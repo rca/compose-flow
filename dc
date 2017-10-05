@@ -23,10 +23,13 @@ DEFAULT_DC_OVERLAY_FILE = 'dc-overlay.yml'
 # directory to keep all compose files in
 COMPOSE_DIR = 'compose'
 
+PROJECT_NAME = None
 DC_OVERLAY_FILE = os.environ.get('DC_OVERLAY_FILE')
 if DC_OVERLAY_FILE is None:
     COMPOSE_DC_OVERLAY_FILE = f'{COMPOSE_DIR}/{DEFAULT_DC_OVERLAY_FILE}'
     if os.path.exists(COMPOSE_DC_OVERLAY_FILE):
+        PROJECT_NAME = os.path.basename(os.getcwd())
+
         os.chdir(COMPOSE_DIR)
 
     DC_OVERLAY_FILE = DEFAULT_DC_OVERLAY_FILE
@@ -226,6 +229,9 @@ def main(args, docker_args):
 def run_compose(args, filenames, docker_args):
     command = ['docker-compose']
     command[0] = find_executable(command[0])
+
+    if PROJECT_NAME:
+        command.extend(['--project-name', PROJECT_NAME])
 
     for _filename in filenames:
         command.extend(['-f', _filename])
