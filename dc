@@ -1,0 +1,260 @@
+#!/usr/bin/env python
+from __future__ import print_function
+
+import argparse
+import io
+import logging
+import os
+import sh
+import shlex
+import sys
+
+import yaml
+
+from distutils.spawn import find_executable
+
+DEFAULT_DC_OVERLAY_FILE = 'dc-overlay.yml'
+
+# directory to keep all compose files in
+COMPOSE_DIR = 'compose'
+
+DC_OVERLAY_FILE = os.environ.get('DC_OVERLAY_FILE')
+if DC_OVERLAY_FILE is None:
+    COMPOSE_DC_OVERLAY_FILE = f'{COMPOSE_DIR}/{DEFAULT_DC_OVERLAY_FILE}'
+    if os.path.exists(COMPOSE_DC_OVERLAY_FILE):
+        os.chdir(COMPOSE_DIR)
+
+    DC_OVERLAY_FILE = DEFAULT_DC_OVERLAY_FILE
+
+ENVIRONMENT_ROOT = os.path.expanduser('~/.docker/_environments')
+DC_ENVIRONMENT = os.environ.get('DC_ENVIRONMENT', ENVIRONMENT_ROOT)
+
+
+def check_environment(args):
+    if not args.environment:
+        return
+
+    environment_path = get_environment_path(args)
+    stack_env = {}
+    if os.path.exists(environment_path):
+        with open(environment_path) as fh:
+            for line in fh.read().splitlines():
+                if line.startswith('#'):
+                    continue
+
+                try:
+                    key, value = line.split('=', 1)
+                except ValueError as exc:
+                    print(f'unable to split line={line}')
+                    raise
+                stack_env[key] = value
+    else:
+        raise CommandError(f'environment={args.environment} in {DC_ENVIRONMENT} not found')
+
+    if args.tag_version:
+        tag_version_command = getattr(sh, 'tag-version')
+        tag_version = tag_version_command().stdout.decode('utf8').strip()
+
+        stack_env['VERSION'] = tag_version
+
+    if args.tag_docker_image:
+        if not args.tag_version:
+            raise CommandError('cannot tag docker image without setting --tag-version')
+
+        docker_image = os.environ.get('DOCKER_IMAGE', stack_env['DOCKER_IMAGE']).rsplit(':', 1)[0]
+        tagged_docker_image = f'{docker_image}:{tag_version}'
+        stack_env['DOCKER_IMAGE'] = tagged_docker_image
+
+    os.environ.update(stack_env)
+
+    for k, v in stack_env.items():
+        print(f'{k}={v}')
+
+    return stack_env
+
+
+def get_environment_path(args):
+    return os.path.join(DC_ENVIRONMENT, args.environment)
+
+
+def main(args, docker_args):
+    logger = logging.getLogger('main')
+
+    command = ['docker-compose']
+    command[0] = find_executable(command[0])
+
+    # make sure just a task or profile is given
+    if all([args.profile, args.task]) or not any([args.profile, args.task]):
+        return 'ERROR: must provide profile or task'
+
+    data = None
+    overlay = []
+
+    check_environment(args)
+
+    if os.path.exists(DC_OVERLAY_FILE):
+        with open(DC_OVERLAY_FILE, 'r') as fh:
+            data = yaml.load(fh)
+
+    if data:
+        if args.task:
+            task = data['tasks'][args.task]
+            command = shlex.split(task['command'])
+
+            return init(command=command)
+
+        overlay_data = data['overlay']
+        # check which profile to use
+        profile = args.profile
+        try:
+            overlay.extend(overlay_data[profile])
+        except KeyError:
+            print('profile {} not found'.format(profile))
+            return -1
+        except TypeError:
+            print('place overlays within named profiles under the `overlay` section')
+            return -1
+    elif args.task:
+        return 'ERROR: cannot run task without overlay file'
+
+    for item in (args.add_overlay or []):
+        overlay.extend([x.strip() for x in item.split(',')])
+
+    logger.debug('overlay={}'.format(overlay))
+
+    def add_filename(path):
+        command.extend(['-f', _filename])
+
+    applied = []
+    for item in overlay:
+        if item in applied:
+            continue
+        applied.append(item)
+
+        path = None
+        if isinstance(item, dict):
+            name = item['name']
+            path = item['path']
+        else:
+            name = item
+
+        # prefix partial with a dot in order to complete the name
+        if path:
+            _filename = os.path.join(path, name)
+        else:
+            _filename = name
+
+        if _filename and os.path.exists(_filename) and os.path.isfile(_filename):
+            add_filename(_filename)
+        else:
+            if name:
+                name = '.{}'.format(name)
+            else:
+                name = ''
+
+            _filename = 'docker-compose{}.yml'.format(name)
+            if path:
+                _filename = os.path.join(path, _filename)
+
+            logging.debug('_filename={}'.format(_filename))
+
+            if os.path.exists(_filename):
+                add_filename(_filename)
+
+    command.extend(docker_args)
+
+    print(' '.join(command), file=sys.stderr)
+
+    if not args.noop:
+        # os.execve(command[0], command, os.environ)
+        proc = getattr(sh, command[0])
+        proc(*command[1:], _env=os.environ, _fg=True)
+
+        if args.write_tag:
+            write_tag(args)
+
+        if args.push:
+            sh.docker('push', os.environ['DOCKER_IMAGE'], _fg=True)
+
+
+def write_tag(args):
+    buf = io.StringIO()
+
+    env_file = get_environment_path(args)
+    with open(env_file) as fh:
+        while True:
+            line = fh.readline()
+            if line == '':
+                break
+
+            line = line.strip()
+
+            if line.startswith('DOCKER_IMAGE='):
+                line = f'DOCKER_IMAGE={os.environ["DOCKER_IMAGE"]}'
+
+            buf.write(f'{line}\n')
+
+    with open(env_file, 'w') as fh:
+        fh.write(buf.getvalue())
+
+
+def init(command=None):
+    parser = argparse.ArgumentParser()
+
+    # required
+    parser.add_argument('-p', '--profile', help='profile to use in overlay')
+
+    # optional
+    parser.add_argument('-e', '--environment', help='load up environment prior to running command')
+    parser.add_argument('-a', '--add-overlay', help='additional file to overlay', action='append')
+    parser.add_argument('-n', '--noop', action='store_true', help='just print command, do not execute')
+    parser.add_argument('--task', help='run a task defined in dc-overlay.yml')
+    parser.add_argument('--deploy', help='execute a deployment')
+    parser.add_argument(
+        '--tag-version',
+        action='store_true',
+        help='set VERSION environment var with tag-version output'
+    )
+    parser.add_argument(
+        '--tag-docker-image',
+        action='store_true',
+        help='when --tag-version is enabled, replace the tag in DOCKER_IMAGE environment variable'
+    )
+    parser.add_argument(
+        '--write-tag',
+        action='store_true',
+        help='when --tag-docker-image is enabled, write DOCKER_IMAGE to the environment file'
+    )
+    parser.add_argument(
+        '--push',
+        action='store_true',
+        help='when enabled, push DOCKER_IMAGE'
+    )
+
+    parser.add_argument('docker_args', nargs=argparse.REMAINDER)
+
+    if command is None:
+        command = sys.argv
+
+    args = parser.parse_args(command[1:])
+
+    # hack when no profile or task is given
+    # take the first docker_args argument as the profile
+    if not any([args.profile, args.task]) and len(args.docker_args) > 1:
+        args.profile = args.docker_args.pop(0)
+
+    # hack when there is no `dc-overlay.yml`
+    # this is just so that the dc command can be used even when there is no overlay file in the project
+    if not os.path.exists(DC_OVERLAY_FILE):
+        args.docker_args.insert(0, args.profile)
+        args.profile = '-'
+
+    return main(args, args.docker_args)
+
+
+if __name__ == '__main__':
+    log_level=os.environ.get('LOG_LEVEL', 'info')
+
+    logging.basicConfig(level=getattr(logging, log_level.upper()))
+
+    sys.exit(init())
