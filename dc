@@ -5,13 +5,18 @@ import argparse
 import io
 import logging
 import os
+import re
 import sh
 import shlex
 import sys
+import tempfile
 
 import yaml
 
 from distutils.spawn import find_executable
+
+# regular expression for finding variables in docker compose files
+VAR_RE = re.compile(r'\${(?P<varname>.*)}')
 
 DEFAULT_DC_OVERLAY_FILE = 'dc-overlay.yml'
 
@@ -67,21 +72,110 @@ def check_environment(args):
 
     os.environ.update(stack_env)
 
-    for k, v in stack_env.items():
-        print(f'{k}={v}')
+    # for k, v in stack_env.items():
+    #     print(f'{k}={v}')
 
     return stack_env
+
+
+def deploy(args, filenames):
+    if len(filenames) > 1:
+        return 'deploy only supports a single compose file'
+
+    compose_file = filenames[0]
+    if not os.path.exists(compose_file):
+        return f'compose_file={compose_file} not found'
+
+    with open(compose_file) as fh:
+        content = fh.read()
+
+        previous_idx = 0
+        rendered = ''
+        for x in VAR_RE.finditer(content):
+            rendered += content[previous_idx:x.start('varname')-2]  # -2 to get rid of variable's `${`
+
+            varname = x.group('varname')
+            try:
+                rendered += os.environ[varname]
+            except KeyError:
+                sys.exit(f'varname={varname} not in environment')
+
+            previous_idx = x.end('varname') + 1  # +1 to get rid of variable's `}`
+
+        rendered += content[previous_idx:]
+
+    fh = tempfile.NamedTemporaryFile()
+    fh.write(rendered.encode('utf8'))
+    fh.flush()
+
+    command = f"""docker stack deploy
+      --prune
+      --with-registry-auth
+      --compose-file {fh.name}
+      {args.environment}"""
+    command_split = shlex.split(command)
+
+    print(command)
+
+    if args.noop:
+        print(rendered)
+    else:
+        executable = getattr(sh, command_split[0])
+        executable(*command_split[1:], _env=os.environ)
 
 
 def get_environment_path(args):
     return os.path.join(DC_ENVIRONMENT, args.environment)
 
 
+def get_overlay_filenames(overlay):
+    overlay_filenames = []
+
+    applied = []
+    for item in overlay:
+        if item in applied:
+            continue
+
+        applied.append(item)
+
+        path = None
+        if isinstance(item, dict):
+            name = item['name']
+            path = item['path']
+        else:
+            name = item
+
+        # join path and name if the path is given
+        if path:
+            _filename = os.path.join(path, name)
+        else:
+            _filename = name
+
+        if _filename and os.path.exists(_filename) and os.path.isfile(_filename):
+            overlay_filenames.append(_filename)
+        else:
+            # prefix partial with a dot in order to complete the name
+            if name:
+                name = '.{}'.format(name)
+            else:
+                name = ''
+
+            _filename = 'docker-compose{}.yml'.format(name)
+            if path:
+                _filename = os.path.join(path, _filename)
+
+            logging.debug('_filename={}'.format(_filename))
+
+            if os.path.exists(_filename):
+                overlay_filenames.append(_filename)
+            else:
+                logger.warning(f'filename={_filename} does not exist, skipping')
+
+    return overlay_filenames
+
+
 def main(args, docker_args):
     logger = logging.getLogger('main')
-
-    command = ['docker-compose']
-    command[0] = find_executable(command[0])
 
     # make sure just a task or profile is given
     if all([args.profile, args.task]) or not any([args.profile, args.task]):
@@ -122,44 +216,19 @@ def main(args, docker_args):
 
     logger.debug('overlay={}'.format(overlay))
 
-    def add_filename(path):
+    filenames = get_overlay_filenames(overlay)
+
+    if args.deploy:
+        return deploy(args, filenames)
+    else:
+        return run_compose(args, filenames, docker_args)
+
+def run_compose(args, filenames, docker_args):
+    command = ['docker-compose']
+    command[0] = find_executable(command[0])
+
+    for _filename in filenames:
         command.extend(['-f', _filename])
-
-    applied = []
-    for item in overlay:
-        if item in applied:
-            continue
-        applied.append(item)
-
-        path = None
-        if isinstance(item, dict):
-            name = item['name']
-            path = item['path']
-        else:
-            name = item
-
-        # prefix partial with a dot in order to complete the name
-        if path:
-            _filename = os.path.join(path, name)
-        else:
-            _filename = name
-
-        if _filename and os.path.exists(_filename) and os.path.isfile(_filename):
-            add_filename(_filename)
-        else:
-            if name:
-                name = '.{}'.format(name)
-            else:
-                name = ''
-
-            _filename = 'docker-compose{}.yml'.format(name)
-            if path:
-                _filename = os.path.join(path, _filename)
-
-            logging.debug('_filename={}'.format(_filename))
-
-            if os.path.exists(_filename):
-                add_filename(_filename)
 
     command.extend(docker_args)
 
@@ -209,7 +278,7 @@ def init(command=None):
     parser.add_argument('-a', '--add-overlay', help='additional file to overlay', action='append')
     parser.add_argument('-n', '--noop', action='store_true', help='just print command, do not execute')
     parser.add_argument('--task', help='run a task defined in dc-overlay.yml')
-    parser.add_argument('--deploy', help='execute a deployment')
+    parser.add_argument('--deploy', action='store_true', help='execute a deployment')
     parser.add_argument(
         '--tag-version',
         action='store_true',
