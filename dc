@@ -43,7 +43,12 @@ def check_environment(args):
         return
 
     environment_path = get_environment_path(args)
-    stack_env = {}
+
+    # the stack environment includes the environment name
+    stack_env = {
+        'DOCKER_STACK': args.environment,
+    }
+
     if os.path.exists(environment_path):
         with open(environment_path) as fh:
             for line in fh.read().splitlines():
