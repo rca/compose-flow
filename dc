@@ -203,7 +203,7 @@ def main(args, docker_args):
             task = data['tasks'][args.task]
             command = shlex.split(task['command'])
 
-            return init(command=command)
+            return init(command=command + args.docker_args)
 
         overlay_data = data['overlay']
         # check which profile to use
@@ -321,7 +321,11 @@ def init(command=None):
     # hack when no profile or task is given
     # take the first docker_args argument as the profile
     if not any([args.profile, args.task]) and len(args.docker_args) > 1:
-        args.profile = args.docker_args.pop(0)
+        item = args.docker_args.pop(0)
+        if item == 'task':
+            args.task = args.docker_args.pop(0)
+        else:
+            args.profile = item
 
     # hack when there is no `dc-overlay.yml`
     # this is just so that the dc command can be used even when there is no overlay file in the project
