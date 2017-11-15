@@ -193,6 +193,10 @@ def get_overlay_filenames(overlay):
             else:
                 logger.warning(f'filename={_filename} does not exist, skipping')
 
+    # check to see if any filenames were found, else default to docker-compose.yml
+    if not overlay_filenames:
+        overlay_filenames.append('docker-compose.yml')
+
     return overlay_filenames
 
 
