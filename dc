@@ -88,6 +88,8 @@ def check_environment(args):
         tagged_docker_image = f'{docker_image}:{tag_version}'
         stack_env['DOCKER_IMAGE'] = tagged_docker_image
 
+        logger.info(f'tagged_docker_image={tagged_docker_image}')
+
     os.environ.update(stack_env)
 
     # for k, v in stack_env.items():
@@ -147,6 +149,8 @@ def get_environment_path(args):
 
 
 def get_overlay_filenames(overlay):
+    logger = logging.getLogger('get_overlay_filenames')
+
     overlay_filenames = []
 
     applied = []
