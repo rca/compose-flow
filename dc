@@ -26,21 +26,29 @@ COMPOSE_DIR = 'compose'
 PROJECT_NAME = None
 
 # check to see if an overlay file is provided in the environment
-DC_CONFIG_FILE = os.environ.get('DC_CONFIG_FILE')
-if DC_CONFIG_FILE is None:
+DC_CONFIG_FILE = os.environ.get('DC_CONFIG_FILE', '')
+if not DC_CONFIG_FILE:
     for _file in DC_CONFIG_FILES:
-        compose_path = f'{COMPOSE_DIR}/{_file}'
-        if os.path.exists(compose_path):
-            PROJECT_NAME = os.path.basename(os.getcwd())
-            DC_CONFIG_FILE = _file
+        for _dir in ('.', COMPOSE_DIR):
+            compose_path = f'{_dir}/{_file}'
+            if os.path.exists(compose_path):
+                PROJECT_NAME = os.path.basename(os.getcwd())
+                # print(f'PROJECT_NAME={PROJECT_NAME}')
+                DC_CONFIG_FILE = _file
 
-            os.chdir(COMPOSE_DIR)
+                os.chdir(_dir)
 
 ENVIRONMENT_ROOT = os.path.expanduser('~/.docker/_environments')
 DC_ENVIRONMENT = os.environ.get('DC_ENVIRONMENT', ENVIRONMENT_ROOT)
 
 
+class CommandError(Exception):
+    pass
+
+
 def check_environment(args):
+    logger = logging.getLogger('main')
+
     if not args.environment:
         return
 
