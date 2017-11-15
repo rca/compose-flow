@@ -224,7 +224,11 @@ def main(args, docker_args):
 
             return init(command=command + args.docker_args)
 
-        overlay_data = data['overlay']
+        try:
+            overlay_data = data.get('profiles') or data['overlay']
+        except KeyError:
+            return 'ERROR: define profiles section in dc.yml'
+
         # check which profile to use
         profile = args.profile
         try:
