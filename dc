@@ -205,7 +205,8 @@ def main(args, docker_args):
 
     # make sure just a task or profile is given
     if all([args.profile, args.task]) or not any([args.profile, args.task]):
-        return 'ERROR: must provide profile or task'
+        args.profile = 'default'
+        logger.warning('using default profile')
 
     data = None
     overlay = []
