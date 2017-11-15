@@ -258,8 +258,8 @@ def run_compose(args, filenames, docker_args):
     command = ['docker-compose']
     command[0] = find_executable(command[0])
 
-    if PROJECT_NAME:
-        command.extend(['--project-name', PROJECT_NAME])
+    if args.project_name:
+        command.extend(['--project-name', args.project_name])
 
     for _filename in filenames:
         command.extend(['-f', _filename])
@@ -311,6 +311,7 @@ def init(command=None):
     parser.add_argument('-e', '--environment', help='load up environment prior to running command')
     parser.add_argument('-a', '--add-overlay', help='additional file to overlay', action='append')
     parser.add_argument('-n', '--noop', action='store_true', help='just print command, do not execute')
+    parser.add_argument('--project-name', default=PROJECT_NAME, help=f'the projet name to use, default={PROJECT_NAME}')
     parser.add_argument('--task', help='run a task defined in dc-overlay.yml')
     parser.add_argument('--deploy', action='store_true', help='execute a deployment')
     parser.add_argument(
