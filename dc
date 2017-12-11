@@ -18,6 +18,7 @@ from distutils.spawn import find_executable
 # regular expression for finding variables in docker compose files
 VAR_RE = re.compile(r'\${(?P<varname>.*)}')
 
+COMPOSE_FILES = ['docker-compose-stack.yml', 'docker-compose.yml']
 DC_CONFIG_FILES = ['dc.yml', 'dc-overlay.yml']
 
 # directory to keep all compose files in
@@ -28,15 +29,22 @@ PROJECT_NAME = None
 # check to see if an overlay file is provided in the environment
 DC_CONFIG_FILE = os.environ.get('DC_CONFIG_FILE', '')
 if not DC_CONFIG_FILE:
+    # find one
     for _file in DC_CONFIG_FILES:
         for _dir in ('.', COMPOSE_DIR):
             compose_path = f'{_dir}/{_file}'
             if os.path.exists(compose_path):
-                PROJECT_NAME = os.path.basename(os.getcwd())
-                # print(f'PROJECT_NAME={PROJECT_NAME}')
                 DC_CONFIG_FILE = _file
 
-                os.chdir(_dir)
+# find where the compose file is
+for _file in COMPOSE_FILES:
+    for _dir in ('.', COMPOSE_DIR):
+        compose_path = f'{_dir}/{_file}'
+        if os.path.exists(compose_path):
+            PROJECT_NAME = os.path.basename(os.getcwd())
+            # print(f'PROJECT_NAME={PROJECT_NAME}')
+
+            os.chdir(_dir)
 
 ENVIRONMENT_ROOT = os.path.expanduser('~/.docker/_environments')
 DC_ENVIRONMENT = os.environ.get('DC_ENVIRONMENT', ENVIRONMENT_ROOT)
