@@ -361,10 +361,12 @@ def init(command=None):
         else:
             args.profile = item
 
-    # hack when there is no `dc-overlay.yml`
+    # hack when there is no `dc.yml`
     # this is just so that the dc command can be used even when there is no overlay file in the project
     if not os.path.exists(DC_CONFIG_FILE):
-        args.docker_args.insert(0, args.profile)
+        if args.profile:
+            args.docker_args.insert(0, args.profile)
+
         args.profile = '-'
 
     return main(args, args.docker_args)
