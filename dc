@@ -64,7 +64,7 @@ def check_environment(args):
 
     # the stack environment includes the environment name
     stack_env = {
-        'DOCKER_STACK': args.environment,
+        'DOCKER_STACK': args.environment or PROJECT_NAME,
     }
 
     if os.path.exists(environment_path):
@@ -136,11 +136,13 @@ def deploy(args, filenames):
     fh.write(rendered.encode('utf8'))
     fh.flush()
 
+    stack_name = args.environment or PROJECT_NAME
+
     command = f"""docker stack deploy
       --prune
       --with-registry-auth
       --compose-file {fh.name}
-      {args.environment}"""
+      {stack_name}"""
     command_split = shlex.split(command)
 
     print(command)
