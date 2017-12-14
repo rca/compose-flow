@@ -1,5 +1,9 @@
 # DC
-The `dc` command is a wrapper around [`docker-compose`](https://docs.docker.com/compose/) that codifies workflows and repeatedly used commands into rememberable, easy to type one-liners.
+The `dc` command is a wrapper around [`docker-compose`](https://docs.docker.com/compose/) that codifies workflows and repeatedly used commands into rememberable, easy to type one-liners.  Can be installed from pypi:
+
+```
+pip install dc-workflows
+```
 
 ## sample dc.yml
 
