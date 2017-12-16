@@ -110,38 +110,12 @@ def deploy(args, filenames):
     if len(filenames) > 1:
         return 'deploy only supports a single compose file'
 
-    compose_file = filenames[0]
-    if not os.path.exists(compose_file):
-        return f'compose_file={compose_file} not found'
-
-    with open(compose_file) as fh:
-        content = fh.read()
-
-        previous_idx = 0
-        rendered = ''
-        for x in VAR_RE.finditer(content):
-            rendered += content[previous_idx:x.start('varname')-2]  # -2 to get rid of variable's `${`
-
-            varname = x.group('varname')
-            try:
-                rendered += os.environ[varname]
-            except KeyError:
-                sys.exit(f'varname={varname} not in environment')
-
-            previous_idx = x.end('varname') + 1  # +1 to get rid of variable's `}`
-
-        rendered += content[previous_idx:]
-
-    fh = tempfile.NamedTemporaryFile()
-    fh.write(rendered.encode('utf8'))
-    fh.flush()
-
     stack_name = args.environment or PROJECT_NAME
 
     command = f"""docker stack deploy
       --prune
       --with-registry-auth
-      --compose-file {fh.name}
+      --compose-file {filenames[0]}
       {stack_name}"""
     command_split = shlex.split(command)
 
@@ -314,6 +288,28 @@ def remerge(target_list, sourced=False):
     if not sourced:
         return ret
     return ret, source_map
+
+
+def render(content):
+    """
+    Renders the variables in the file
+    """
+    previous_idx = 0
+    rendered = ''
+    for x in VAR_RE.finditer(content):
+        rendered += content[previous_idx:x.start('varname')-2]  # -2 to get rid of variable's `${`
+
+        varname = x.group('varname')
+        try:
+            rendered += os.environ[varname]
+        except KeyError:
+            sys.exit(f'varname={varname} not in environment')
+
+        previous_idx = x.end('varname') + 1  # +1 to get rid of variable's `}`
+
+    rendered += content[previous_idx:]
+
+    return rendered
 
 
 def run_compose(args, filenames, docker_args):
