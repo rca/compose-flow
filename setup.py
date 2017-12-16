@@ -18,6 +18,7 @@ setup(
     scripts=['dc'],
     install_requires=[
         'PyYAML',
+        'boltons',
         'sh',
     ]
 )
