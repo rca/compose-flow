@@ -233,8 +233,17 @@ def main(args, docker_args):
 
     filenames = get_overlay_filenames(overlay)
 
-    if args.deploy:
-        return deploy(args, filenames)
+    # merge multiple files together so that deploying stacks works
+    # https://github.com/moby/moby/issues/30127
+    if len(filenames) > 1:
+        yaml_contents = []
+
+        for item in filenames:
+            with open(item, 'r') as fh:
+                yaml_contents.append(yaml.load(fh))
+
+        merged = remerge(yaml_contents)
+        content = yaml.dump(merged, default_flow_style=False)
     else:
         return run_compose(args, filenames, docker_args)
 
