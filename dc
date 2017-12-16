@@ -15,6 +15,8 @@ from distutils.spawn import find_executable
 
 from boltons.iterutils import remap, get_path, default_enter, default_visit
 
+MERGED_YML = 'docker-compose-merged.yml'
+
 # regular expression for finding variables in docker compose files
 VAR_RE = re.compile(r'\${(?P<varname>.*)}')
 
@@ -245,7 +247,25 @@ def main(args, docker_args):
         merged = remerge(yaml_contents)
         content = yaml.dump(merged, default_flow_style=False)
     else:
-        return run_compose(args, filenames, docker_args)
+        with open(filenames[0], 'r') as fh:
+            content = fh.read()
+
+    # render the file
+    rendered = render(content)
+
+    fh = open(MERGED_YML, 'w')
+    fh.write(rendered)
+    fh.flush()
+
+    try:
+        if args.deploy:
+            return deploy(args, [fh.name])
+        else:
+            return run_compose(args, [fh.name], docker_args)
+    except:
+        os.remove(MERGED_YML)
+
+        raise
 
 
 # https://gist.github.com/mahmoud/db02d16ac89fa401b968
