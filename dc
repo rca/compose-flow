@@ -262,10 +262,8 @@ def main(args, docker_args):
             return deploy(args, [fh.name])
         else:
             return run_compose(args, [fh.name], docker_args)
-    except:
+    finally:
         os.remove(MERGED_YML)
-
-        raise
 
 
 # https://gist.github.com/mahmoud/db02d16ac89fa401b968
