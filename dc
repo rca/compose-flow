@@ -15,6 +15,7 @@ from distutils.spawn import find_executable
 
 from boltons.iterutils import remap, get_path, default_enter, default_visit
 
+SCRIPT_DIR, SCRIPT_NAME = os.path.split(__file__)
 MERGED_YML = 'docker-compose-merged.yml'
 
 # regular expression for finding variables in docker compose files
@@ -430,6 +431,9 @@ def init(command=None):
     if command is None:
         command = sys.argv
 
+    if not command[0].endswith(SCRIPT_NAME):
+        return run_external_command(command)
+
     args = parser.parse_args(command[1:])
 
     # hack when no profile or task is given
@@ -450,6 +454,10 @@ def init(command=None):
         args.profile = '-'
 
     return main(args, args.docker_args)
+
+
+def run_external_command(command):
+    return getattr(sh, command[0])(command[1:], _fg=True)
 
 
 if __name__ == '__main__':
