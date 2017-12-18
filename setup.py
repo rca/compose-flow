@@ -12,7 +12,7 @@ setup(
     url='https://github.com/rca/dc',
     author='Roberto Aguilar',
     author_email='roberto.c.aguilar@gmail.com',
-    version='0.0.1',
+    version='0.0.0',
     description='codified workflows for docker compose',
     long_description=readme(),
     scripts=['dc'],
