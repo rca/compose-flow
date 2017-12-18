@@ -72,6 +72,11 @@ def check_environment(args):
     if os.path.exists(environment_path):
         with open(environment_path) as fh:
             for line in fh.read().splitlines():
+                # skip empty lines
+                if line.strip() == '':
+                    continue
+
+                # skip commented lines
                 if line.startswith('#'):
                     continue
 
