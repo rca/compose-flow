@@ -40,14 +40,21 @@ if not DC_CONFIG_FILE:
                 DC_CONFIG_FILE = _file
 
 # find where the compose file is
+_found = False
 for _file in COMPOSE_FILES:
     for _dir in ('.', COMPOSE_DIR):
         compose_path = f'{_dir}/{_file}'
         if os.path.exists(compose_path):
+            _found = True
+
             PROJECT_NAME = os.path.basename(os.getcwd())
             # print(f'PROJECT_NAME={PROJECT_NAME}')
 
             os.chdir(_dir)
+
+            break
+    if _found:
+        break
 
 ENVIRONMENT_ROOT = os.path.expanduser('~/.docker/_environments')
 DC_ENVIRONMENT = os.environ.get('DC_ENVIRONMENT', ENVIRONMENT_ROOT)
