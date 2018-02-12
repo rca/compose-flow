@@ -272,7 +272,8 @@ def main(args, docker_args):
 
     if args.dry_run:
         print(f'{MERGED_YML}:\n----------\n')
-        print(rendered)
+        with open(MERGED_YML, 'r') as fh:
+            print(fh.read())
         print(f'\n----------\n')
 
     try:
