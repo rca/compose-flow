@@ -377,9 +377,15 @@ def run_compose(args, filenames, docker_args):
     logger.info(' '.join(command))
 
     if not args.dry_run:
-        # os.execve(command[0], command, os.environ)
-        proc = getattr(sh, command[0])
-        proc(*command[1:], _env=os.environ, _fg=True)
+        try:
+            # os.execve(command[0], command, os.environ)
+            proc = getattr(sh, command[0])
+            proc(*command[1:], _env=os.environ, _fg=True)
+        except:
+            print(command)
+            print(sh.cat(MERGED_YML).stdout)
+
+            raise
 
     if args.write_tag:
         write_tag(args)
