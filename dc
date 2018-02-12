@@ -270,6 +270,11 @@ def main(args, docker_args):
     fh.write(rendered)
     fh.flush()
 
+    if args.dry_run:
+        print(f'{MERGED_YML}:\n----------\n')
+        print(rendered)
+        print(f'\n----------\n')
+
     try:
         if args.deploy:
             return deploy(args, [fh.name])
