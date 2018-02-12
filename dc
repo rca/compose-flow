@@ -134,7 +134,7 @@ def deploy(args, filenames):
       {stack_name}"""
     command_split = shlex.split(command)
 
-    print(command)
+    print(command, file=sys.stderr)
 
     if not args.dry_run:
         executable = getattr(sh, command_split[0])
