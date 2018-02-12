@@ -386,6 +386,7 @@ def run_compose(args, filenames, docker_args):
 
 
 def write_tag(args):
+    logger = logging.getLogger('write_tag')
     buf = io.StringIO()
 
     env_file = get_environment_path(args)
@@ -398,12 +399,17 @@ def write_tag(args):
             line = line.strip()
 
             if line.startswith('DOCKER_IMAGE='):
-                line = f'DOCKER_IMAGE={os.environ["DOCKER_IMAGE"]}'
+                new_line = f'DOCKER_IMAGE={os.environ["DOCKER_IMAGE"]}'
+
+                logger.info(f'replacing line={line} with new_line={new_line}')
+
+                line = new_line
 
             buf.write(f'{line}\n')
 
-    with open(env_file, 'w') as fh:
-        fh.write(buf.getvalue())
+    if not args.dry_run:
+        with open(env_file, 'w') as fh:
+            fh.write(buf.getvalue())
 
 
 def init(command=None):
