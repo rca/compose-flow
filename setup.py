@@ -20,5 +20,6 @@ setup(
         'PyYAML',
         'boltons',
         'sh',
+        'tag-version',
     ]
 )
