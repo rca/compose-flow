@@ -136,9 +136,7 @@ def deploy(args, filenames):
 
     print(command)
 
-    if args.noop:
-        print(rendered)
-    else:
+    if not args.dry_run:
         executable = getattr(sh, command_split[0])
         executable(*command_split[1:], _env=os.environ)
 
@@ -366,7 +364,7 @@ def run_compose(args, filenames, docker_args):
 
     print(' '.join(command), file=sys.stderr)
 
-    if not args.noop:
+    if not args.dry_run:
         # os.execve(command[0], command, os.environ)
         proc = getattr(sh, command[0])
         proc(*command[1:], _env=os.environ, _fg=True)
@@ -408,7 +406,11 @@ def init(command=None):
     # optional
     parser.add_argument('-e', '--environment', help='load up environment prior to running command')
     parser.add_argument('-a', '--add-overlay', help='additional file to overlay', action='append')
-    parser.add_argument('-n', '--noop', action='store_true', help='just print command, do not execute')
+    parser.add_argument(
+        '-n', '--noop', '--dry-run',
+        action='store_true', dest='dry_run',
+        help='just print command, do not execute'
+    )
     parser.add_argument('--project-name', default=PROJECT_NAME, help=f'the projet name to use, default={PROJECT_NAME}')
     parser.add_argument('--task', help='run a task defined in dc-overlay.yml')
     parser.add_argument('--deploy', action='store_true', help='execute a deployment')
