@@ -221,7 +221,7 @@ def main(args, docker_args):
             task = data['tasks'][args.task]
             command = shlex.split(task['command'])
 
-            return init(command=command + args.docker_args)
+            return init(command=command + args.docker_args, prev_args=args)
 
         try:
             overlay_data = data.get('profiles') or data['overlay']
@@ -412,7 +412,7 @@ def write_tag(args):
             fh.write(buf.getvalue())
 
 
-def init(command=None):
+def init(command=None, prev_args=None):
     parser = argparse.ArgumentParser()
 
     # required
@@ -459,6 +459,10 @@ def init(command=None):
         return run_external_command(command)
 
     args = parser.parse_args(command[1:])
+
+    # if previous arguments were given, check them for certain args
+    if prev_args:
+        args.dry_run = prev_args.dry_run
 
     # hack when no profile or task is given
     # take the first docker_args argument as the profile
