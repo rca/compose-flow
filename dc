@@ -65,7 +65,7 @@ class CommandError(Exception):
 
 
 def check_environment(args):
-    logger = logging.getLogger('main')
+    logger = logging.getLogger('check_environment')
 
     if not args.environment:
         return
@@ -122,6 +122,8 @@ def check_environment(args):
 
 
 def deploy(args, filenames):
+    logger = logging.getLogger('deploy')
+
     if len(filenames) > 1:
         return 'deploy only supports a single compose file'
 
@@ -134,11 +136,9 @@ def deploy(args, filenames):
       {stack_name}"""
     command_split = shlex.split(command)
 
-    print(command)
+    logger.info(command)
 
-    if args.noop:
-        print(rendered)
-    else:
+    if not args.dry_run:
         executable = getattr(sh, command_split[0])
         executable(*command_split[1:], _env=os.environ)
 
@@ -221,7 +221,7 @@ def main(args, docker_args):
             task = data['tasks'][args.task]
             command = shlex.split(task['command'])
 
-            return init(command=command + args.docker_args)
+            return init(command=command + args.docker_args, prev_args=args)
 
         try:
             overlay_data = data.get('profiles') or data['overlay']
@@ -269,6 +269,12 @@ def main(args, docker_args):
     fh = open(MERGED_YML, 'w')
     fh.write(rendered)
     fh.flush()
+
+    if args.dry_run:
+        print(f'{MERGED_YML}:\n----------\n')
+        with open(MERGED_YML, 'r') as fh:
+            print(fh.read())
+        print(f'\n----------\n')
 
     try:
         if args.deploy:
@@ -353,6 +359,10 @@ def render(content):
 
 
 def run_compose(args, filenames, docker_args):
+    docker_image = os.environ['DOCKER_IMAGE']
+
+    logger = logging.getLogger('run_compose')
+
     command = ['docker-compose']
     command[0] = find_executable(command[0])
 
@@ -364,21 +374,25 @@ def run_compose(args, filenames, docker_args):
 
     command.extend(docker_args)
 
-    print(' '.join(command), file=sys.stderr)
+    logger.info(' '.join(command))
 
-    if not args.noop:
+    if not args.dry_run:
         # os.execve(command[0], command, os.environ)
         proc = getattr(sh, command[0])
         proc(*command[1:], _env=os.environ, _fg=True)
 
-        if args.write_tag:
-            write_tag(args)
+    if args.write_tag:
+        write_tag(args)
 
-        if args.push:
-            sh.docker('push', os.environ['DOCKER_IMAGE'], _fg=True)
+    if args.push:
+        if args.dry_run:
+            logger.info(f'docker push {docker_image}')
+        else:
+            sh.docker('push', docker_image, _fg=True)
 
 
 def write_tag(args):
+    logger = logging.getLogger('write_tag')
     buf = io.StringIO()
 
     env_file = get_environment_path(args)
@@ -391,15 +405,20 @@ def write_tag(args):
             line = line.strip()
 
             if line.startswith('DOCKER_IMAGE='):
-                line = f'DOCKER_IMAGE={os.environ["DOCKER_IMAGE"]}'
+                new_line = f'DOCKER_IMAGE={os.environ["DOCKER_IMAGE"]}'
+
+                logger.info(f'replacing line={line} with new_line={new_line}')
+
+                line = new_line
 
             buf.write(f'{line}\n')
 
-    with open(env_file, 'w') as fh:
-        fh.write(buf.getvalue())
+    if not args.dry_run:
+        with open(env_file, 'w') as fh:
+            fh.write(buf.getvalue())
 
 
-def init(command=None):
+def init(command=None, prev_args=None):
     parser = argparse.ArgumentParser()
 
     # required
@@ -408,7 +427,11 @@ def init(command=None):
     # optional
     parser.add_argument('-e', '--environment', help='load up environment prior to running command')
     parser.add_argument('-a', '--add-overlay', help='additional file to overlay', action='append')
-    parser.add_argument('-n', '--noop', action='store_true', help='just print command, do not execute')
+    parser.add_argument(
+        '-n', '--noop', '--dry-run',
+        action='store_true', dest='dry_run',
+        help='just print command, do not execute'
+    )
     parser.add_argument('--project-name', default=PROJECT_NAME, help=f'the projet name to use, default={PROJECT_NAME}')
     parser.add_argument('--task', help='run a task defined in dc-overlay.yml')
     parser.add_argument('--deploy', action='store_true', help='execute a deployment')
@@ -442,6 +465,10 @@ def init(command=None):
         return run_external_command(command)
 
     args = parser.parse_args(command[1:])
+
+    # if previous arguments were given, check them for certain args
+    if prev_args:
+        args.dry_run = prev_args.dry_run
 
     # hack when no profile or task is given
     # take the first docker_args argument as the profile
