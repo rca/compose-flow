@@ -270,7 +270,12 @@ def main(args, docker_args):
     fh.write(rendered)
     fh.flush()
 
+    # when executing a dry run, list out the environment and the merged docker-compose file
     if args.dry_run:
+        print(f'environment:\n----------\n')
+        print('\n'.join(sorted([f'{k}={v}' for k, v in os.environ.items()])))
+        print(f'\n----------\n')
+
         print(f'{MERGED_YML}:\n----------\n')
         with open(MERGED_YML, 'r') as fh:
             print(fh.read())
