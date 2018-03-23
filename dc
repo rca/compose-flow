@@ -388,7 +388,7 @@ def run_compose(args, filenames, docker_args):
             proc(*command[1:], _env=os.environ, _fg=True)
         except:
             print(command)
-            print(sh.cat(MERGED_YML).stdout)
+            print(sh.cat(MERGED_YML).stdout.decode('utf8'))
 
             raise
 
