@@ -364,8 +364,6 @@ def render(content):
 
 
 def run_compose(args, filenames, docker_args):
-    docker_image = os.environ['DOCKER_IMAGE']
-
     logger = logging.getLogger('run_compose')
 
     command = ['docker-compose']
@@ -396,6 +394,8 @@ def run_compose(args, filenames, docker_args):
         write_tag(args)
 
     if args.push:
+        docker_image = os.environ['DOCKER_IMAGE']
+
         if args.dry_run:
             logger.info(f'docker push {docker_image}')
         else:
