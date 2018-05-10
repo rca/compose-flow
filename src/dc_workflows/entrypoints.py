@@ -1,5 +1,15 @@
+"""
+Entrypoints module
+
+Main console script entrypoints for the dc tool
+"""
+import sys
+
+from .commands import DCWorkflow
+
+
 def dc():
     """
     Main entrypoint
     """
-    print('hi')
+    sys.exit(DCWorkflow().run())
