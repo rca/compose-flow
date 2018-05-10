@@ -1,6 +1,8 @@
 import argparse
 import sys
 
+from .subcommands import find_subcommands
+
 
 class DCWorkflow(object):
     def __init__(self, argv=None):
@@ -21,6 +23,8 @@ class DCWorkflow(object):
             help='just print command, do not execute'
         )
 
+        for subcommand in find_subcommands():
+            print(f'subcommand={subcommand}')
 
         return parser
 
