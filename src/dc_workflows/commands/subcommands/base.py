@@ -38,7 +38,7 @@ class BaseSubcommand(ABC):
 
         action_fn = getattr(self, action, None)
         if action_fn:
-            action_fn()
+            return action_fn()
         else:
             self.print_subcommand_help(__doc__, error=f'unknown action={action}')
 
@@ -49,7 +49,7 @@ class BaseSubcommand(ABC):
         self.workflow.parser.print_help()
 
         if error:
-            print(f'Error: {error}')
+            return f'\nError: {error}'
 
     def run(self):
         self._check_args()
