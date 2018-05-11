@@ -23,12 +23,12 @@ class DCWorkflow(object):
         parser.add_argument('-e', '--environment')
         parser.add_argument('-p', '--profile')
         parser.add_argument(
-            '-n', '--noop', '--dry-run',
+            '--noop', '--dry-run',
             action='store_true', dest='dry_run',
             help='just print command, do not execute'
         )
         parser.add_argument(
-            '--project-name',
+            '-n', '--project-name',
             default=PROJECT_NAME,
             help=f'the projet name to use, default={PROJECT_NAME}'
         )
