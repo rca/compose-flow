@@ -15,5 +15,5 @@ class Help(Subcommand):
     def fill_subparser(cls, parser, subparser):
         pass
 
-    def run(self):
+    def handle(self):
         self.print_subcommand_help(__doc__)

@@ -94,9 +94,25 @@ class Subcommand(object):
     def __init__(self, workflow):
         self.workflow = workflow
 
+    def _check_args(self):
+        """
+        Checks and transforms the command line arguments
+        """
+        args = self.workflow.args
+
+        if None in (args.environment,):
+            print('profile and environment are required')
+
+        args.profile = args.profile or args.environment
+
     @classmethod
     def fill_subparser(cls, subparser):
         raise NotImplementedError()
+
+    def handle(self):
+        args = self.workflow.args
+
+        print(f'hi! args={args}')
 
     def print_subcommand_help(self, doc):
         print(doc.lstrip())
@@ -104,9 +120,9 @@ class Subcommand(object):
         self.workflow.parser.print_help()
 
     def run(self):
-        args = self.workflow.args
+        self._check_args()
 
-        print(f'hi! args={args}')
+        self.handle()
 
     @classmethod
     def setup_subparser(cls, parser, subparsers):
