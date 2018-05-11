@@ -45,4 +45,4 @@ class DCWorkflow(object):
     def run(self):
         subcommand = self.args.subcommand_cls(self)
 
-        subcommand.run()
+        return subcommand.run()

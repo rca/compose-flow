@@ -122,7 +122,7 @@ class Subcommand(object):
     def run(self):
         self._check_args()
 
-        self.handle()
+        return self.handle()
 
     @classmethod
     def setup_subparser(cls, parser, subparsers):
