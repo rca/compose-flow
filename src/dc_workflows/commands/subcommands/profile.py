@@ -12,5 +12,8 @@ class Profile(BaseSubcommand):
     def fill_subparser(cls, parser, subparser):
         subparser.add_argument('action')
 
+    def cat(self):
+        print(f'{self.__class__.__name__} cat!')
+
     def handle(self):
-        print(self.workflow.args)
+        return self.handle_action()

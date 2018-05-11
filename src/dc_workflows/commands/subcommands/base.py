@@ -29,6 +29,16 @@ class BaseSubcommand(ABC):
 
         print(f'hi! args={args}')
 
+    def handle_action(self):
+        action = self.workflow.args.action
+
+        action_fn = getattr(self, action, None)
+        if action_fn:
+            action_fn()
+        else:
+            self.print_subcommand_help(__doc__, error=f'unknown action={action}')
+
+
     def print_subcommand_help(self, doc, error=None):
         print(doc.lstrip())
 
