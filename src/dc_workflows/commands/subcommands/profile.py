@@ -1,10 +1,10 @@
 """
 Profile subcommand
 """
-from . import Subcommand
+from .base import BaseSubcommand
 
 
-class Profile(Subcommand):
+class Profile(BaseSubcommand):
     """
     Subcommand for managing profiles
     """
