@@ -7,6 +7,10 @@ class BaseSubcommand(ABC):
     def __init__(self, workflow):
         self.workflow = workflow
 
+    @property
+    def args(self):
+        return self.workflow.args
+
     def _check_args(self):
         """
         Checks and transforms the command line arguments
