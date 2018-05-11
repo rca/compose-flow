@@ -1,18 +1,20 @@
 import argparse
 import sys
 
-from .subcommands import find_subcommands
+from .subcommands import find_subcommands, set_default_subparser
 
 
 class DCWorkflow(object):
     def __init__(self, argv=None):
         self.argv = argv or sys.argv
 
-        parser = self.get_argument_parser(self.argv)
+        self.parser = self.get_argument_parser(self.argv)
 
-        self.args = parser.parse_args()
+        self.args = self.parser.parse_args()
 
     def get_argument_parser(self, argv):
+        argparse.ArgumentParser.set_default_subparser = set_default_subparser
+
         parser = argparse.ArgumentParser(argv)
 
         parser.add_argument('-e', '--environment')
@@ -23,10 +25,16 @@ class DCWorkflow(object):
             help='just print command, do not execute'
         )
 
+        self.subparsers = parser.add_subparsers(dest='command')
+
         for subcommand in find_subcommands():
-            print(f'subcommand={subcommand}')
+            subcommand.setup_subparser(parser, self.subparsers)
+
+        parser.set_default_subparser('help')
 
         return parser
 
     def run(self):
-        print(f'DCWorkflow.run(), args={self.args}')
+        subcommand = self.args.subcommand_cls(self)
+
+        subcommand.run()
