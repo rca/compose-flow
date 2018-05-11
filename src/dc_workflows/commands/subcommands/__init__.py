@@ -114,10 +114,13 @@ class Subcommand(object):
 
         print(f'hi! args={args}')
 
-    def print_subcommand_help(self, doc):
+    def print_subcommand_help(self, doc, error=None):
         print(doc.lstrip())
 
         self.workflow.parser.print_help()
+
+        if error:
+            print(f'Error: {error}')
 
     def run(self):
         self._check_args()
