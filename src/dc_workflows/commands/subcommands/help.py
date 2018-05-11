@@ -11,9 +11,5 @@ class Help(BaseSubcommand):
     """
     Subcommand for managing profiles
     """
-    @classmethod
-    def fill_subparser(cls, parser, subparser):
-        pass
-
     def handle(self):
         self.print_subcommand_help(__doc__)
