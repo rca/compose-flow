@@ -1,7 +1,10 @@
 import argparse
+import os
 import sys
 
 from .subcommands import find_subcommands, set_default_subparser
+
+PROJECT_NAME = os.path.basename(os.getcwd())
 
 
 class DCWorkflow(object):
@@ -23,6 +26,11 @@ class DCWorkflow(object):
             '-n', '--noop', '--dry-run',
             action='store_true', dest='dry_run',
             help='just print command, do not execute'
+        )
+        parser.add_argument(
+            '--project-name',
+            default=PROJECT_NAME,
+            help=f'the projet name to use, default={PROJECT_NAME}'
         )
 
         self.subparsers = parser.add_subparsers(dest='command')
