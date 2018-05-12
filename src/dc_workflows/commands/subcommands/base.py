@@ -35,9 +35,7 @@ class BaseSubcommand(ABC):
         """
 
     def handle(self):
-        args = self.workflow.args
-
-        print(f'hi! args={args}')
+        return self.handle_action()
 
     def handle_action(self):
         action = self.workflow.args.action

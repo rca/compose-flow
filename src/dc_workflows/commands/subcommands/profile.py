@@ -64,6 +64,3 @@ class Profile(BaseSubcommand):
         fh.seek(0, 0)
 
         return fh
-
-    def handle(self):
-        return self.handle_action()

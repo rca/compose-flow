@@ -45,9 +45,6 @@ class Env(BaseSubcommand):
 
         return data
 
-    def handle(self):
-        return self.handle_action()
-
     def load(self):
         """
         Loads an environment into the swarm
