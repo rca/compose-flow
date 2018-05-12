@@ -67,10 +67,10 @@ class BaseSubcommand(ABC):
         if error:
             return f'\nError: {error}'
 
-    def run(self):
+    def run(self, *args, **kwargs):
         self._check_args()
 
-        return self.handle()
+        return self.handle(*args, **kwargs)
 
     @classmethod
     def setup_subparser(cls, parser, subparsers):
