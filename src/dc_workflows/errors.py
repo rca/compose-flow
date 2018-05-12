@@ -1,3 +1,9 @@
+class CommandError(Exception):
+    """
+    Raised when a problem with the command run is encountered
+    """
+
+
 class NoSuchProfile(Exception):
     """
     Raised when a requested profile is not listed in dc.yml

@@ -4,6 +4,7 @@ import sys
 
 from .subcommands import find_subcommands, set_default_subparser
 from ..config import DC_CONFIG_ROOT
+from ..errors import CommandError
 
 PROJECT_NAME = os.path.basename(os.getcwd())
 
@@ -48,4 +49,9 @@ class DCWorkflow(object):
     def run(self):
         subcommand = self.args.subcommand_cls(self)
 
-        return subcommand.run()
+        try:
+            return subcommand.run()
+        except CommandError as exc:
+            self.parser.print_help()
+
+            return f'\n{exc}'

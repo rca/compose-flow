@@ -1,5 +1,7 @@
 from abc import ABC, abstractclassmethod
 
+from dc_workflows.errors import CommandError
+
 class BaseSubcommand(ABC):
     """
     Parent class for any subcommand class
@@ -18,7 +20,7 @@ class BaseSubcommand(ABC):
         args = self.workflow.args
 
         if None in (args.environment,):
-            print('profile and environment are required')
+            raise CommandError('Error: environment is required')
 
         args.profile = args.profile or args.environment
 
