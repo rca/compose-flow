@@ -7,6 +7,7 @@ class BaseSubcommand(ABC):
     Parent class for any subcommand class
     """
     def __init__(self, workflow):
+        self.profile = None  # populated in run()
         self.workflow = workflow
 
     @property
@@ -70,6 +71,8 @@ class BaseSubcommand(ABC):
     def run(self, *args, **kwargs):
         self._check_args()
 
+        self._write_profile()
+
         return self.handle(*args, **kwargs)
 
     @classmethod
@@ -81,3 +84,9 @@ class BaseSubcommand(ABC):
         subparser.set_defaults(subcommand_cls=cls)
 
         cls.fill_subparser(parser, subparser)
+
+    def _write_profile(self):
+        from .profile import Profile
+
+        self.profile = Profile(self.workflow)
+        self.profile.write()
