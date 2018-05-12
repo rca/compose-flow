@@ -20,6 +20,12 @@ class Compose(BaseSubcommand):
     """
     Subcommand for running compose commands
     """
+    def __init__(self, *args, **kwargs):
+        # pop off the compose_args kwarg
+        compose_args = kwargs.pop('compose_args', None)
+
+        super().__init__(*args, **kwargs)
+
     @classmethod
     def fill_subparser(cls, parser, subparser) -> None:
         subparser.add_argument('compose_args', nargs=argparse.REMAINDER)
@@ -36,7 +42,7 @@ class Compose(BaseSubcommand):
             '-f', profile.filename,
         ])
 
-        command.extend(self.args.compose_args)
+        command.extend(self.compose_args)
 
         self.logger.info(' '.join(command))
 
