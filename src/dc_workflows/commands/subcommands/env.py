@@ -21,6 +21,30 @@ class Env(BaseSubcommand):
 
         print(docker.get_config(self.env_name))
 
+    @property
+    def data(self):
+        data = {}
+
+        env = docker.get_config(self.env_name)
+        for line in env.splitlines():
+            # skip empty lines
+            if line.strip() == '':
+                continue
+
+            # skip commented lines
+            if line.startswith('#'):
+                continue
+
+            try:
+                key, value = line.split('=', 1)
+            except ValueError as exc:
+                print(f'unable to split line={line}')
+                raise
+
+            data[key] = value
+
+        return data
+
     def handle(self):
         return self.handle_action()
 
