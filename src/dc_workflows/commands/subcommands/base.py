@@ -22,6 +22,12 @@ class BaseSubcommand(ABC):
 
         args.profile = args.profile or args.environment
 
+    @property
+    def env_name(self):
+        args = self.workflow.args
+
+        return f'{args.environment}-{args.project_name}'
+
     @abstractclassmethod
     def fill_subparser(cls, parser, subparser):
         """

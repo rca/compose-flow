@@ -21,12 +21,6 @@ class Env(BaseSubcommand):
 
         print(docker.get_config(self.env_name))
 
-    @property
-    def env_name(self):
-        args = self.workflow.args
-
-        return f'{args.environment}-{args.project_name}'
-
     def handle(self):
         return self.handle_action()
 
