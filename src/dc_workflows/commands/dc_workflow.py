@@ -3,6 +3,7 @@ import os
 import sys
 
 from .subcommands import find_subcommands, set_default_subparser
+from ..config import DC_CONFIG_ROOT
 
 PROJECT_NAME = os.path.basename(os.getcwd())
 
@@ -14,6 +15,8 @@ class DCWorkflow(object):
         self.parser = self.get_argument_parser(self.argv)
 
         self.args = self.parser.parse_args()
+
+        os.chdir(DC_CONFIG_ROOT)
 
     def get_argument_parser(self, argv):
         argparse.ArgumentParser.set_default_subparser = set_default_subparser
