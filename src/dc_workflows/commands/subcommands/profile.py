@@ -39,12 +39,7 @@ class Profile(BaseSubcommand):
         """
         Processes the profile to generate the compose file
         """
-        from .env import Env
-
-        # load up the environment
-        env = Env(self.workflow)
-
-        os.environ.update(env.data)
+        os.environ.update(self.env.data)
 
         filenames = get_overlay_filenames(profile)
 

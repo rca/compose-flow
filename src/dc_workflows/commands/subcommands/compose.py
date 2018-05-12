@@ -9,7 +9,6 @@ import sys
 import sh
 
 from .base import BaseSubcommand
-from .env import Env
 from .profile import Profile
 
 from dc_workflows import docker

@@ -25,6 +25,16 @@ class BaseSubcommand(ABC):
         args.profile = args.profile or args.environment
 
     @property
+    def env(self):
+        """
+        Returns an Env instance
+        """
+        # avoid circular import
+        from .env import Env
+
+        return Env(self.workflow)
+
+    @property
     def env_name(self):
         args = self.workflow.args
 
