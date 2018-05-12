@@ -1,7 +1,10 @@
 """
 Env subcommand
 """
+import io
+import logging
 import sys
+import tempfile
 
 import sh
 
@@ -14,6 +17,11 @@ class Env(BaseSubcommand):
     """
     Subcommand for managing environment
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, *kwargs)
+
+        self._config = None
+
     @classmethod
     def fill_subparser(cls, parser, subparser):
         subparser.add_argument('action')
@@ -59,7 +67,10 @@ class Env(BaseSubcommand):
         """
         Loads an environment from the docker swarm config
         """
-        config = docker.get_config(self.env_name)
+        if self._config:
+            return self._config
+
+        self._config = docker.get_config(self.env_name)
 
         # inject the version from tag-version command into the loaded environment
         tag_version = 'unknown'
@@ -73,15 +84,20 @@ class Env(BaseSubcommand):
             except Exception as exc:
                 raise errors.TagVersionError(f'Warning: unable to run tag-version ({exc})\n')
 
-
         # check if adding a newline to the end of the file is necessary
         new_line = '\n'
-        if config.endswith('\n'):
+        if self._config.endswith('\n'):
             new_line = ''
 
-        config += f'{new_line}VERSION={tag_version}\n'
+        version_var = 'VERSION'
+        if version_var not in self.data:
+            self._config += f'{new_line}{version_var}={tag_version}\n'
 
-        return config
+        return self._config
+
+    @property
+    def logger(self):
+        return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
     def push(self, path:str=None) -> None:
         """
@@ -91,10 +107,41 @@ class Env(BaseSubcommand):
         if not path:
             return self.print_subcommand_help(__doc__, error='path needed to load')
 
-        docker.load_config(self.env_name, self.args.path)
+        docker.load_config(self.env_name, path)
+
+    def render(self, data:dict=None) -> str:
+        """
+        Returns a rendered file in .env file format
+        """
+        buf = io.StringIO()
+
+        data = data or self.data
+        for k, v in data.items():
+            buf.write(f'{k}={v}\n')
+
+        return buf.getvalue()
 
     def rm(self) -> None:
         """
         Removes an environment from the swarm
         """
         docker.remove_config(self.env_name)
+
+    def write_tag(self) -> None:
+        """
+        Writes the projects tag version into the environment
+
+        This currently writes the tag to the `DOCKER_IMAGE` variable
+        """
+        data = self.data
+
+        image_base = data['DOCKER_IMAGE'].rsplit(':', 1)[0]
+        data['DOCKER_IMAGE'] = f'{image_base}:{data["VERSION"]}'
+
+        with tempfile.NamedTemporaryFile('w+') as fh:
+            fh.write(self.render(data))
+            fh.flush()
+
+            fh.seek(0, 0)
+
+            self.push(path=fh.name)
