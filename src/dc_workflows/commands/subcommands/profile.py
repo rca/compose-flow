@@ -13,6 +13,9 @@ from dc_workflows.config import get_config
 from dc_workflows.errors import NoSuchProfile
 from dc_workflows.utils import remerge, render
 
+# keep track of written profiles in order to prevent writing them twice
+WRITTEN_PROFILES = []
+
 
 class Profile(BaseSubcommand):
     """
@@ -90,5 +93,11 @@ class Profile(BaseSubcommand):
         """
         Writes the loaded compose file to disk
         """
+        # do not write profiles more than once per execution
+        if self.filename in WRITTEN_PROFILES:
+            return
+
         with open(self.filename, 'w') as fh:
             fh.write(self.load())
+
+        WRITTEN_PROFILES.append(self.filename)
