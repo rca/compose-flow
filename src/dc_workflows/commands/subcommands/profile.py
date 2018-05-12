@@ -4,31 +4,41 @@ Profile subcommand
 import os
 import tempfile
 
+import yaml
+
 from .base import BaseSubcommand
 
 from dc_workflows.compose import get_overlay_filenames
 from dc_workflows.config import get_config
-from dc_workflows.utils import render
+from dc_workflows.errors import NoSuchProfile
+from dc_workflows.utils import remerge, render
 
 
 class Profile(BaseSubcommand):
     """
     Subcommand for managing profiles
     """
+    @property
+    def filename(self) -> str:
+        """
+        Returns the filename for this profile
+        """
+        return f'docker-compose-dc-{self.args.profile}.yml'
+
     @classmethod
     def fill_subparser(cls, parser, subparser):
         subparser.add_argument('action')
 
     def cat(self):
-        config = get_config()
-
-        profile = config['profiles'][self.args.profile]
-
-        fh = self.get_profile_compose_file(profile)
-
-        print(fh.read())
+        """
+        Prints the loaded compose file to stdout
+        """
+        print(self.load())
 
     def get_profile_compose_file(self, profile):
+        """
+        Processes the profile to generate the compose file
+        """
         from .env import Env
 
         # load up the environment
@@ -64,3 +74,26 @@ class Profile(BaseSubcommand):
         fh.seek(0, 0)
 
         return fh
+
+    def load(self) -> str:
+        """
+        Loads the compose file that is generated from all the items listed in the profile
+        """
+        config = get_config()
+
+        profile_name = self.args.profile
+        try:
+            profile = config['profiles'][profile_name]
+        except KeyError:
+            raise NoSuchProfile(f'profile={profile_name}')
+
+        fh = self.get_profile_compose_file(profile)
+
+        return fh.read()
+
+    def write(self) -> None:
+        """
+        Writes the loaded compose file to disk
+        """
+        with open(self.filename, 'w') as fh:
+            fh.write(self.load())
