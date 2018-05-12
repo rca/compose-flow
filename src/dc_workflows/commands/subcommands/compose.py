@@ -46,17 +46,6 @@ class Compose(BaseSubcommand):
             proc = getattr(sh, command[0])
             proc(*command[1:], _env=os.environ, _fg=True)
 
-        if args.write_tag:
-            write_tag(args)
-
-        if args.push:
-            docker_image = os.environ['DOCKER_IMAGE']
-
-            if args.dry_run:
-                logger.info(f'docker push {docker_image}')
-            else:
-                sh.docker('push', docker_image, _fg=True)
-
     @property
     def logger(self) -> logging.Logger:
         return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
