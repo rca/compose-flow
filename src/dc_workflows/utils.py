@@ -1,4 +1,6 @@
 import re
+import os
+import sys
 
 from boltons.iterutils import remap, get_path, default_enter, default_visit
 
