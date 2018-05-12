@@ -22,7 +22,7 @@ class Compose(BaseSubcommand):
     """
     @classmethod
     def fill_subparser(cls, parser, subparser) -> None:
-        subparser.add_argument('docker_args', nargs=argparse.REMAINDER)
+        subparser.add_argument('compose_args', nargs=argparse.REMAINDER)
 
     def handle(self):
         profile = Profile(self.workflow)
@@ -36,7 +36,7 @@ class Compose(BaseSubcommand):
             '-f', profile.filename,
         ])
 
-        command.extend(self.args.docker_args)
+        command.extend(self.args.compose_args)
 
         self.logger.info(' '.join(command))
 
