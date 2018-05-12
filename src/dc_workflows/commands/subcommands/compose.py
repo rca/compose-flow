@@ -9,7 +9,6 @@ import sys
 import sh
 
 from .base import BaseSubcommand
-from .profile import Profile
 
 from dc_workflows import docker
 
@@ -31,15 +30,12 @@ class Compose(BaseSubcommand):
         subparser.add_argument('compose_args', nargs=argparse.REMAINDER)
 
     def handle(self, compose_args:list=None) -> [None, str]:
-        profile = Profile(self.workflow)
-        profile.write()
-
         command = ['docker-compose']
         command[0] = find_executable(command[0])
 
         command.extend([
             '--project-name', self.args.project_name,
-            '-f', profile.filename,
+            '-f', self.profile.filename,
         ])
 
         compose_args = compose_args or self.args.compose_args
