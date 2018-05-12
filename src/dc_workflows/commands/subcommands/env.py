@@ -7,7 +7,7 @@ import sh
 
 from .base import BaseSubcommand
 
-from dc_workflows import docker
+from dc_workflows import docker, errors
 
 
 class Env(BaseSubcommand):
@@ -65,9 +65,14 @@ class Env(BaseSubcommand):
         tag_version = 'unknown'
         try:
             tag_version_command = getattr(sh, 'tag-version')
-            tag_version = tag_version_command().stdout.decode('utf8').strip()
         except Exception as exc:
-            print('Warning: unable to run tag-version\n', file=sys.stderr)
+            print(f'Warning: unable to find tag-version ({exc})\n', file=sys.stderr)
+        else:
+            try:
+                tag_version = tag_version_command().stdout.decode('utf8').strip()
+            except Exception as exc:
+                raise errors.TagVersionError(f'Warning: unable to run tag-version ({exc})\n')
+
 
         # check if adding a newline to the end of the file is necessary
         new_line = '\n'
