@@ -4,7 +4,7 @@ import sys
 
 from .subcommands import find_subcommands, set_default_subparser
 from ..config import DC_CONFIG_ROOT
-from ..errors import CommandError
+from ..errors import CommandError, ErrorMessage
 
 PROJECT_NAME = os.path.basename(os.getcwd())
 
@@ -54,4 +54,6 @@ class DCWorkflow(object):
         except CommandError as exc:
             self.parser.print_help()
 
+            return f'\n{exc}'
+        except ErrorMessage as exc:
             return f'\n{exc}'
