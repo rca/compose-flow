@@ -5,7 +5,7 @@ import shlex
 
 from .base import BaseSubcommand
 
-from dc_workflows.config import get_config
+from compose_flow.config import get_config
 
 
 class Task(BaseSubcommand):

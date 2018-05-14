@@ -11,10 +11,10 @@ def readme():
 
 
 setup(
-    name='dc-workflows',
-    url='https://github.com/rca/dc',
-    author='Roberto Aguilar',
-    author_email='roberto.c.aguilar@gmail.com',
+    name='compose-flow',
+    url='https://github.com/openslate/compose-flow',
+    author='OpenSlate',
+    author_email='code@openslate.com',
     version='0.0.0',
     description='codified workflows for docker compose',
     long_description=readme(),
@@ -22,7 +22,7 @@ setup(
     packages=packages,
     entry_points={
         'console_scripts': [
-            'dc = dc_workflows.entrypoints:dc',
+            'compose-flow = compose_flow.entrypoints:compose_flow',
         ],
     },
     install_requires=[

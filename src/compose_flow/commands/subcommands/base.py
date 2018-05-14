@@ -1,6 +1,6 @@
 from abc import ABC, abstractclassmethod
 
-from dc_workflows.errors import CommandError
+from compose_flow.errors import CommandError
 
 class BaseSubcommand(ABC):
     """

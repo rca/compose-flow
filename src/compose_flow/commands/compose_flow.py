@@ -9,7 +9,7 @@ from ..errors import CommandError, ErrorMessage
 PROJECT_NAME = os.path.basename(os.getcwd())
 
 
-class DCWorkflow(object):
+class ComposeFlow(object):
     def __init__(self, argv=None):
         self.argv = argv or sys.argv
 

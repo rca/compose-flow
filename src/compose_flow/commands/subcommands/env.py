@@ -10,7 +10,7 @@ import sh
 
 from .base import BaseSubcommand
 
-from dc_workflows import docker, errors
+from compose_flow import docker, errors
 
 
 class Env(BaseSubcommand):

@@ -8,10 +8,10 @@ import yaml
 
 from .base import BaseSubcommand
 
-from dc_workflows.compose import get_overlay_filenames
-from dc_workflows.config import get_config
-from dc_workflows.errors import NoSuchProfile, ProfileError
-from dc_workflows.utils import remerge, render
+from compose_flow.compose import get_overlay_filenames
+from compose_flow.config import get_config
+from compose_flow.errors import NoSuchProfile, ProfileError
+from compose_flow.utils import remerge, render
 
 # keep track of written profiles in order to prevent writing them twice
 WRITTEN_PROFILES = []
