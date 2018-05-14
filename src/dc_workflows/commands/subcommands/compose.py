@@ -19,6 +19,8 @@ class Compose(BaseSubcommand):
     """
     Subcommand for running compose commands
     """
+    dirty_working_copy_okay = True
+
     def __init__(self, *args, **kwargs):
         # pop off the compose_args kwarg
         compose_args = kwargs.pop('compose_args', None)
@@ -30,6 +32,9 @@ class Compose(BaseSubcommand):
         subparser.add_argument('compose_args', nargs=argparse.REMAINDER)
 
     def handle(self, compose_args:list=None) -> [None, str]:
+        # check the profile to make sure it defines all the needed environment variables
+        self.profile.check()
+
         command = ['docker-compose']
         command[0] = find_executable(command[0])
 

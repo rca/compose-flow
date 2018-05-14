@@ -6,6 +6,8 @@ class BaseSubcommand(ABC):
     """
     Parent class for any subcommand class
     """
+    dirty_working_copy_okay = False
+
     def __init__(self, workflow):
         self.profile = None  # populated in run()
         self.workflow = workflow
