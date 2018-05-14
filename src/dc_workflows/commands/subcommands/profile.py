@@ -77,6 +77,15 @@ class Profile(BaseSubcommand):
         """
         Loads the compose file that is generated from all the items listed in the profile
         """
+        fh = self.get_profile_compose_file(self.profile_files)
+
+        return fh.read()
+
+    @property
+    def profile_files(self) -> dict:
+        """
+        Returns the profile data found in the dc.yml file
+        """
         config = get_config()
 
         profile_name = self.args.profile
@@ -85,9 +94,7 @@ class Profile(BaseSubcommand):
         except KeyError:
             raise NoSuchProfile(f'profile={profile_name}')
 
-        fh = self.get_profile_compose_file(profile)
-
-        return fh.read()
+        return profile
 
     def write(self) -> None:
         """
