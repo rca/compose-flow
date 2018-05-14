@@ -17,6 +17,9 @@ class DCWorkflow(object):
 
         self.args = self.parser.parse_args()
 
+        # the subcommand that is being run; defined in run() below
+        self.subcommand = None
+
         os.chdir(DC_CONFIG_ROOT)
 
     def get_argument_parser(self, argv):
@@ -47,10 +50,10 @@ class DCWorkflow(object):
         return parser
 
     def run(self):
-        subcommand = self.args.subcommand_cls(self)
+        self.subcommand = self.args.subcommand_cls(self)
 
         try:
-            return subcommand.run()
+            return self.subcommand.run()
         except CommandError as exc:
             self.parser.print_help()
 
