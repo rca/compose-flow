@@ -10,7 +10,7 @@ import sh
 
 from .base import BaseSubcommand
 
-from dc_workflows import docker
+from compose_flow import docker
 
 from distutils.spawn import find_executable
 
