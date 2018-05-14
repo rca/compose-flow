@@ -82,7 +82,9 @@ class Env(BaseSubcommand):
             try:
                 tag_version = tag_version_command().stdout.decode('utf8').strip()
             except Exception as exc:
-                raise errors.TagVersionError(f'Warning: unable to run tag-version ({exc})\n')
+                # check if the subcommand is okay with a dirty working copy
+                if not self.workflow.subcommand.dirty_working_copy_okay:
+                    raise errors.TagVersionError(f'Warning: unable to run tag-version ({exc})\n')
 
         # check if adding a newline to the end of the file is necessary
         new_line = '\n'

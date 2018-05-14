@@ -19,6 +19,8 @@ class Compose(BaseSubcommand):
     """
     Subcommand for running compose commands
     """
+    dirty_working_copy_okay = True
+
     def __init__(self, *args, **kwargs):
         # pop off the compose_args kwarg
         compose_args = kwargs.pop('compose_args', None)
