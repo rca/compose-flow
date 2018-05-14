@@ -18,6 +18,9 @@ class Deploy(BaseSubcommand):
         return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
     def handle(self):
+        # check the profile to make sure it defines all the needed environment variables
+        self.profile.check()
+
         project_name = self.args.project_name
 
         command = f"""docker stack deploy
