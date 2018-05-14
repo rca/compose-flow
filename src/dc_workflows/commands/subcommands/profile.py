@@ -10,7 +10,7 @@ from .base import BaseSubcommand
 
 from dc_workflows.compose import get_overlay_filenames
 from dc_workflows.config import get_config
-from dc_workflows.errors import NoSuchProfile
+from dc_workflows.errors import NoSuchProfile, ProfileError
 from dc_workflows.utils import remerge, render
 
 # keep track of written profiles in order to prevent writing them twice
@@ -37,6 +37,29 @@ class Profile(BaseSubcommand):
         Prints the loaded compose file to stdout
         """
         print(self.load())
+
+    def check(self):
+        """
+        Checks the profile against some rules
+        """
+        env_data = self.env.data
+
+        compose_content = self.load()
+        data = yaml.load(compose_content)
+
+        errors = []
+        for name, service_data in data['services'].items():
+            for item in service_data.get('environment', []):
+                # when a variable has an equal sign, it is setting
+                # the value, so don't check the environment for this variable
+                if '=' in item:
+                    continue
+
+                if item not in env_data:
+                    errors.append(f'{item} not found in environment')
+
+        if errors:
+            raise ProfileError('\n'.join(errors))
 
     def get_profile_compose_file(self, profile):
         """
