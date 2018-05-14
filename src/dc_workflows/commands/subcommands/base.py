@@ -25,6 +25,16 @@ class BaseSubcommand(ABC):
 
         args.profile = args.profile or args.environment
 
+    def get_subcommand(self, name:str) -> object:
+        """
+        Returns the requested subcommand class by name
+        """
+        from . import get_subcommand_class
+
+        subcommand_cls = get_subcommand_class(name)
+
+        return subcommand_cls(self.workflow)
+
     @property
     def env(self):
         """
