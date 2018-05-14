@@ -1,4 +1,6 @@
 import logging
+import os
+import shlex
 
 import sh
 
@@ -26,7 +28,7 @@ class Deploy(BaseSubcommand):
         command = f"""docker stack deploy
           --prune
           --with-registry-auth
-          --compose-file {filenames[0]}
+          --compose-file {self.profile.filename}
           {project_name}"""
 
         command_split = shlex.split(command)
