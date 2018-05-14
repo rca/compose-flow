@@ -1,1 +1,1 @@
-from .dc_workflow import DCWorkflow
+from .compose_flow import ComposeFlow

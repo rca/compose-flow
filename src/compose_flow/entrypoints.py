@@ -6,13 +6,13 @@ Main console script entrypoints for the dc tool
 import logging
 import sys
 
-from .commands import DCWorkflow
+from .commands import ComposeFlow
 
 
-def dc():
+def compose_flow():
     """
     Main entrypoint
     """
     logging.basicConfig(level=logging.WARN)
 
-    sys.exit(DCWorkflow().run())
+    sys.exit(ComposeFlow().run())
