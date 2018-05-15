@@ -72,7 +72,7 @@ def render(content):
         try:
             rendered += os.environ[varname]
         except KeyError:
-            sys.exit(f'varname={varname} not in environment')
+            sys.exit(f'Error: varname={varname} not in environment; cannot render')
 
         previous_idx = x.end('varname') + 1  # +1 to get rid of variable's `}`
 
