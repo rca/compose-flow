@@ -1,78 +1,93 @@
-# DC
-The `dc` command is a wrapper around [`docker-compose`](https://docs.docker.com/compose/) that codifies workflows and repeatedly used commands into rememberable, easy to type one-liners.  Can be installed from pypi:
+# Compose Flow
+
+This utility is built on top of [Docker Compose](https://docs.docker.com/compose/) and [Swarm Mode](https://docs.docker.com/engine/swarm/).  It establishes conventions for publishing and deploying [Stacks](https://docs.docker.com/get-started/part5/#prerequisites) that are easily shared between team members -- and bots -- who need to manage running services.
 
 ```
-pip install dc-workflows
+pip install compose-flow
 ```
 
-## sample dc.yml
 
-Take following `dc.yml` file:
+## A quick example and why compose-flow exists
+
+Take following configuration file located at `compose/dc.yml` within your project:
 
 ```
 profiles:
-  build:
+  prod:
     - docker-compose.yml
-    - build
+
+  dev:
+    - docker-compose.yml
 
   local:
     - docker-compose.yml
+    - local
     - postgres
-
-  stack:
-    - docker-compose-stack.yml
-
-  test:
-    - docker-compose.yml
-    - postgres
-    - test
+    - ports
 
 tasks:
-  publish:
-    command: dc --profile build -e api --tag-version --tag-docker-image --write-tag --push build
+  psql:
+    command: compose-flow compose exec postgres psql -U postgres postgres
 
-  deploy:
-    command: dc --profile stack -e api --deploy
-
-  dev-publish:
-    command: dc --profile build -e dev-api --tag-version --tag-docker-image --write-tag --push build
-
-  dev-deploy:
-    command: dc --profile stack -e dev-api --deploy
-
-  local:
-    command: dc --profile local -e local-api
-
-  local-build:
-    command: dc task local build app
-
-  test:
-    command: dc --profile test --project-name api-test
-
-  test-build:
-    command: dc task test build
+  psql-drop-test-db:
+    command: compose-flow compose exec postgres /bin/bash -c 'echo "DROP DATABASE test_db;" | psql -U postgres postgres'
 ```
 
-It defines four profiles; for local development, testing, building, deploying a stack to a Docker Swarm.  It also defines a number of tasks.  Notice their length and imagine consistently writing them throughout your work day.
+It defines three "Profiles" for local, development, and production deployments.  They all share a base `docker-compose.yml` file, but you may need additional services locally that you don't need for development and production environments.  In the example above, `dev` and `prod` don't need a postgres service (they probably use a standalone system or a hosted database like RDS), but a postgres service is needed locally.
 
-Using `dc` with the configuration above, publishing a production image is done with the command:
-
-```
-dc task publish
-```
-
-Similarly, deploying to the Swarm:
+It also defines some "Tasks", which are commonly run within this example project.  The `psql` task using `docker-compose` against the `dev` environment expands to:
 
 ```
-dc task deploy
+$ cp /path/to/dev.env ./.env
+$ docker-compose -f docker-compose.yml -f docker-compose.dev.yml exec postgres psql -U postgres postgres
 ```
 
-Tasks themselves are composable, such as `local` and `local-build` above.  Note that `local-build` is written as an extension to the `local` task.
+(Note: remember to replace `.env` when you deploy to prod...)
+
+The equivalent command with `compose-flow` is:
+
+```
+$ compose-flow -e dev task psql
+```
+
+The clear advantage is brevity.  A second advantage is not managing environment files yourself.  A final benefit to using `compose-flow` not seen above is its automatic environment validation.  It checks that the environment defined in your compose files has a corresponding value at runtime to ensure all the variables are, in fact, defined.
+
+
+## Publishing
+
+Publishing is simple.  For example, to publish a production image:
+
+```
+compose-flow -e prod publish
+```
+
+Behind the scenes a unique version is generated for your Docker Image using `git tag`, for example `1.3.0-3-gf67c2b8-compose-flow`.  The unique docker image is used in your deployment by simply specifying the docker image as a variable in your compose file, for instance:
+
+```
+version: '3.3'
+services:
+  app:
+    image: ${DOCKER_IMAGE}
+  [...]
+```
+
+The rest is taken care of.
+
+
+## Deployment
+
+Deployment is ... simple:
+
+```
+compose-flow -e prod deploy
+```
+
+Behind the scenes this uses `docker stack` to clean up and re-deploy your code
 
 
 ### Environments
 
-Instead of keeping environments in the repo's working copy, they are, by default, stored in `~/.docker/_environments`.  This location can be overridden with the `DC_ENVIRONMENT` environment variable.  These files are simple `key=value` pairs, such as:
+Instead of keeping environments in the repo's working copy, they are stored on the Swarm using `docker config`.  They can also be kept locally on the filesystem at `~/.docker/_environments`.  This location can be overridden with the `DC_ENVIRONMENT` environment variable.  These files are simple `key=value` pairs, such as:
 
 ```
 DJANGO_DEBUG=False
@@ -82,13 +97,7 @@ DOCKER_IMAGE=roberto/api:0.0.1
 
 ### Tag Versioning
 
-The `--tag-version` argument uses another utility, [tag-version](https://github.com/rca/tag-version) to generate a tag based on git tags.
-
-The `--tag-docker-image` argument will use the `tag-version` command's result as the tag for the generated docker image.
-
-The `--write-tag` argument will re-write the `DOCKER_IMAGE` variable in the environment file.
-
-The `--push` argument will automatically run `docker push` when the build runs successfully.
+Behind the scenes, `compose-flow` automatically generates versions based on git tags with the [tag-version](https://github.com/rca/tag-version) utility.
 
 
 ## History
@@ -104,4 +113,4 @@ Docker Compose also allows specifying environment variables in a `.env` file rat
 
 Another issue with vanilla `docker-compose` is its inconsistency when substituting environment variables in compose.yml files; sometimes they apply, sometimes they don't.
 
-`dc` eliminates these limitations by pre-processing the compose file and rendering out a yml file with the values found in the environment.  It also eliminates accidentally mis-writing a command, by aliasing the commands with memorable tasks.
+`compose-flow` eliminates these limitations by pre-processing the compose file and rendering out a yml file with the values found in the environment.  It also eliminates accidentally mis-writing a command, by aliasing the commands with memorable tasks.
