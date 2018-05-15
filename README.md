@@ -1,6 +1,9 @@
 # Compose Flow
 
-This utility is built on top of [Docker Compose](https://docs.docker.com/compose/) and [Swarm Mode](https://docs.docker.com/engine/swarm/).  It establishes conventions for publishing and deploying [Stacks](https://docs.docker.com/get-started/part5/#prerequisites) that are easily shared between team members -- and bots -- who need to manage running services.
+This utility is built on top of [Docker Compose](https://docs.docker.com/compose/) and [Swarm Mode](https://docs.docker.com/engine/swarm/).  It establishes conventions for publishing Images and deploying [Stacks](https://docs.docker.com/get-started/part5/#prerequisites) that are easily shared between team members -- and bots -- who need to manage running services.
+
+
+## Installation
 
 ```
 pip install compose-flow
@@ -50,7 +53,7 @@ The equivalent command with `compose-flow` is:
 $ compose-flow -e dev task psql
 ```
 
-The clear advantage is brevity.  A second advantage is not managing environment files yourself.  A final benefit to using `compose-flow` not seen above is its automatic environment validation.  It checks that the environment defined in your compose files has a corresponding value at runtime to ensure all the variables are, in fact, defined.
+The clear advantage is brevity.  A second advantage is not managing environment files yourself.  `compose-flow` also validates the runtime environment.  It checks that the environment defined in your compose files has a corresponding value at runtime to ensure all the variables are, in fact, defined.
 
 
 ## Publishing
@@ -67,6 +70,7 @@ Behind the scenes a unique version is generated for your Docker Image using `git
 version: '3.3'
 services:
   app:
+    build: ..
     image: ${DOCKER_IMAGE}
   [...]
 ```
@@ -76,7 +80,7 @@ The rest is taken care of.
 
 ## Deployment
 
-Deployment is ... simple:
+Deployment is also simple:
 
 ```
 compose-flow -e prod deploy
@@ -87,7 +91,7 @@ Behind the scenes this uses `docker stack` to clean up and re-deploy your code
 
 ### Environments
 
-Instead of keeping environments in the repo's working copy, they are stored on the Swarm using `docker config`.  They can also be kept locally on the filesystem at `~/.docker/_environments`.  This location can be overridden with the `DC_ENVIRONMENT` environment variable.  These files are simple `key=value` pairs, such as:
+Instead of using environments written to files in the repo's working copy, they are stored on the Swarm via [`docker config`](https://docs.docker.com/engine/swarm/configs/).  They can also be kept locally on the filesystem at `~/.docker/_environments` (but then they can't be shared within a team, or accessible if you're on another workstation like work and home).  This location can be overridden with the `DC_ENVIRONMENT` environment variable.  These files are simple `key=value` pairs, such as:
 
 ```
 DJANGO_DEBUG=False
@@ -97,7 +101,7 @@ DOCKER_IMAGE=roberto/api:0.0.1
 
 ### Tag Versioning
 
-Behind the scenes, `compose-flow` automatically generates versions based on git tags with the [tag-version](https://github.com/rca/tag-version) utility.
+Behind the scenes, versions are generated based on git tags with the [tag-version](https://github.com/rca/tag-version) utility.
 
 
 ## History
