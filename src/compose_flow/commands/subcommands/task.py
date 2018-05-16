@@ -25,8 +25,8 @@ class Task(BaseSubcommand):
         command = task['command']
         command_split = shlex.split(command)
 
-        if command_split[0] != 'dc':
-            raise NotImplementedError('tasks that are not dc are not yet supported')
+        if command_split[0] != 'compose-flow':
+            raise NotImplementedError('tasks that are not compose-flow are not yet supported')
 
         subcommand_name = command_split[1]
         subcommand = self.get_subcommand(subcommand_name)
