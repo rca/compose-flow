@@ -4,6 +4,8 @@ import sys
 
 from boltons.iterutils import remap, get_path, default_enter, default_visit
 
+from .errors import ProfileError
+
 # regular expression for finding variables in docker compose files
 VAR_RE = re.compile(r'\${(?P<varname>.*)}')
 
@@ -72,7 +74,7 @@ def render(content):
         try:
             rendered += os.environ[varname]
         except KeyError:
-            sys.exit(f'Error: varname={varname} not in environment; cannot render')
+            raise ProfileError(f'Error: varname={varname} not in environment; cannot render')
 
         previous_idx = x.end('varname') + 1  # +1 to get rid of variable's `}`
 
