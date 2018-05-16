@@ -1,6 +1,6 @@
 from abc import ABC, abstractclassmethod
 
-from compose_flow.errors import CommandError
+from compose_flow.errors import CommandError, ProfileError
 
 class BaseSubcommand(ABC):
     """
@@ -71,6 +71,14 @@ class BaseSubcommand(ABC):
         else:
             self.print_subcommand_help(__doc__, error=f'unknown action={action}')
 
+    def is_dirty_working_copy_okay(self, exc):
+        return self.dirty_working_copy_okay
+
+    def is_env_error_okay(self, exc):
+        return False
+
+    def is_write_profile_error_okay(self, exc):
+        return False
 
     def print_subcommand_help(self, doc, error=None):
         print(doc.lstrip())
@@ -83,7 +91,11 @@ class BaseSubcommand(ABC):
     def run(self, *args, **kwargs):
         self._check_args()
 
-        self._write_profile()
+        try:
+            self._write_profile()
+        except ProfileError as exc:
+            if not self.is_write_profile_error_okay(exc):
+                raise
 
         return self.handle(*args, **kwargs)
 

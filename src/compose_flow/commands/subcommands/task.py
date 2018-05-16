@@ -36,3 +36,6 @@ class Task(BaseSubcommand):
         subcommand.run(subcommand_args)
 
         return f'{subcommand}'
+
+    def is_dirty_working_copy_okay(self, exc):
+        return self.workflow.args.environment in ('local',)

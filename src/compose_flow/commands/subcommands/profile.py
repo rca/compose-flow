@@ -65,7 +65,11 @@ class Profile(BaseSubcommand):
         """
         Processes the profile to generate the compose file
         """
-        os.environ.update(self.env.data)
+        try:
+            os.environ.update(self.env.data)
+        except NoSuchConfig as exc:
+            if not self.workflow.subcommand.is_env_error_okay(exc):
+                raise
 
         filenames = get_overlay_filenames(profile)
 

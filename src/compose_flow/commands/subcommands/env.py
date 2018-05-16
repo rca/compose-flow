@@ -63,6 +63,15 @@ class Env(BaseSubcommand):
 
         return data
 
+    def is_dirty_working_copy_okay(self, exc):
+        return self.workflow.args.action in ('cat', 'push')
+
+    def is_env_error_okay(self, exc):
+        return self.workflow.args.action in ('push',)
+
+    def is_write_profile_error_okay(self, exc):
+        return self.workflow.args.action in ('push',)
+
     def load(self) -> str:
         """
         Loads an environment from the docker swarm config
@@ -83,7 +92,7 @@ class Env(BaseSubcommand):
                 tag_version = tag_version_command().stdout.decode('utf8').strip()
             except Exception as exc:
                 # check if the subcommand is okay with a dirty working copy
-                if not self.workflow.subcommand.dirty_working_copy_okay:
+                if not self.workflow.subcommand.is_dirty_working_copy_okay(exc):
                     raise errors.TagVersionError(f'Warning: unable to run tag-version ({exc})\n')
 
         # check if adding a newline to the end of the file is necessary
