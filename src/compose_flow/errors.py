@@ -9,6 +9,12 @@ class ErrorMessage(Exception):
     """
 
 
+class NoSuchConfig(Exception):
+    """
+    Raised when a requested config is not in the docker swarm
+    """
+
+
 class NoSuchProfile(Exception):
     """
     Raised when a requested profile is not listed in dc.yml

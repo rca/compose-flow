@@ -3,6 +3,8 @@ import json
 
 import sh
 
+from .errors import NoSuchConfig
+
 
 def get_configs() -> list:
     """
@@ -17,7 +19,14 @@ def get_config(name: str) -> str:
     """
     Returns the content of the config in the swarm
     """
-    configs = sh.docker('config', 'inspect', name)
+    try:
+        configs = sh.docker('config', 'inspect', name)
+    except sh.ErrorReturnCode_1 as exc:
+        # if the config does not exist in docker, raise NoSuchConfig
+        if 'No such config' in f'{exc}':
+            raise NoSuchConfig()
+
+        raise
 
     content = configs.stdout.decode('utf8')
     data = json.loads(content)

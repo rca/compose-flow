@@ -10,7 +10,7 @@ from .base import BaseSubcommand
 
 from compose_flow.compose import get_overlay_filenames
 from compose_flow.config import get_config
-from compose_flow.errors import NoSuchProfile, ProfileError
+from compose_flow.errors import NoSuchConfig, NoSuchProfile, ProfileError
 from compose_flow.utils import remerge, render
 
 # keep track of written profiles in order to prevent writing them twice
