@@ -34,7 +34,7 @@ class Env(BaseSubcommand):
         if self.env_name not in docker.get_configs():
             return f'docker config named {self.env_name} not in swarm'
 
-        print(self.load())
+        print(self.render())
 
     @property
     def data(self) -> dict:
