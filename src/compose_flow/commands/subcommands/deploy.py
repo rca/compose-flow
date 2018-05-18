@@ -23,13 +23,11 @@ class Deploy(BaseSubcommand):
         # check the profile to make sure it defines all the needed environment variables
         self.profile.check()
 
-        project_name = self.args.project_name
-
         command = f"""docker stack deploy
           --prune
           --with-registry-auth
           --compose-file {self.profile.filename}
-          {project_name}"""
+          {self.env.env_name}"""
 
         command_split = shlex.split(command)
 
