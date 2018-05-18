@@ -61,6 +61,12 @@ class Env(BaseSubcommand):
 
             data[key] = value
 
+        # TODO: this is hacky because of the back-and-forth relationship
+        # between data() and load() ... gotta fix this.
+        docker_image = data.get('DOCKER_IMAGE')
+        if 'VERSION' in data and docker_image and ':' in docker_image:
+            data['DOCKER_IMAGE'] = f'{docker_image.split(":", 1)[0]}:{data["VERSION"]}'
+
         return data
 
     def is_dirty_working_copy_okay(self, exc):
