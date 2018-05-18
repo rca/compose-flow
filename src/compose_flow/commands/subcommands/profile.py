@@ -26,7 +26,7 @@ class Profile(BaseSubcommand):
         """
         Returns the filename for this profile
         """
-        return f'docker-compose-dc-{self.args.profile}.yml'
+        return f'compose-flow-{self.args.profile}.yml'
 
     @classmethod
     def fill_subparser(cls, parser, subparser):

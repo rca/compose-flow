@@ -3,7 +3,7 @@ import pathlib
 
 import yaml
 
-DEFAULT_DC_CONFIG_FILE = pathlib.Path('compose') / 'dc.yml'
+DEFAULT_DC_CONFIG_FILE = pathlib.Path('compose') / 'compose-flow.yml'
 
 # check to see if an overlay file is provided in the environment
 DC_CONFIG_PATH = os.environ.get('DC_CONFIG_FILE', DEFAULT_DC_CONFIG_FILE)
