@@ -3,6 +3,8 @@ Env subcommand
 """
 import io
 import logging
+import os
+import shlex
 import sys
 import tempfile
 
@@ -68,6 +70,24 @@ class Env(BaseSubcommand):
             data['DOCKER_IMAGE'] = f'{docker_image.split(":", 1)[0]}:{data["VERSION"]}'
 
         return data
+
+    def edit(self) -> None:
+        with tempfile.NamedTemporaryFile('w') as fh:
+            path = fh.name
+
+            self.render_buf(fh)
+
+            fh.flush()
+
+            editor = os.environ.get('EDITOR', os.environ.get('VISUAL', 'vi'))
+
+            command = shlex.split(f'{editor} {path}')
+
+            # os.execve(command[0], command, os.environ)
+            proc = getattr(sh, command[0])
+            proc(*command[1:], _env=os.environ, _fg=True)
+
+            self.push(path)
 
     def is_dirty_working_copy_okay(self, exc):
         return self.workflow.args.action in ('cat', 'push')
