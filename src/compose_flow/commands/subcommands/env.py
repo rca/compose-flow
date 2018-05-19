@@ -121,14 +121,11 @@ class Env(BaseSubcommand):
                 if not self.workflow.subcommand.is_dirty_working_copy_okay(exc):
                     raise errors.TagVersionError(f'Warning: unable to run tag-version ({exc})\n')
 
-        # check if adding a newline to the end of the file is necessary
-        new_line = '\n'
-        if self._config.endswith('\n'):
-            new_line = ''
+        data = self.data
 
         version_var = 'VERSION'
-        if version_var not in self.data:
-            self._config += f'{new_line}{version_var}={tag_version}\n'
+        data[version_var] = tag_version
+        self._config = self.render(data)
 
         return self._config
 
@@ -152,11 +149,14 @@ class Env(BaseSubcommand):
         """
         buf = io.StringIO()
 
+        self.render_buf(buf, data=data)
+
+        return buf.getvalue()
+
+    def render_buf(self, buf, data: dict=None):
         data = data or self.data
         for k, v in data.items():
             buf.write(f'{k}={v}\n')
-
-        return buf.getvalue()
 
     def rm(self) -> None:
         """
