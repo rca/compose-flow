@@ -12,7 +12,7 @@ pip install compose-flow
 
 ## A quick example and why compose-flow exists
 
-Take following configuration file located at `compose/dc.yml` within your project:
+Take following configuration file located at `compose/compose-flow.yml` within your project:
 
 ```
 profiles:
@@ -24,9 +24,7 @@ profiles:
 
   local:
     - docker-compose.yml
-    - local
-    - postgres
-    - ports
+    - docker-compose.local.yml
 
 tasks:
   psql:
@@ -38,11 +36,11 @@ tasks:
 
 It defines three "Profiles" for local, development, and production deployments.  They all share a base `docker-compose.yml` file, but you may need additional services locally that you don't need for development and production environments.  In the example above, `dev` and `prod` don't need a postgres service (they probably use a standalone system or a hosted database like RDS), but a postgres service is needed locally.
 
-It also defines some "Tasks", which are commonly run within this example project.  The `psql` task using `docker-compose` against the `dev` environment expands to:
+It also defines some "Tasks", which are commonly run within this example project.  The `psql` task using `docker-compose` against the `local` environment expands to:
 
 ```
-$ cp /path/to/dev.env ./.env
-$ docker-compose -f docker-compose.yml -f docker-compose.dev.yml exec postgres psql -U postgres postgres
+$ cp /path/to/local.env ./.env
+$ docker-compose -f docker-compose.yml -f docker-compose.local.yml exec postgres psql -U postgres postgres
 ```
 
 (Note: remember to replace `.env` when you deploy to prod...)
@@ -50,13 +48,13 @@ $ docker-compose -f docker-compose.yml -f docker-compose.dev.yml exec postgres p
 The equivalent command with `compose-flow` is:
 
 ```
-$ compose-flow -e dev task psql
+$ compose-flow -e local task psql
 ```
 
 The clear advantage is brevity.  A second advantage is not managing environment files yourself.  `compose-flow` also validates the runtime environment.  It checks that the environment defined in your compose files has a corresponding value at runtime to ensure all the variables are, in fact, defined.
 
 
-## Publishing
+### Publishing
 
 Publishing is simple.  For example, to publish a production image:
 
@@ -64,7 +62,7 @@ Publishing is simple.  For example, to publish a production image:
 compose-flow -e prod publish
 ```
 
-Behind the scenes a unique version is generated for your Docker Image using `git tag`, for example `1.3.0-3-gf67c2b8-compose-flow`.  The unique docker image is used in your deployment by simply specifying the docker image as a variable in your compose file, for instance:
+Behind the scenes a unique version is generated for your Docker Image using `git tag`, for example, `1.3.0-3-gf67c2b8-compose-flow`.  The unique docker image is used in your deployment by simply specifying the docker image as a variable in your compose file, for instance:
 
 ```
 version: '3.3'
@@ -78,7 +76,7 @@ services:
 The rest is taken care of.
 
 
-## Deployment
+### Deployment
 
 Deployment is also simple:
 
@@ -89,7 +87,16 @@ compose-flow -e prod deploy
 Behind the scenes this uses `docker stack` to clean up and re-deploy your code
 
 
-### Environments
+### Using docker-compose
+
+All of `docker-compose` is available via the `compose` subcommand, for instance, the following is the same as `docker-compose up` plus environment and compose file management:
+
+```
+compose-flow -e local compose up
+```
+
+
+## Environments
 
 Instead of using environments written to files in the repo's working copy, they are stored on the Swarm via [`docker config`](https://docs.docker.com/engine/swarm/configs/).  They can also be kept locally on the filesystem at `~/.docker/_environments` (but then they can't be shared within a team, or accessible if you're on another workstation like work and home).  This location can be overridden with the `DC_ENVIRONMENT` environment variable.  These files are simple `key=value` pairs, such as:
 
@@ -99,12 +106,12 @@ DOCKER_IMAGE=roberto/api:0.0.1
 ```
 
 
-### Tag Versioning
+## Tag Versioning
 
 Behind the scenes, versions are generated based on git tags with the [tag-version](https://github.com/rca/tag-version) utility.
 
 
-## History
+# History
 Docker Compose is great.  It allows you to put together pretty sophisticated commands that, in turn, produce some really powerful results.  The problem is remembering the commands as they can become long an cumbersome.
 
 For example, `docker-compose` allows to overlay multiple compose files together where each subsequent compose file overrides the previous file's settings.  Repeatedly writing this on the command line is cumbersome and error-prone:
