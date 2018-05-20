@@ -25,6 +25,11 @@ class NoSuchProfile(Exception):
     Raised when a requested profile is not listed in dc.yml
     """
 
+class NotConnected(Exception):
+    """
+    Raised when not connected to a remote host
+    """
+
 
 class ProfileError(ErrorMessage):
     """
