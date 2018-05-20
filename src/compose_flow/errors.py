@@ -9,6 +9,11 @@ class ErrorMessage(Exception):
     """
 
 
+class EnvError(ErrorMessage):
+    """
+    Error for when environment variables are not found
+    """
+
 class NoSuchConfig(Exception):
     """
     Raised when a requested config is not in the docker swarm
