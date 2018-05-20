@@ -9,6 +9,11 @@ class ErrorMessage(Exception):
     """
 
 
+class EnvError(ErrorMessage):
+    """
+    Error for when environment variables are not found
+    """
+
 class NoSuchConfig(Exception):
     """
     Raised when a requested config is not in the docker swarm
@@ -18,6 +23,11 @@ class NoSuchConfig(Exception):
 class NoSuchProfile(Exception):
     """
     Raised when a requested profile is not listed in dc.yml
+    """
+
+class NotConnected(Exception):
+    """
+    Raised when not connected to a remote host
     """
 
 

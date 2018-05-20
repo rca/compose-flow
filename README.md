@@ -96,6 +96,30 @@ compose-flow -e local compose up
 ```
 
 
+## Managing a remote Docker Swarm
+
+`compose-flow remote` manages connections to a remote Docker Swarm via `ssh`.  To connect to a remote swarm run the command:
+
+```
+$ compose-flow -e dev remote connect --host <user>@<host>
+copy and paste the commands below or run this command wrapped in an eval statement:
+
+export DOCKER_HOST=unix:///tmp/compose-flow-usre@host.sock
+```
+
+Running the command `export DOCKER_HOST=unix:///tmp/compose-flow-usre@host.sock` wires up your shell to the remote host.  For Bash, the command can be run like so and the export command is run automatically:
+
+```
+eval `compose-flow -e dev remote connect --host <user>@<host>`
+```
+
+Similarly to disconnect:
+
+```
+eval `compose-flow -e dev remote close`
+```
+
+
 ## Environments
 
 Instead of using environments written to files in the repo's working copy, they are stored on the Swarm via [`docker config`](https://docs.docker.com/engine/swarm/configs/).  They can also be kept locally on the filesystem at `~/.docker/_environments` (but then they can't be shared within a team, or accessible if you're on another workstation like work and home).  This location can be overridden with the `DC_ENVIRONMENT` environment variable.  These files are simple `key=value` pairs, such as:
