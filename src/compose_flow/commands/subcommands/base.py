@@ -77,6 +77,9 @@ class BaseSubcommand(ABC):
     def is_env_error_okay(self, exc):
         return False
 
+    def is_missing_profile_okay(self, exc):
+        return False
+
     def is_write_profile_error_okay(self, exc):
         return False
 
