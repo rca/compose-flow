@@ -3,7 +3,7 @@ import json
 
 import sh
 
-from .errors import NoSuchConfig
+from .errors import NoSuchConfig, NotConnected
 
 
 def get_configs() -> list:
@@ -22,9 +22,13 @@ def get_config(name: str) -> str:
     try:
         configs = sh.docker('config', 'inspect', name)
     except sh.ErrorReturnCode_1 as exc:
+        exc_s = f'{exc}'
+
         # if the config does not exist in docker, raise NoSuchConfig
-        if 'No such config' in f'{exc}':
+        if 'No such config' in exc_s:
             raise NoSuchConfig()
+        elif 'Cannot connect to the Docker daemon' in exc_s:
+            raise NotConnected()
 
         raise
 

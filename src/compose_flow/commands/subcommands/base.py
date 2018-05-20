@@ -1,6 +1,6 @@
 from abc import ABC, abstractclassmethod
 
-from compose_flow.errors import CommandError, ProfileError
+from compose_flow.errors import CommandError, NotConnected, ProfileError
 
 class BaseSubcommand(ABC):
     """
@@ -96,7 +96,7 @@ class BaseSubcommand(ABC):
 
         try:
             self._write_profile()
-        except ProfileError as exc:
+        except (NotConnected, ProfileError) as exc:
             if not self.is_write_profile_error_okay(exc):
                 raise
 
