@@ -129,6 +129,11 @@ DJANGO_DEBUG=False
 DOCKER_IMAGE=roberto/api:0.0.1
 ```
 
+To push up a new environment configuration, simply use:
+```compose-flow -e dev env push ~/.docker/_environments/dev-project-env```
+while connected to the cluster.
+This works on local machines as well if docker swarm mode is turned on (`docker swarm init`):
+```compose-flow -e local env push ~/.docker/_environments/local-project-env```
 
 ## Tag Versioning
 
