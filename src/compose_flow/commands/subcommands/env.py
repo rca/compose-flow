@@ -69,6 +69,8 @@ class Env(BaseSubcommand):
         if 'VERSION' in data and docker_image and ':' in docker_image:
             data['DOCKER_IMAGE'] = f'{docker_image.split(":", 1)[0]}:{data["VERSION"]}'
 
+        data['CF_ENV_NAME'] = self.env_name
+
         return data
 
     def edit(self) -> None:
