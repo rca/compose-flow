@@ -1,13 +1,8 @@
 #!/bin/bash
 set -e
 
+SCRIPT_DIR=$(dirname $0)
+
 tag-version --bump
 
-version=$(tag-version)
-
-tag-version write --pattern "(?P<start>.*?)0.0.0(?P<content>.*)" setup.py
-
-python setup.py sdist
-twine upload dist/*${version}*
-
-git checkout setup.py
+${SCRIPT_DIR}/publish.sh
