@@ -17,6 +17,10 @@ from compose_flow.utils import remerge, render
 WRITTEN_PROFILES = []
 
 
+def dump_yaml(data):
+    return yaml.dump(data, default_flow_style=False)
+
+
 class Profile(BaseSubcommand):
     """
     Subcommand for managing profiles
@@ -83,7 +87,7 @@ class Profile(BaseSubcommand):
                     yaml_contents.append(yaml.load(fh))
 
             merged = remerge(yaml_contents)
-            content = yaml.dump(merged, default_flow_style=False)
+            content = dump_yaml(merged)
         else:
             with open(filenames[0], 'r') as fh:
                 content = fh.read()
