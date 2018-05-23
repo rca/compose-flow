@@ -13,6 +13,8 @@ from compose_flow.config import get_config
 from compose_flow.errors import EnvError, NoSuchConfig, NoSuchProfile, ProfileError
 from compose_flow.utils import remerge, render
 
+COPY_ENV_VAR = 'CF_COPY_ENV_FROM'
+
 # keep track of written profiles in order to prevent writing them twice
 WRITTEN_PROFILES = []
 
@@ -89,6 +91,51 @@ class Profile(BaseSubcommand):
         if errors:
             raise ProfileError('\n'.join(errors))
 
+    def _copy_environment(self, content):
+        """
+        Processes CF_COPY_ENV_FROM environment entries
+        """
+        # load up the yaml
+        data = yaml.load(content)
+        environments = {}
+
+        # first get the env from each service
+        for service_name, service_data in data['services'].items():
+            environment = service_data.get('environment')
+            if environment:
+                _env = {}
+
+                for item in environment:
+                    k, v = get_kv(item)
+
+                    _env[k] = v
+
+                environments[service_name] = _env
+
+        # go through each service environment and apply any copies found
+        for service_name, service_data in data['services'].items():
+            environment = service_data.get('environment')
+            if not environment:
+                continue
+
+            new_env = {}
+            for item in environment:
+                key, val = get_kv(item)
+                new_env[key] = val
+
+                if not item.startswith(COPY_ENV_VAR):
+                    continue
+
+                _env = environments.get(val)
+                if not _env:
+                    raise EnvError(f'Unable to find val={val} to copy into service_name={service_name}')
+
+                new_env.update(_env)
+
+            service_data['environment'] = listify_kv(new_env)
+
+        return dump_yaml(data)
+
     def get_profile_compose_file(self, profile):
         """
         Processes the profile to generate the compose file
@@ -115,6 +162,8 @@ class Profile(BaseSubcommand):
         else:
             with open(filenames[0], 'r') as fh:
                 content = fh.read()
+
+        content = self._copy_environment(content)
 
         fh = tempfile.TemporaryFile(mode='w+')
 
