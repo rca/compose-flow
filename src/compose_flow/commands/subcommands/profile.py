@@ -21,6 +21,30 @@ def dump_yaml(data):
     return yaml.dump(data, default_flow_style=False)
 
 
+def get_kv(item: str) -> tuple:
+    """
+    Returns the item split at equal
+    """
+    item_split = item.split('=', 1)
+    key = item_split[0]
+
+    try:
+        val = item_split[1]
+    except IndexError:
+        val = None
+
+    return key, val
+
+
+def listify_kv(d: dict) -> list:
+    """
+    Returns an equal-delimited list of the dictionary's key/value pairs
+
+    When the value is null the equal is not appended
+    """
+    return [f'{k}={v}' if v else k for k, v in d.items()]
+
+
 class Profile(BaseSubcommand):
     """
     Subcommand for managing profiles
