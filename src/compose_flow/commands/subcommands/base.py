@@ -69,7 +69,7 @@ class BaseSubcommand(ABC):
         if action_fn:
             return action_fn()
         else:
-            self.print_subcommand_help(__doc__, error=f'unknown action={action}')
+            self.print_subcommand_help(self.__doc__, error=f'unknown action={action}')
 
     def is_dirty_working_copy_okay(self, exc):
         return self.dirty_working_copy_okay
