@@ -1,6 +1,7 @@
 from abc import ABC, abstractclassmethod
 
-from compose_flow.errors import CommandError, EnvError, NotConnected, ProfileError, TagVersionError
+from compose_flow.errors import CommandError, EnvError, NoSuchConfig, \
+    NotConnected, ProfileError, TagVersionError
 
 class BaseSubcommand(ABC):
     """
@@ -77,6 +78,9 @@ class BaseSubcommand(ABC):
     def is_env_error_okay(self, exc):
         return False
 
+    def is_missing_config_okay(self, exc):
+        return False
+
     def is_missing_profile_okay(self, exc):
         return False
 
@@ -98,6 +102,9 @@ class BaseSubcommand(ABC):
             self._write_profile()
         except (EnvError, NotConnected, ProfileError, TagVersionError) as exc:
             if not self.is_write_profile_error_okay(exc):
+                raise
+        except NoSuchConfig as exc:
+            if not self.is_missing_config_okay(exc):
                 raise
 
         return self.handle(*args, **kwargs)

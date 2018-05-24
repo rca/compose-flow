@@ -28,6 +28,7 @@ class Env(BaseSubcommand):
     def fill_subparser(cls, parser, subparser):
         subparser.add_argument('action')
         subparser.add_argument('path', nargs='*')
+        subparser.add_argument('-f', '--force', action='store_true', help='edit even if no config found')
 
     def cat(self) -> str:
         """
@@ -97,6 +98,9 @@ class Env(BaseSubcommand):
     def is_env_error_okay(self, exc):
         return self.workflow.args.action in ('push',)
 
+    def is_missing_config_okay(self, exc):
+        return self.workflow.args.action in ('edit',) and self.workflow.subcommand.args.force
+
     def is_env_modification_action(self):
         return self.workflow.args.action in ('cat', 'edit', 'push')
 
@@ -107,10 +111,16 @@ class Env(BaseSubcommand):
         """
         Loads an environment from the docker swarm config
         """
-        if self._config:
+        if self._config is not None:
             return self._config
 
-        self._config = docker.get_config(self.env_name)
+        try:
+            self._config = docker.get_config(self.env_name)
+        except errors.NoSuchConfig as exc:
+            if not self.workflow.subcommand.args.action == 'edit' and self.workflow.subcommand.args.force:
+                raise
+
+            self._config = ''
 
         # inject the version from tag-version command into the loaded environment
         tag_version = 'unknown'
