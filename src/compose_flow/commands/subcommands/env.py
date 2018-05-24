@@ -92,13 +92,16 @@ class Env(BaseSubcommand):
             self.push(path)
 
     def is_dirty_working_copy_okay(self, exc):
-        return self.workflow.args.action in ('cat', 'push')
+        return self.is_env_modification_action()
 
     def is_env_error_okay(self, exc):
         return self.workflow.args.action in ('push',)
 
+    def is_env_modification_action(self):
+        return self.workflow.args.action in ('cat', 'edit', 'push')
+
     def is_write_profile_error_okay(self, exc):
-        return self.workflow.args.action in ('push',)
+        return self.is_env_modification_action()
 
     def load(self) -> str:
         """
