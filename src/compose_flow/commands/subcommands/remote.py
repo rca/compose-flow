@@ -19,25 +19,45 @@ class Remote(BaseSubcommand):
     """
     Subcommand for connecting to a remote docker swarm
     """
-    def close(self):
+    def close(self, pids=None, do_print=True):
         try:
-            pid = self.get_remote_ssh_pid()
+            pids = pids or list(self.get_remote_ssh_pids())
         except EnvError:
             pass
         else:
-            print(f'closing pid {pid}', file=sys.stderr)
-            sh.kill(pid)
+            if do_print:
+                pids_s = ", ".join([f'{x}' for x in pids])
+                print(f'closing pids {pids_s}', file=sys.stderr)
+
+            for pid in pids:
+                sh.kill(pid)
 
         self.remove_socket()
 
         self.print_eval_hint()
 
-        print(f'unset DOCKER_HOST')
+        if do_print:
+            print(f'unset DOCKER_HOST')
 
     def connect(self):
-        remote_host = self.get_remote_host()
-        if remote_host:
-            return f'already connected to {remote_host}'
+        try:
+            pids = list(self.get_remote_ssh_pids())
+        except (EnvError, ErrorMessage):
+            pids = None
+
+        try:
+            remote_host = self.get_remote_host()
+        except EnvError:
+            remote_host = None
+
+        try:
+            if self.status(do_print=False):
+                return f'already connected to {remote_host}'
+        except EnvError:
+            pass
+
+        if pids:
+            self.close(do_print=False)
 
         host = self.host
         if not host:
@@ -49,9 +69,10 @@ class Remote(BaseSubcommand):
 
         sh.ssh('-Nf', '-L', f'{socket_path}:/var/run/docker.sock', host)
 
-        self.print_eval_hint()
+        if remote_host != socket_path:
+            self.print_eval_hint()
 
-        print(f'export DOCKER_HOST={UNIX_PREFIX}{socket_path}')
+            print(f'export DOCKER_HOST={UNIX_PREFIX}{socket_path}')
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
@@ -61,7 +82,7 @@ class Remote(BaseSubcommand):
     def get_remote_host(self):
         return os.environ.get('DOCKER_HOST')
 
-    def get_remote_ssh_pid(self):
+    def get_remote_ssh_pids(self):
         socket = self.get_socket()
         pgrep_search = f'ssh -Nf -L {socket}'
 
@@ -70,7 +91,8 @@ class Remote(BaseSubcommand):
         except sh.ErrorReturnCode_1:
             raise ErrorMessage('remote ssh process not found')
 
-        return int(proc.stdout.decode('utf8').strip())
+        for item in proc.stdout.decode('utf8').strip().splitlines():
+            yield int(item)
 
     def get_socket(self):
         remote_host = self.get_remote_host()
@@ -113,11 +135,31 @@ class Remote(BaseSubcommand):
 
         return f'/tmp/compose-flow-{host}.sock'
 
-    def status(self):
-        docker_host = self.get_remote_host()
-        if docker_host:
-            pid = self.get_remote_ssh_pid()
+    def status(self, do_print=True):
+        pids = None
+        status = False
 
-            print(f'connected to docker_host {docker_host}, ssh pid {pid}')
+        docker_host = self.get_remote_host()
+        try:
+            pids = list(self.get_remote_ssh_pids())
+        except ErrorMessage:
+            connected = False
         else:
-            print(f'not connected')
+            connected = True
+
+        if docker_host and connected:
+            status = True
+
+            message = f'connected to docker_host {docker_host}, ssh pid {pids}'
+        elif docker_host:
+            message = f'environment set to {docker_host}, but no ssh connection found'
+        elif pids:
+            pids_s = ", ".join([f'{x}' for x in pids])
+            message = f'ssh connection found at pids {pids_s}, but environment not setup'
+        else:
+            message = 'Not connected'
+
+        if message and do_print:
+            print(message)
+
+        return status
