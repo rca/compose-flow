@@ -117,7 +117,7 @@ class Env(BaseSubcommand):
         try:
             self._config = docker.get_config(self.env_name)
         except errors.NoSuchConfig as exc:
-            if not self.workflow.subcommand.args.action == 'edit' and self.workflow.subcommand.args.force:
+            if not (self.workflow.subcommand.args.action == 'edit' and self.workflow.subcommand.args.force):
                 raise
 
             self._config = ''
