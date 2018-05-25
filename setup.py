@@ -18,6 +18,7 @@ setup(
     version='0.0.0',
     description='codified workflows for docker compose',
     long_description=readme(),
+    long_description_content_type='text/plain',
     package_dir={'':'src'},
     packages=packages,
     entry_points={
