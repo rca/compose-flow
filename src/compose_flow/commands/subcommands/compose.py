@@ -35,13 +35,16 @@ class Compose(BaseSubcommand):
         # check the profile to make sure it defines all the needed environment variables
         self.profile.check()
 
-        command = ['docker-compose']
-        command[0] = find_executable(command[0])
+        # check to make sure docker-compose is installed
+        docker_compose_path = find_executable('docker-compose')
+        if docker_compose_path is None:
+            return f'docker-compose not found in PATH; is it installed?'
 
-        command.extend([
+        command = [
+            docker_compose_path,
             '--project-name', self.env.env_name,
             '-f', self.profile.filename,
-        ])
+        ]
 
         compose_args = compose_args or self.args.compose_args
         command.extend(compose_args)
