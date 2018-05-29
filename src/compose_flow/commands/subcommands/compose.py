@@ -39,7 +39,7 @@ class Compose(BaseSubcommand):
         command[0] = find_executable(command[0])
 
         command.extend([
-            '--project-name', self.args.project_name,
+            '--project-name', self.env.env_name,
             '-f', self.profile.filename,
         ])
 
