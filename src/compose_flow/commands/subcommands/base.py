@@ -24,7 +24,8 @@ class BaseSubcommand(ABC):
         args = self.workflow.args
 
         if None in (args.environment,):
-            raise CommandError('Error: environment is required')
+            if not self.workflow.subcommand.is_missing_env_arg_okay():
+                raise CommandError('Error: environment is required')
 
         args.profile = args.profile or args.environment
 
@@ -79,6 +80,9 @@ class BaseSubcommand(ABC):
         return False
 
     def is_missing_config_okay(self, exc):
+        return False
+
+    def is_missing_env_arg_okay(self):
         return False
 
     def is_missing_profile_okay(self, exc):
