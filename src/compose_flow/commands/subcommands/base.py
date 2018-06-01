@@ -71,7 +71,10 @@ class BaseSubcommand(ABC):
     def handle_action(self):
         action = self.workflow.args.action
 
-        action_fn = getattr(self, action, None)
+        action_fn = getattr(self, f'action_{action}', None)
+        if not action_fn:
+            action_fn = getattr(self, action, None)
+
         if action_fn:
             return action_fn()
         else:
