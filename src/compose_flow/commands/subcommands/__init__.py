@@ -7,6 +7,7 @@ import os
 import sys
 
 from .config_base import BaseSubcommand, ConfigBaseSubcommand
+from .passthrough_base import PassthroughBaseSubcommand
 
 
 def find_subcommands() -> object:
@@ -40,7 +41,7 @@ def get_subcommand_class(filename: str) -> [object, None]:
         attr = getattr(module, attr_name)
 
         try:
-            if attr not in (BaseSubcommand, ConfigBaseSubcommand) and issubclass(attr, BaseSubcommand):
+            if attr not in (BaseSubcommand, ConfigBaseSubcommand, PassthroughBaseSubcommand) and issubclass(attr, BaseSubcommand):
                 return attr
         except TypeError:
             continue
