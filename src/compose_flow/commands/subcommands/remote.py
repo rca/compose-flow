@@ -112,6 +112,15 @@ class Remote(BaseSubcommand):
     def is_env_error_okay(self, exc):
         return True
 
+    def is_host_defined(self):
+        return self.host is not None
+
+    def is_missing_config_okay(self, exc):
+        return self.is_host_defined()
+
+    def is_missing_env_arg_okay(self):
+        return self.is_host_defined()
+
     def is_missing_profile_okay(self, exc):
         return True
 
