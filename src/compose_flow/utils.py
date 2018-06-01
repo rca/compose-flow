@@ -123,4 +123,8 @@ def yaml_dump(data, stream=None, Dumper=yaml.Dumper, **kwds):
             yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
             data.items())
     OrderedDumper.add_representer(OrderedDict, _dict_representer)
+
+    # set the default_flow_style to False if not set
+    kwds.setdefault('default_flow_style', False)
+
     return yaml.dump(data, stream, OrderedDumper, **kwds)
