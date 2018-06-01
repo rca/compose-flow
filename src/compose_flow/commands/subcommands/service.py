@@ -41,6 +41,7 @@ class Service(BaseSubcommand):
         subparser.add_argument('--list', action='store_true', help='list available containers')
         subparser.add_argument('--container', type=int, default=0, help='which numbered container to select, default=0')
         subparser.add_argument('--random', action='store_true', help='pick a random matching container')
+        subparser.add_argument('--service-name', help='full service name to use instead of generated')
         subparser.add_argument('action', help='The action to run')
         subparser.add_argument('service', nargs='?', help='The desired service')
 
@@ -144,6 +145,10 @@ class Service(BaseSubcommand):
 
     @property
     def service_name(self):
+        service_name = self.args.service_name
+        if service_name:
+            return service_name
+
         env_name = self.env.env_name
 
         service_name = self.args.service
