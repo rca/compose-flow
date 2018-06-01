@@ -1,7 +1,11 @@
+import os
+
 from abc import ABC, abstractclassmethod
 
+from compose_flow import errors
 from compose_flow.errors import CommandError, EnvError, NoSuchConfig, \
     NoSuchProfile, NotConnected, ProfileError, TagVersionError
+
 
 class BaseSubcommand(ABC):
     """
@@ -102,6 +106,8 @@ class BaseSubcommand(ABC):
     def run(self, *args, **kwargs):
         self._check_args()
 
+        self._setup_remote()
+
         try:
             self._write_profile()
         except (EnvError, NotConnected, ProfileError, TagVersionError) as exc:
@@ -115,6 +121,26 @@ class BaseSubcommand(ABC):
                 raise
 
         return self.handle(*args, **kwargs)
+
+    def _setup_remote(self):
+        """
+        Sets DOCKER_HOST based on the environment
+        """
+        # avoid circular import
+        from .remote import Remote
+
+        remote = Remote(self.workflow)
+
+        try:
+            remote.make_connection(use_existing=True)
+        except (errors.AlreadyConnected, errors.RemoteUndefined):
+            pass
+
+        docker_host = remote.docker_host
+        if docker_host:
+            os.environ.update({
+                'DOCKER_HOST': docker_host,
+            })
 
     @classmethod
     def setup_subparser(cls, parser, subparsers):
