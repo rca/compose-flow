@@ -10,12 +10,12 @@ import tempfile
 
 import sh
 
-from .base import BaseSubcommand
+from .config_base import ConfigBaseSubcommand
 
 from compose_flow import docker, errors
 
 
-class Env(BaseSubcommand):
+class Env(ConfigBaseSubcommand):
     """
     Subcommand for managing environment
     """
@@ -23,6 +23,10 @@ class Env(BaseSubcommand):
         super().__init__(*args, *kwargs)
 
         self._config = None
+
+    @property
+    def config_name(self):
+        return self.env_name
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
@@ -74,24 +78,6 @@ class Env(BaseSubcommand):
 
         return data
 
-    def edit(self) -> None:
-        with tempfile.NamedTemporaryFile('w') as fh:
-            path = fh.name
-
-            self.render_buf(fh)
-
-            fh.flush()
-
-            editor = os.environ.get('EDITOR', os.environ.get('VISUAL', 'vi'))
-
-            command = shlex.split(f'{editor} {path}')
-
-            # os.execve(command[0], command, os.environ)
-            proc = getattr(sh, command[0])
-            proc(*command[1:], _env=os.environ, _fg=True)
-
-            self.push(path)
-
     def is_dirty_working_copy_okay(self, exc):
         return self.is_env_modification_action()
 
@@ -117,14 +103,7 @@ class Env(BaseSubcommand):
         try:
             self._config = docker.get_config(self.env_name)
         except errors.NoSuchConfig as exc:
-            okay = False
-            try:
-                if self.workflow.subcommand.args.action == 'edit' and self.workflow.subcommand.args.force:
-                    okay = True
-            except AttributeError:
-                pass
-
-            if not okay:
+            if not self.is_missing_config_okay(exc):
                 raise
 
             self._config = ''
@@ -155,16 +134,6 @@ class Env(BaseSubcommand):
     def logger(self):
         return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
-    def push(self, path:str=None) -> None:
-        """
-        Saves an environment into the swarm
-        """
-        path = path or self.args.path
-        if not path:
-            return self.print_subcommand_help(__doc__, error='path needed to load')
-
-        docker.load_config(self.env_name, path)
-
     def render(self, data:dict=None) -> str:
         """
         Returns a rendered file in .env file format
@@ -174,11 +143,6 @@ class Env(BaseSubcommand):
         self.render_buf(buf, data=data)
 
         return buf.getvalue()
-
-    def render_buf(self, buf, data: dict=None):
-        data = data or self.data
-        for k, v in data.items():
-            buf.write(f'{k}={v}\n')
 
     def rm(self) -> None:
         """

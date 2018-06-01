@@ -1,7 +1,11 @@
+import os
+
 from abc import ABC, abstractclassmethod
 
+from compose_flow import errors
 from compose_flow.errors import CommandError, EnvError, NoSuchConfig, \
-    NotConnected, ProfileError, TagVersionError
+    NoSuchProfile, NotConnected, ProfileError, TagVersionError
+
 
 class BaseSubcommand(ABC):
     """
@@ -24,7 +28,8 @@ class BaseSubcommand(ABC):
         args = self.workflow.args
 
         if None in (args.environment,):
-            raise CommandError('Error: environment is required')
+            if not self.workflow.subcommand.is_missing_env_arg_okay():
+                raise CommandError('Error: environment is required')
 
         args.profile = args.profile or args.environment
 
@@ -81,6 +86,9 @@ class BaseSubcommand(ABC):
     def is_missing_config_okay(self, exc):
         return False
 
+    def is_missing_env_arg_okay(self):
+        return False
+
     def is_missing_profile_okay(self, exc):
         return False
 
@@ -98,6 +106,8 @@ class BaseSubcommand(ABC):
     def run(self, *args, **kwargs):
         self._check_args()
 
+        self._setup_remote()
+
         try:
             self._write_profile()
         except (EnvError, NotConnected, ProfileError, TagVersionError) as exc:
@@ -106,8 +116,31 @@ class BaseSubcommand(ABC):
         except NoSuchConfig as exc:
             if not self.is_missing_config_okay(exc):
                 raise
+        except NoSuchProfile as exc:
+            if not self.is_missing_profile_okay(exc):
+                raise
 
         return self.handle(*args, **kwargs)
+
+    def _setup_remote(self):
+        """
+        Sets DOCKER_HOST based on the environment
+        """
+        # avoid circular import
+        from .remote import Remote
+
+        remote = Remote(self.workflow)
+
+        try:
+            remote.make_connection(use_existing=True)
+        except (errors.AlreadyConnected, errors.RemoteUndefined):
+            pass
+
+        docker_host = remote.docker_host
+        if docker_host:
+            os.environ.update({
+                'DOCKER_HOST': docker_host,
+            })
 
     @classmethod
     def setup_subparser(cls, parser, subparsers):

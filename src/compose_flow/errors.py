@@ -9,6 +9,12 @@ class ErrorMessage(Exception):
     """
 
 
+class AlreadyConnected(ErrorMessage):
+    """
+    Error raised when already connected to remote
+    """
+
+
 class EnvError(ErrorMessage):
     """
     Error for when environment variables are not found
@@ -34,6 +40,12 @@ class NotConnected(Exception):
 class ProfileError(ErrorMessage):
     """
     Raised when there is a problem with a Profile
+    """
+
+
+class RemoteUndefined(ErrorMessage):
+    """
+    Raised when no remote is defined
     """
 
 

@@ -1,6 +1,9 @@
 import re
 import os
 import sys
+import yaml
+
+from collections import OrderedDict
 
 from boltons.iterutils import remap, get_path, default_enter, default_visit
 
@@ -81,3 +84,47 @@ def render(content):
     rendered += content[previous_idx:]
 
     return rendered
+
+
+##
+# Ordered YAML functions
+# from SO at:
+# https://stackoverflow.com/a/21912744
+##
+
+
+def yaml_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
+    """
+    Ordered YAML loader
+
+    >>> ordered_load(stream, yaml.SafeLoader)
+    """
+    class OrderedLoader(Loader):
+        pass
+    def construct_mapping(loader, node):
+        loader.flatten_mapping(node)
+        return object_pairs_hook(loader.construct_pairs(node))
+    OrderedLoader.add_constructor(
+        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+        construct_mapping)
+    return yaml.load(stream, OrderedLoader)
+
+
+def yaml_dump(data, stream=None, Dumper=yaml.Dumper, **kwds):
+    """
+    Ordered YAML dumper
+
+    >>> ordered_dump(data, Dumper=yaml.SafeDumper)
+    """
+    class OrderedDumper(Dumper):
+        pass
+    def _dict_representer(dumper, data):
+        return dumper.represent_mapping(
+            yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+            data.items())
+    OrderedDumper.add_representer(OrderedDict, _dict_representer)
+
+    # set the default_flow_style to False if not set
+    kwds.setdefault('default_flow_style', False)
+
+    return yaml.dump(data, stream, OrderedDumper, **kwds)

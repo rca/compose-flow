@@ -11,16 +11,12 @@ from .base import BaseSubcommand
 from compose_flow.compose import get_overlay_filenames
 from compose_flow.config import get_config
 from compose_flow.errors import EnvError, NoSuchConfig, NoSuchProfile, ProfileError
-from compose_flow.utils import remerge, render
+from compose_flow.utils import yaml_dump, remerge, render
 
 COPY_ENV_VAR = 'CF_COPY_ENV_FROM'
 
 # keep track of written profiles in order to prevent writing them twice
 WRITTEN_PROFILES = []
-
-
-def dump_yaml(data):
-    return yaml.dump(data, default_flow_style=False)
 
 
 def get_kv(item: str) -> tuple:
@@ -134,7 +130,7 @@ class Profile(BaseSubcommand):
 
             service_data['environment'] = listify_kv(new_env)
 
-        return dump_yaml(data)
+        return yaml_dump(data)
 
     def get_profile_compose_file(self, profile):
         """
@@ -158,7 +154,7 @@ class Profile(BaseSubcommand):
                     yaml_contents.append(yaml.load(fh))
 
             merged = remerge(yaml_contents)
-            content = dump_yaml(merged)
+            content = yaml_dump(merged)
         else:
             with open(filenames[0], 'r') as fh:
                 content = fh.read()
