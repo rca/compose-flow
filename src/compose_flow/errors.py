@@ -37,6 +37,12 @@ class NotConnected(Exception):
     """
 
 
+class NoContainer(Exception):
+    """
+    Raised when a desired container is not found
+    """
+
+
 class ProfileError(ErrorMessage):
     """
     Raised when there is a problem with a Profile

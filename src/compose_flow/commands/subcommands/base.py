@@ -71,7 +71,10 @@ class BaseSubcommand(ABC):
     def handle_action(self):
         action = self.workflow.args.action
 
-        action_fn = getattr(self, action, None)
+        action_fn = getattr(self, f'action_{action}', None)
+        if not action_fn:
+            action_fn = getattr(self, action, None)
+
         if action_fn:
             return action_fn()
         else:
@@ -104,9 +107,9 @@ class BaseSubcommand(ABC):
             return f'\nError: {error}'
 
     def run(self, *args, **kwargs):
-        self._check_args()
-
         self._setup_remote()
+
+        self._check_args()
 
         try:
             self._write_profile()
