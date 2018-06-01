@@ -1,6 +1,6 @@
 # Compose Flow
 
-This utility is built on top of [Docker Compose](https://docs.docker.com/compose/) and [Swarm Mode](https://docs.docker.com/engine/swarm/).  It establishes conventions for publishing Images and deploying [Stacks](https://docs.docker.com/get-started/part5/#prerequisites) that are easily shared between team members -- and bots -- who need to manage running services.
+This utility is built on top of [Docker Compose](https://docs.docker.com/compose/) and [Swarm Mode](https://docs.docker.com/engine/swarm/).  It establishes conventions for publishing Images, deploying [Stacks](https://docs.docker.com/get-started/part5/#prerequisites) across multiple installations (like separate dev and prod Swarms), and working with service containers that are easily shared between team members -- and bots -- who need to manage running services.
 
 
 ## Installation
@@ -36,7 +36,7 @@ tasks:
 
 It defines three "Profiles" for local, development, and production deployments.  They all share a base `docker-compose.yml` file, but you may need additional services locally that you don't need for development and production environments.  In the example above, `dev` and `prod` don't need a postgres service (they probably use a standalone system or a hosted database like RDS), but a postgres service is needed locally.
 
-It also defines some "Tasks", which are commonly run within this example project.  The `psql` task using `docker-compose` against the `local` environment expands to:
+It also defines "Tasks", which are commonly run within this example project.  The `psql` task using `docker-compose` against the `local` environment expands to something resembling:
 
 ```
 $ cp /path/to/local.env ./.env
@@ -98,26 +98,35 @@ compose-flow -e local compose up
 
 ## Managing a remote Docker Swarm
 
-`compose-flow remote` manages connections to a remote Docker Swarm via `ssh`.  To connect to a remote swarm run the command:
+`compose-flow` can also work across multiple Swarms, for example, when you are developing locally on your own laptop and are deploying to a remote swarm.  You can also have separate installations for dev and prod.  This can be accomplished by defining a "remoteconfig":
 
 ```
-$ compose-flow -e dev remote connect --host <user>@<host>
-copy and paste the commands below or run this command wrapped in an eval statement:
-
-export DOCKER_HOST=unix:///tmp/compose-flow-usre@host.sock
+compose-flow remoteconfig edit
 ```
 
-Running the command `export DOCKER_HOST=unix:///tmp/compose-flow-usre@host.sock` wires up your shell to the remote host.  For Bash, the command can be run like so and the export command is run automatically:
+Then you could paste something like the following:
 
 ```
-eval `compose-flow -e dev remote connect --host <user>@<host>`
+remotes:
+  dev:
+    ssh: ${CF_REMOTE_USER}@dev-swarm-manager-1
+
+  prod:
+    ssh: ${CF_REMOTE_USER}@prod-swarm-manager-1
 ```
 
-Similarly to disconnect:
+With this configuration in place the above `deploy` example would deploy to `prod-swarm-manager-1`, while using `compose-flow -e dev deploy` would deploy to `dev-swarm-manager-1`.
+
+
+## Executing commands in service containers
+
+Sometimes it's necessary to run one-off commands in a service container running in a Swarm.  When deploying services to multi-node Swarms, Docker takes care of allocating that service container onto a particular node.  Over time that container can move about, and tracking down where that container is can be teidous.  This scenario is handled with the command:
 
 ```
-eval `compose-flow -e dev remote close`
+compose-flow -e dev service exec app /bin/bash
 ```
+
+Behind the scenes, this command finds the container for the dev app service, makes an SSH connection to the machine that is running that container and executes the command `/bin/bash`.  You'll be dropped into an interactive bash shell on the running service container!
 
 
 ## Environments
