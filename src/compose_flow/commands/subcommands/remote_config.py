@@ -12,13 +12,15 @@ from compose_flow import docker
 from compose_flow.errors import NoSuchConfig
 from compose_flow.utils import render, yaml_load
 
+DEFAULT_CF_REMOTES_CONFIG_NAME = os.environ.get('CF_REMOTES_CONFIG_NAME', 'compose-flow-remotes')
+
 
 class RemoteConfig(ConfigBaseSubcommand):
     """
     Subcommand for managing remote configuration
     """
     def __init__(self, *args, **kwargs):
-        self.config_name = kwargs.pop('config_name', 'compose-flow-remotes')
+        self.config_name = kwargs.pop('config_name', DEFAULT_CF_REMOTES_CONFIG_NAME)
 
         super().__init__(*args, **kwargs)
 
