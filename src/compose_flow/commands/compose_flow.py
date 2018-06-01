@@ -15,7 +15,7 @@ class ComposeFlow(object):
 
         self.parser = self.get_argument_parser(self.argv)
 
-        self.args = self.parser.parse_args()
+        self.args, self.args_remainder = self.parser.parse_known_args()
 
         # the subcommand that is being run; defined in run() below
         self.subcommand = None
