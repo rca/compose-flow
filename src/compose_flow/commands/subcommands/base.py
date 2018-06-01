@@ -104,9 +104,9 @@ class BaseSubcommand(ABC):
             return f'\nError: {error}'
 
     def run(self, *args, **kwargs):
-        self._check_args()
-
         self._setup_remote()
+
+        self._check_args()
 
         try:
             self._write_profile()
