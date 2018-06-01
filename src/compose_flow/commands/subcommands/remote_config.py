@@ -10,6 +10,7 @@ from .config_base import ConfigBaseSubcommand
 
 from compose_flow import docker
 from compose_flow.errors import NoSuchConfig
+from compose_flow.utils import render, yaml_load
 
 
 class RemoteConfig(ConfigBaseSubcommand):
@@ -30,6 +31,12 @@ class RemoteConfig(ConfigBaseSubcommand):
         Prints the loaded compose file to stdout
         """
         print(self.load())
+
+    @property
+    def data(self):
+        rendered = render(self.load())
+
+        return yaml_load(rendered)
 
     def is_missing_config_okay(self, exc):
         return True
