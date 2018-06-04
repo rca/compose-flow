@@ -19,15 +19,6 @@ USER = os.environ.get('USER', 'nobody')
 CF_REMOTE_USER = os.environ.get('CF_REMOTE_USER', USER)
 
 
-def list_services():
-    command = sh.docker(*shlex.split('service ls'))
-
-    for line in command.stdout.decode('utf8').splitlines()[1:]:
-        line_split = line.split()
-
-        yield line_split[1]
-
-
 class Service(BaseSubcommand):
     """
     Subcommand for executing commands within a service container
@@ -60,6 +51,9 @@ class Service(BaseSubcommand):
             sys.exit(f'No container found for service={self.service_name}')
 
     def action_list(self):
+        """
+        Lists all containers found for the given service
+        """
         print('ALL CONTAINERS:\n')
         for idx, item in enumerate(self.list_containers()):
             print('\t{}: {}'.format(idx, item))
@@ -97,6 +91,21 @@ class Service(BaseSubcommand):
                 items.append(item)
 
         return items
+
+    def list_services(self):
+        """
+        Lists all the services for this stack
+        """
+        command = sh.docker(*shlex.split('service ls'))
+
+        for line in command.stdout.decode('utf8').splitlines()[1:]:
+            line_split = line.split()
+
+            service_name = line_split[1]
+            if not service_name.startswith(self.env.env_name):
+                continue
+
+            print(service_name)
 
     def run_service(self):
         line = self.select_container()
