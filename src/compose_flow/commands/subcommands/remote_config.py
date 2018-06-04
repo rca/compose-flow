@@ -36,7 +36,16 @@ class RemoteConfig(ConfigBaseSubcommand):
 
     @property
     def data(self):
-        rendered = render(self.load())
+        try:
+            content = self.load()
+        except NoSuchConfig:
+            content = {}
+
+        # if the content is empty return immediately
+        if not content:
+            return content
+
+        rendered = render(content)
 
         return yaml_load(rendered)
 
@@ -58,4 +67,12 @@ class RemoteConfig(ConfigBaseSubcommand):
         return config
 
     def render_buf(self, fh):
-        fh.write(self.load())
+        try:
+            content = self.load()
+        except NoSuchConfig:
+            content = None
+
+        if not content:
+            return
+
+        fh.write(content)
