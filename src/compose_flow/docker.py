@@ -22,12 +22,12 @@ def get_config(name: str) -> str:
     try:
         configs = sh.docker('config', 'inspect', name)
     except sh.ErrorReturnCode_1 as exc:
-        exc_s = f'{exc}'
+        exc_s = f'{exc}'.lower()
 
         # if the config does not exist in docker, raise NoSuchConfig
-        if 'No such config' in exc_s:
-            raise NoSuchConfig()
-        elif 'Cannot connect to the Docker daemon' in exc_s:
+        if 'no such config' in exc_s:
+            raise NoSuchConfig(f'config name={name} not found')
+        elif 'cannot connect to the docker daemon' in exc_s:
             raise NotConnected()
 
         raise
