@@ -53,10 +53,7 @@ class RemoteConfig(ConfigBaseSubcommand):
         """
         Loads the compose file that is generated from all the items listed in the profile
         """
-        try:
-            config = docker.get_config(self.config_name)
-        except NoSuchConfig as exc:
-            return f'{exc.__class__.__name__}: Missing remote config {self.config_name}'
+        config = docker.get_config(self.config_name)
 
         return config
 
