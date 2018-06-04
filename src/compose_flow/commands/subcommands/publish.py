@@ -13,7 +13,7 @@ class Publish(BaseSubcommand):
     Subcommand for building and pushing Docker images
     """
     def build(self):
-        self.compose.run(compose_args=['build'])
+        self.compose.run(extra_args=['build'])
 
     @property
     @lru_cache()

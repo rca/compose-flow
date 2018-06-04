@@ -15,10 +15,6 @@ class PassthroughBaseSubcommand(BaseSubcommand):
     command_name = None
 
     def __init__(self, *args, **kwargs):
-        # pop off the compose_args kwarg
-        # NOTE: not being used
-        compose_args = kwargs.pop('compose_args', None)
-
         super().__init__(*args, **kwargs)
 
     @classmethod
