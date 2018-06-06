@@ -130,6 +130,12 @@ class Remote(BaseSubcommand):
     def is_missing_profile_okay(self, exc):
         return True
 
+    def is_not_connected_okay(self, exc):
+        if self.workflow.args.action in ('connect',):
+            return True
+
+        return super().is_not_connected_okay(exc)
+
     def is_write_profile_error_okay(self, exc):
         return True
 

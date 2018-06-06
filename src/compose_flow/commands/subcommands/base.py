@@ -95,6 +95,9 @@ class BaseSubcommand(ABC):
     def is_missing_profile_okay(self, exc):
         return False
 
+    def is_not_connected_okay(self, exc):
+        return False
+
     def is_write_profile_error_okay(self, exc):
         return False
 
