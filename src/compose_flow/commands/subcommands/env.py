@@ -71,6 +71,21 @@ class Env(ConfigBaseSubcommand):
         # TODO: this is hacky because of the back-and-forth relationship
         # between data() and load() ... gotta fix this.
         docker_image = data.get('DOCKER_IMAGE')
+        if not docker_image:
+            # when a registry domain is set and the docker image is not found
+            # auto-generate the docker image name
+            registry_domain = os.environ.get('CF_DOCKER_IMAGE_PREFIX')
+            if registry_domain:
+                project_name = self.workflow.args.project_name
+                env = self.workflow.args.environment
+
+                docker_image = f'{registry_domain}/{project_name}:{env}'
+
+                # set the auto-generated docker image name in the environment
+                os.environ['DOCKER_IMAGE'] = \
+                    data['DOCKER_IMAGE'] = \
+                    docker_image
+
         if 'VERSION' in data and docker_image and ':' in docker_image:
             data['DOCKER_IMAGE'] = f'{docker_image.split(":", 1)[0]}:{data["VERSION"]}'
 
