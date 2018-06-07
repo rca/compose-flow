@@ -157,8 +157,11 @@ class Profile(BaseSubcommand):
             merged = remerge(yaml_contents)
             content = yaml_dump(merged)
         else:
-            with open(filenames[0], 'r') as fh:
-                content = fh.read()
+            try:
+                with open(filenames[0], 'r') as fh:
+                    content = fh.read()
+            except FileNotFoundError:
+                content = ''
 
         content = self._copy_environment(content)
 
