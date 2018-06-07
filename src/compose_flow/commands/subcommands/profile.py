@@ -197,6 +197,8 @@ class Profile(BaseSubcommand):
         Returns the profile data found in the dc.yml file
         """
         config = get_config()
+        if not config:
+            return {}
 
         profile_name = self.args.profile
         try:
