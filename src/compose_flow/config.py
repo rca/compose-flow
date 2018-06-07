@@ -1,7 +1,8 @@
 import os
 import pathlib
 
-import yaml
+from compose_flow.utils import yaml_load
+
 
 DEFAULT_DC_CONFIG_FILE = pathlib.Path('compose') / 'compose-flow.yml'
 
@@ -16,6 +17,6 @@ def get_config() -> dict:
 
     if os.path.exists(DC_CONFIG_FILE):
         with open(DC_CONFIG_FILE, 'r') as fh:
-            data = yaml.load(fh)
+            data = yaml_load(fh)
 
     return data

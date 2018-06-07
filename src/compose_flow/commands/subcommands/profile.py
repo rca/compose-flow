@@ -4,14 +4,12 @@ Profile subcommand
 import os
 import tempfile
 
-import yaml
-
 from .base import BaseSubcommand
 
 from compose_flow.compose import get_overlay_filenames
 from compose_flow.config import get_config
 from compose_flow.errors import EnvError, NoSuchConfig, NoSuchProfile, ProfileError
-from compose_flow.utils import yaml_dump, remerge, render
+from compose_flow.utils import remerge, render, yaml_dump, yaml_load
 
 COPY_ENV_VAR = 'CF_COPY_ENV_FROM'
 
@@ -71,7 +69,7 @@ class Profile(BaseSubcommand):
         env_data = self.env.data
 
         compose_content = self.load()
-        data = yaml.load(compose_content)
+        data = yaml_load(compose_content)
 
         errors = []
         for name, service_data in data['services'].items():
@@ -92,7 +90,7 @@ class Profile(BaseSubcommand):
         Processes CF_COPY_ENV_FROM environment entries
         """
         # load up the yaml
-        data = yaml.load(content)
+        data = yaml_load(content)
         environments = {}
 
         # first get the env from each service
@@ -151,7 +149,7 @@ class Profile(BaseSubcommand):
 
             for item in filenames:
                 with open(item, 'r') as fh:
-                    yaml_contents.append(yaml.load(fh))
+                    yaml_contents.append(yaml_load(fh))
 
             merged = remerge(yaml_contents)
             content = yaml_dump(merged)
