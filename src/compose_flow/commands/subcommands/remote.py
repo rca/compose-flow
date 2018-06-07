@@ -103,7 +103,14 @@ class Remote(BaseSubcommand):
 
         if not self._host:
             remote_config = RemoteConfig(self.workflow)
-            data = remote_config.data
+
+            try:
+                data = remote_config.data
+            except errors.NotConnected as exc:
+                if not self.workflow.subcommand.is_not_connected_okay(exc):
+                    raise
+
+                return
 
             environment = self.args.environment
 
@@ -129,6 +136,12 @@ class Remote(BaseSubcommand):
 
     def is_missing_profile_okay(self, exc):
         return True
+
+    def is_not_connected_okay(self, exc):
+        if self.workflow.args.action in ('connect',):
+            return True
+
+        return super().is_not_connected_okay(exc)
 
     def is_write_profile_error_okay(self, exc):
         return True

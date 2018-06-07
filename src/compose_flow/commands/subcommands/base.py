@@ -95,6 +95,9 @@ class BaseSubcommand(ABC):
     def is_missing_profile_okay(self, exc):
         return False
 
+    def is_not_connected_okay(self, exc):
+        return False
+
     def is_write_profile_error_okay(self, exc):
         return False
 
@@ -107,7 +110,11 @@ class BaseSubcommand(ABC):
             return f'\nError: {error}'
 
     def run(self, *args, **kwargs):
-        self._setup_remote()
+        try:
+            self._setup_remote()
+        except errors.NotConnected as exc:
+            if not self.is_not_connected_okay(exc):
+                raise
 
         self._check_args()
 
@@ -138,6 +145,9 @@ class BaseSubcommand(ABC):
             remote.make_connection(use_existing=True)
         except (errors.AlreadyConnected, errors.RemoteUndefined):
             pass
+        except errors.NotConnected as exc:
+            if not self.is_not_connected_okay(exc):
+                raise
 
         docker_host = remote.docker_host
         if docker_host:

@@ -89,6 +89,9 @@ class Profile(BaseSubcommand):
         """
         Processes CF_COPY_ENV_FROM environment entries
         """
+        if not content:
+            return content
+
         # load up the yaml
         data = yaml_load(content)
         environments = {}
@@ -154,8 +157,11 @@ class Profile(BaseSubcommand):
             merged = remerge(yaml_contents)
             content = yaml_dump(merged)
         else:
-            with open(filenames[0], 'r') as fh:
-                content = fh.read()
+            try:
+                with open(filenames[0], 'r') as fh:
+                    content = fh.read()
+            except FileNotFoundError:
+                content = ''
 
         content = self._copy_environment(content)
 
@@ -191,6 +197,8 @@ class Profile(BaseSubcommand):
         Returns the profile data found in the dc.yml file
         """
         config = get_config()
+        if not config:
+            return {}
 
         profile_name = self.args.profile
         try:
