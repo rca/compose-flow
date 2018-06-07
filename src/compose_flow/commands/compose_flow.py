@@ -20,7 +20,8 @@ class ComposeFlow(object):
         # the subcommand that is being run; defined in run() below
         self.subcommand = None
 
-        os.chdir(DC_CONFIG_ROOT)
+        if os.path.exists(DC_CONFIG_ROOT):
+            os.chdir(DC_CONFIG_ROOT)
 
     def get_argument_parser(self, argv):
         argparse.ArgumentParser.set_default_subparser = set_default_subparser
