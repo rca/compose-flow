@@ -89,6 +89,9 @@ class Profile(BaseSubcommand):
         """
         Processes CF_COPY_ENV_FROM environment entries
         """
+        if not content:
+            return content
+
         # load up the yaml
         data = yaml_load(content)
         environments = {}
