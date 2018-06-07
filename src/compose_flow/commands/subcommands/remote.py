@@ -103,7 +103,14 @@ class Remote(BaseSubcommand):
 
         if not self._host:
             remote_config = RemoteConfig(self.workflow)
-            data = remote_config.data
+
+            try:
+                data = remote_config.data
+            except errors.NotConnected as exc:
+                if not self.workflow.subcommand.is_not_connected_okay(exc):
+                    raise
+
+                return
 
             environment = self.args.environment
 
