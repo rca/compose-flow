@@ -103,7 +103,12 @@ class Env(ConfigBaseSubcommand):
         # the `force` attribute may not exist
         force = 'force' in self.workflow.subcommand.args and self.workflow.subcommand.args.force
 
-        return self.workflow.args.action in ('edit',) and force
+        try:
+            action = self.workflow.args.action
+        except AttributeError:
+            action = None
+
+        return action in ('edit',) and force
 
     def is_env_modification_action(self):
         return self.workflow.args.action in ('cat', 'edit', 'push')
