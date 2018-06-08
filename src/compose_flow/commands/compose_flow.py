@@ -38,7 +38,7 @@ class ComposeFlow(object):
         parser.add_argument(
             '-n', '--project-name',
             default=PROJECT_NAME,
-            help=f'the projet name to use, default={PROJECT_NAME}'
+            help=f'the project name to use, default={PROJECT_NAME}'
         )
 
         self.subparsers = parser.add_subparsers(dest='command')
