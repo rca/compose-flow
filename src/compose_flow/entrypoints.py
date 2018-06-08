@@ -6,6 +6,8 @@ Main console script entrypoints for the dc tool
 import logging
 import sys
 
+from compose_flow import errors
+
 MIN_VERSION = (3, 6)
 RUNTIME_VERSION = (sys.version_info.major, sys.version_info.minor)
 
@@ -21,4 +23,9 @@ def compose_flow():
     """
     logging.basicConfig(level=logging.WARN)
 
-    sys.exit(ComposeFlow().run())
+    try:
+        response = ComposeFlow().run()
+    except errors.NoSuchConfig as exc:
+        response = f'Error: {exc}'
+
+    sys.exit(response)
