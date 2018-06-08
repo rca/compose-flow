@@ -100,7 +100,10 @@ class Env(ConfigBaseSubcommand):
         return self.workflow.args.action in ('push',)
 
     def is_missing_config_okay(self, exc):
-        return self.workflow.args.action in ('edit',) and self.workflow.subcommand.args.force
+        # the `force` attribute may not exist
+        force = 'force' in self.workflow.subcommand.args and self.workflow.subcommand.args.force
+
+        return self.workflow.args.action in ('edit',) and force
 
     def is_env_modification_action(self):
         return self.workflow.args.action in ('cat', 'edit', 'push')
