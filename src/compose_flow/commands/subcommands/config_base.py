@@ -1,5 +1,6 @@
 import os
 import shlex
+import sys
 import tempfile
 
 import sh
@@ -10,6 +11,25 @@ from .base import BaseSubcommand
 
 
 class ConfigBaseSubcommand(BaseSubcommand):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._check_swarm()
+
+    def _check_swarm(self):
+        """
+        Checks to see if Docker is setup as a swarm
+        """
+        try:
+            sh.docker('config', 'ls')
+        except sh.ErrorReturnCode_1 as exc:
+            message = exc.stderr.decode('utf8').strip().lower()
+
+            if 'this node is not a swarm manager' in message:
+                self.init_swarm(prompt=True)
+            else:
+                raise
+
     def edit(self) -> None:
         with tempfile.NamedTemporaryFile('w') as fh:
             path = fh.name
@@ -27,6 +47,41 @@ class ConfigBaseSubcommand(BaseSubcommand):
             proc(*command[1:], _env=os.environ, _fg=True)
 
             self.push(path)
+
+    def init_swarm(self, prompt: bool=False) -> None:
+        """
+        Prompts to initialize a local swarm
+        """
+        try:
+            sh.docker('config', 'ls')
+        except:
+            pass
+        else:
+            return
+
+        docker_host = os.environ.get('DOCKER_HOST')
+        if docker_host:
+            docker_host_message = f'docker host at {docker_host}'
+        else:
+            docker_host_message = 'docker host'
+
+        message = (
+            f'It looks like your {docker_host_message} is not setup for a swarm.'
+            '\nSwarm is needed in order to store configuration directly on Docker itself.'
+            '\n\nWould you like to configure it now? [N|y]: '
+        )
+
+        init_swarm = True
+        if prompt:
+            print(message, end='')
+            response = sys.stdin.readline().strip()
+
+            response = response.upper() or 'N'
+            if response != 'Y':
+                init_swarm = False
+
+        if init_swarm:
+            sh.docker('swarm', 'init')
 
     def push(self, path:str=None) -> None:
         """
