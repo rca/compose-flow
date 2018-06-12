@@ -33,6 +33,7 @@ class Env(ConfigBaseSubcommand):
         subparser.add_argument('action')
         subparser.add_argument('path', nargs='*')
         subparser.add_argument('-f', '--force', action='store_true', help='edit even if no config found')
+        subparser.add_argument('--variables', action='store_true', help='show runtime variables instead of values')
 
     def cat(self) -> str:
         """
@@ -90,6 +91,25 @@ class Env(ConfigBaseSubcommand):
             data['DOCKER_IMAGE'] = f'{docker_image.split(":", 1)[0]}:{data["VERSION"]}'
 
         data['CF_ENV_NAME'] = self.env_name
+
+        # render placeholders
+        for k, v in data.items():
+            if '://' not in v:
+                continue
+
+            location, location_ref = v.split('://', 1)
+            location_ref = location_ref or k
+
+            if location != 'runtime' and not self.is_env_runtime_error_okay():
+                raise errors.RuntimeEnvError(f'unknown location {location} for {k}={v} substitution')
+
+            self._rendered_config[k] = v
+
+            new_val = os.environ.get(location_ref)
+            if new_val is None:
+                raise errors.RuntimeEnvError(f'environment var {location_ref} not found at runtime')
+
+            data[k] = new_val
 
         return data
 
@@ -166,7 +186,7 @@ class Env(ConfigBaseSubcommand):
         """
         buf = io.StringIO()
 
-        self.render_buf(buf, data=data)
+        self.render_buf(buf, data=data, runtime_config=not self.args.variables)
 
         return buf.getvalue()
 
