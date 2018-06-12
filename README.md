@@ -144,6 +144,35 @@ while connected to the cluster.
 This works on local machines as well if docker swarm mode is turned on (`docker swarm init`):
 ```compose-flow -e local env push ~/.docker/_environments/local-project-env```
 
+Environments can also be printed to the screen with the `cat` action:
+
+```
+compose-flow -e local env cat
+```
+
+And they can be edited in your `$EDITOR` with the `edit` action:
+
+```
+compose-flow -e local env edit
+```
+
+### Runtime environment variables
+
+Sometimes it's necessary to inject an environment variable at runtime rather than hard-coding it into the config, for example, using the Jenkins `BUILD_NUMBER` variable.  This can be specified in the config with:
+
+```
+BUILD_NUMBER=runtime://
+```
+
+This will set the config's `BUILD_NUMBER` variable with the value of the `$BUILD_NUMBER` environment variable when the `compose-flow` command is run.
+
+If the variable names differ, it's possible to specify what the runtime name is:
+
+```
+RUNTIME_USER=runtime://USER
+```
+
+
 ## Tag Versioning
 
 Behind the scenes, versions are generated based on git tags with the [tag-version](https://github.com/rca/tag-version) utility.

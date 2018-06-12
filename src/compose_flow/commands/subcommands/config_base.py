@@ -16,6 +16,11 @@ class ConfigBaseSubcommand(BaseSubcommand):
 
         self._check_swarm()
 
+        # the original values for config items whose values have been rendered
+        # for example, the value for `FOO=runtime://` will be whatever $FOO is at runtime
+        # similarly, the value for `FOO=runtime://BAR` will be whatever $BAR is at runtime
+        self._rendered_config = {}
+
     def _check_swarm(self):
         """
         Checks to see if Docker is setup as a swarm
@@ -34,7 +39,7 @@ class ConfigBaseSubcommand(BaseSubcommand):
         with tempfile.NamedTemporaryFile('w') as fh:
             path = fh.name
 
-            self.render_buf(fh)
+            self.render_buf(fh, runtime_config=False)
 
             fh.flush()
 
@@ -93,7 +98,12 @@ class ConfigBaseSubcommand(BaseSubcommand):
 
         docker.load_config(self.config_name, path)
 
-    def render_buf(self, buf, data: dict=None):
+    def render_buf(self, buf, data: dict=None, runtime_config: bool=True):
         data = data or self.data
+
+        # reset runtime variables
+        if not runtime_config:
+            data.update(self._rendered_config)
+
         for k, v in data.items():
             buf.write(f'{k}={v}\n')
