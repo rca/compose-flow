@@ -86,6 +86,9 @@ class BaseSubcommand(ABC):
     def is_env_error_okay(self, exc):
         return False
 
+    def is_env_runtime_error_okay(self):
+        return False
+
     def is_missing_config_okay(self, exc):
         return False
 

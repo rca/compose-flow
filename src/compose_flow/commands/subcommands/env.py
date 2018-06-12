@@ -99,6 +99,9 @@ class Env(ConfigBaseSubcommand):
     def is_env_error_okay(self, exc):
         return self.workflow.args.action in ('push',)
 
+    def is_env_runtime_error_okay(self):
+        return self.is_env_modification_action()
+
     def is_missing_config_okay(self, exc):
         # the `force` attribute may not exist
         force = 'force' in self.workflow.subcommand.args and self.workflow.subcommand.args.force
