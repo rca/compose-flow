@@ -55,6 +55,12 @@ class RemoteUndefined(ErrorMessage):
     """
 
 
+class RuntimeEnvError(ErrorMessage):
+    """
+    Raised when variable substitution at runtime fails
+    """
+
+
 class TagVersionError(Exception):
     """
     Raised when there is a problem running tag-version
