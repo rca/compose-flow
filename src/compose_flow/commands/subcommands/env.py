@@ -94,20 +94,18 @@ class Env(ConfigBaseSubcommand):
 
         # render placeholders
         for k, v in data.items():
-            if '://' not in v:
+            if not v.startswith('runtime://'):
                 continue
 
             location, location_ref = v.split('://', 1)
             location_ref = location_ref or k
 
-            if location != 'runtime' and not self.is_env_runtime_error_okay():
-                raise errors.RuntimeEnvError(f'unknown location {location} for {k}={v} substitution')
-
-            self._rendered_config[k] = v
+            if k not in self._rendered_config:
+                self._rendered_config[k] = v
 
             new_val = os.environ.get(location_ref)
             if new_val is None:
-                raise errors.RuntimeEnvError(f'environment var {location_ref} not found at runtime')
+                raise errors.RuntimeEnvError(f'runtime substitution for {k}={v} not found')
 
             data[k] = new_val
 
