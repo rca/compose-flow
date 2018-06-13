@@ -184,7 +184,12 @@ class Env(ConfigBaseSubcommand):
         """
         buf = io.StringIO()
 
-        self.render_buf(buf, data=data, runtime_config=not self.args.variables)
+        try:
+            runtime_config = not self.args.variables
+        except AttributeError:
+            runtime_config = True
+
+        self.render_buf(buf, data=data, runtime_config=runtime_config)
 
         return buf.getvalue()
 
