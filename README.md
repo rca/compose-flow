@@ -156,6 +156,7 @@ And they can be edited in your `$EDITOR` with the `edit` action:
 compose-flow -e local env edit
 ```
 
+
 ### Runtime environment variables
 
 Sometimes it's necessary to inject an environment variable at runtime rather than hard-coding it into the config, for example, using the Jenkins `BUILD_NUMBER` variable.  This can be specified in the config with:
@@ -170,6 +171,16 @@ If the variable names differ, it's possible to specify what the runtime name is:
 
 ```
 RUNTIME_USER=runtime://USER
+```
+
+
+### Variable substitutions
+
+Variable substitution works in the environment as well, with the caveat that it will only allow substitutions for variables defined in the env file itself.  So, for example, if you want to substitute in the runtime user's username, first define a runtime variable:
+
+```
+RUNTIME_USER=runtime://USER
+USER_VOL=${RUNTIME_USER}-data
 ```
 
 
