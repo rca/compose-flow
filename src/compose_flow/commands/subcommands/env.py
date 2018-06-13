@@ -12,7 +12,7 @@ import sh
 
 from .config_base import ConfigBaseSubcommand
 
-from compose_flow import docker, errors
+from compose_flow import docker, errors, utils
 
 
 class Env(ConfigBaseSubcommand):
@@ -108,6 +108,23 @@ class Env(ConfigBaseSubcommand):
                 raise errors.RuntimeEnvError(f'runtime substitution for {k}={v} not found')
 
             data[k] = new_val
+
+        # render substitutions
+        sub_count = True
+        while sub_count:
+            # reset the substitution count to break the loop when no subs are made
+            sub_count = 0
+
+            for k, v in data.items():
+                rendered = utils.render(v, env=data)
+
+                if rendered != v:
+                    sub_count += 1
+
+                    if k not in self._rendered_config:
+                        self._rendered_config[k] = v
+
+                    data[k] = rendered
 
         return data
 
