@@ -64,18 +64,21 @@ def remerge(target_list, sourced=False):
     return ret, source_map
 
 
-def render(content):
+def render(content: str, env: dict=None) -> str:
     """
     Renders the variables in the file
     """
     previous_idx = 0
     rendered = ''
+
+    env = env or os.environ
+
     for x in VAR_RE.finditer(content):
         rendered += content[previous_idx:x.start('varname')-2]  # -2 to get rid of variable's `${`
 
         varname = x.group('varname')
         try:
-            rendered += os.environ[varname]
+            rendered += env[varname]
         except KeyError:
             raise EnvError(f'Error: varname={varname} not in environment; cannot render')
 
