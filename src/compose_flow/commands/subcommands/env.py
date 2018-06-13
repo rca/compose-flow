@@ -12,7 +12,7 @@ import sh
 
 from .config_base import ConfigBaseSubcommand
 
-from compose_flow import docker, errors
+from compose_flow import docker, errors, utils
 
 
 class Env(ConfigBaseSubcommand):
@@ -109,6 +109,23 @@ class Env(ConfigBaseSubcommand):
 
             data[k] = new_val
 
+        # render substitutions
+        sub_count = True
+        while sub_count:
+            # reset the substitution count to break the loop when no subs are made
+            sub_count = 0
+
+            for k, v in data.items():
+                rendered = utils.render(v, env=data)
+
+                if rendered != v:
+                    sub_count += 1
+
+                    if k not in self._rendered_config:
+                        self._rendered_config[k] = v
+
+                    data[k] = rendered
+
         return data
 
     def is_dirty_working_copy_okay(self, exc):
@@ -184,7 +201,12 @@ class Env(ConfigBaseSubcommand):
         """
         buf = io.StringIO()
 
-        self.render_buf(buf, data=data, runtime_config=not self.args.variables)
+        try:
+            runtime_config = not self.args.variables
+        except AttributeError:
+            runtime_config = True
+
+        self.render_buf(buf, data=data, runtime_config=runtime_config)
 
         return buf.getvalue()
 
