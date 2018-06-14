@@ -10,7 +10,7 @@ from boltons.iterutils import remap, get_path, default_enter, default_visit
 from .errors import EnvError, ProfileError
 
 # regular expression for finding variables in docker compose files
-VAR_RE = re.compile(r'\${(?P<varname>.*)}')
+VAR_RE = re.compile(r'\${(?P<varname>.*?)}')
 
 
 # https://gist.github.com/mahmoud/db02d16ac89fa401b968
