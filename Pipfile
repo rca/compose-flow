@@ -8,7 +8,7 @@ name = "pypi"
 [dev-packages]
 twine = "*"
 setuptools = "*"
-
+nose = "*"
 
 [requires]
 python_version = "3.6"
