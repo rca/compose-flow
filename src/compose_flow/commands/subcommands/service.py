@@ -25,7 +25,7 @@ class Service(BaseSubcommand):
     """
     @classmethod
     def fill_subparser(cls, parser, subparser):
-        subparser.add_argument('--user', '-u', default=CF_REMOTE_USER, help='the user to connect as (default: {})'.format(CF_REMOTE_USER))
+        subparser.add_argument('--user', '-u', help='the user to become int he container')
         subparser.add_argument('--retries', type=int, default=30, help='number of times to retry')
         subparser.add_argument('--ssh', action='store_true', help='ssh to the machine, not the container')
         subparser.add_argument('--sudo', action='store_true', help='use sudo to run the docker command remotely')
@@ -121,13 +121,15 @@ class Service(BaseSubcommand):
         if container_host.startswith('ip-'):
             container_host = container_host.replace('ip-', '').replace('-', '.')
 
-        host_info = container_host
+        host_info = f'{CF_REMOTE_USER}@{container_host}'
+
+        docker_user = ''
         if self.args.user:
-            host_info = f'{self.args.user}@{host_info}'
+              docker_user = f'--user {self.args.user} '
 
         command = f'ssh -t {host_info}'
         docker_command = (
-            f'docker exec -t -i {container_prefix}.{container_hash}'
+            f'docker exec -t -i {docker_user}{container_prefix}.{container_hash}'
             f' {" ".join(self.workflow.args_remainder)}'
         )
 
