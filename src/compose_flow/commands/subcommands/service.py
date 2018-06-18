@@ -26,7 +26,6 @@ class Service(BaseSubcommand):
     @classmethod
     def fill_subparser(cls, parser, subparser):
         subparser.add_argument('--user', '-u', default=CF_REMOTE_USER, help='the user to connect as (default: {})'.format(CF_REMOTE_USER))
-        subparser.add_argument('--loglevel', '-l', default='warn', help='log level')
         subparser.add_argument('--retries', type=int, default=30, help='number of times to retry')
         subparser.add_argument('--ssh', action='store_true', help='ssh to the machine, not the container')
         subparser.add_argument('--sudo', action='store_true', help='use sudo to run the docker command remotely')
