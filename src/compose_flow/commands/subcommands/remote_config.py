@@ -66,7 +66,7 @@ class RemoteConfig(ConfigBaseSubcommand):
 
         return config
 
-    def render_buf(self, fh):
+    def render_buf(self, fh, runtime_config: bool=True):
         try:
             content = self.load()
         except NoSuchConfig:
