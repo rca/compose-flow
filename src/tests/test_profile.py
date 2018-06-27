@@ -53,14 +53,14 @@ class ProfileTestCase(TestCase):
 
         self.assertEqual(
             [x['ports'] for x in new_data['services'].values()],
-            [['8001:8001'], ['8002:8002'], ['8003:8003']]
+            [['8000:8000'], ['8001:8001'], ['8002:8002']]
         )
 
         self.assertEqual(
             [x['environment'] for x in new_data['services'].values()],
             [
+                ['FOO=1', 'SPARK_WORKER_PORT=8888', 'SPARK_WORKER_WEBUI_PORT=8080'],
                 ['FOO=1', 'SPARK_WORKER_PORT=8889', 'SPARK_WORKER_WEBUI_PORT=8081'],
                 ['FOO=1', 'SPARK_WORKER_PORT=8890', 'SPARK_WORKER_WEBUI_PORT=8082'],
-                ['FOO=1', 'SPARK_WORKER_PORT=8891', 'SPARK_WORKER_WEBUI_PORT=8083'],
             ]
         )

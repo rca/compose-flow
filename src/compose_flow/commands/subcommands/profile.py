@@ -94,8 +94,8 @@ class Profile(BaseSubcommand):
 
             increment_config = expand_config[service_name].get('increment')
 
-            for idx in range(1, replicas+1):
-                _service_name = f'{service_name}{idx}'
+            for idx in range(replicas):
+                _service_name = f'{service_name}{idx+1}'
                 _service = copy.deepcopy(base_service)
 
                 _service['deploy'].pop('replicas')
