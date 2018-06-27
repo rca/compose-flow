@@ -184,10 +184,67 @@ USER_VOL=${RUNTIME_USER}-data
 ```
 
 
-## Tag Versioning
+## Tag versioning
 
 Behind the scenes, versions are generated based on git tags with the [tag-version](https://github.com/rca/tag-version) utility.
 
+
+## Expanding services
+
+Sometimes replicas aren't exactly what is needed.  For example, there are some systems that spin up a number of workers, but each worker needs to work as its own unit instead of being part of a round-robin pool as `replicas` work by default.
+
+It is possible to "expand" a service out into individual services, for example, the following configuration:
+
+```
+services:
+  foo:
+    build: ..
+    image: ${DOCKER_IMAGE}
+    environment:
+      - PORT=8880
+      - UI_PORT=9990
+    ports:
+      - 8000:8000
+    deploy:
+      replicas: 2
+
+
+compose_flow:
+  expand:
+    foo:
+      increment:
+        env:
+          - PORT
+          - UI_PORT
+        ports:
+          source_port: true
+          destination_port: true
+```
+
+will expand out to:
+
+```
+services:
+  foo1:
+    build: ..
+    image: ${DOCKER_IMAGE}
+    environment:
+      - PORT=8880
+      - UI_PORT=9990
+    ports:
+      - 8000:8000
+    deploy:
+
+  foo2:
+    build: ..
+    image: ${DOCKER_IMAGE}
+    environment:
+      - PORT=8881
+      - UI_PORT=9991
+    ports:
+      - 8001:8001
+    deploy:
+```
 
 # History
 Docker Compose is great.  It allows you to put together pretty sophisticated commands that, in turn, produce some really powerful results.  The problem is remembering the commands as they can become long an cumbersome.
