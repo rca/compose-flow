@@ -1,3 +1,26 @@
+"""
+    ,---,. ,--,
+  ,'  .' ,--.'|
+,---.'   |  | :     ,---.          .---.
+|   |   .:  : '    '   ,'\\        /. ./|
+:   :  : |  ' |   /   /   |    .-'-. ' |
+:   |  |-'  | |  .   ; ,. :   /___/ \\: |
+|   :  ;/|  | :  '   | |: :.-'.. '   ' .
+|   |   .'  : |__'   | .; /___/ \\:     '
+'   :  ' |  | '.'|   :    .   \\  ' .\\
+|   |  | ;  :    ;\\   \\  / \\   \\   ' \\ |
+|   :  \\ |  ,   /  `----'   \\   \\  |--"
+|   | ,'  ---`-'             \\   \\ |
+`----'                        '---"
+
+Compose Flow - Codified workflows for Docker Compose and Swarm
+
+This utility is built on top of Docker Compose and Swarm Mode. It establishes
+conventions for publishing Images, deploying Stacks across multiple
+installations (like separate dev and prod Swarms), and working with service
+containers that are easily shared between team members -- and bots -- who need
+to manage running services.
+"""
 import argparse
 import os
 import sys
