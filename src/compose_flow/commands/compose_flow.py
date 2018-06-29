@@ -55,6 +55,7 @@ class ComposeFlow(object):
             formatter_class=argparse.RawDescriptionHelpFormatter
         )
 
+        parser.add_argument('-c', '--config-name')
         parser.add_argument('-e', '--environment')
         parser.add_argument('-p', '--profile')
         parser.add_argument(

@@ -26,7 +26,7 @@ class Env(ConfigBaseSubcommand):
 
     @property
     def config_name(self):
-        return self.env_name
+        return self.workflow.args.config_name or self.env_name
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
@@ -39,8 +39,10 @@ class Env(ConfigBaseSubcommand):
         """
         Prints the loaded config to stdout
         """
-        if self.env_name not in docker.get_configs():
-            return f'docker config named {self.env_name} not in swarm'
+        config_name = self.config_name
+
+        if config_name not in docker.get_configs():
+            return f'docker config named {config_name} not in swarm'
 
         print(self.render())
 
@@ -162,7 +164,7 @@ class Env(ConfigBaseSubcommand):
             return self._config
 
         try:
-            self._config = docker.get_config(self.env_name)
+            self._config = docker.get_config(self.config_name)
         except errors.NoSuchConfig as exc:
             if not self.is_missing_config_okay(exc):
                 raise
