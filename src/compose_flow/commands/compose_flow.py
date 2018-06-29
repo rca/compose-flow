@@ -11,11 +11,10 @@ PROJECT_NAME = os.path.basename(os.getcwd())
 
 class ComposeFlow(object):
     def __init__(self, argv=None):
-        self.argv = argv or sys.argv
+        self.argv = argv or sys.argv[1:]
 
-        self.parser = self.get_argument_parser(self.argv)
-
-        self.args, self.args_remainder = self.parser.parse_known_args()
+        self.parser = self.get_argument_parser()
+        self.args, self.args_remainder = self.parser.parse_known_args(self.argv)
 
         # the subcommand that is being run; defined in run() below
         self.subcommand = None
@@ -23,10 +22,15 @@ class ComposeFlow(object):
         if os.path.exists(DC_CONFIG_ROOT):
             os.chdir(DC_CONFIG_ROOT)
 
-    def get_argument_parser(self, argv):
+    def get_argument_parser(self, doc: str=None):
         argparse.ArgumentParser.set_default_subparser = set_default_subparser
 
-        parser = argparse.ArgumentParser(argv)
+        doc = doc or __doc__
+
+        parser = argparse.ArgumentParser(
+            epilog=doc,
+            formatter_class=argparse.RawDescriptionHelpFormatter
+        )
 
         parser.add_argument('-e', '--environment')
         parser.add_argument('-p', '--profile')
