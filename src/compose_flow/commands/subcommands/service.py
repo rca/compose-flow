@@ -1,6 +1,33 @@
 #!/usr/bin/env python3
 """
-Get the first running docker service container
+Subcommand for working with services
+
+This subcommand provides two actions:
+
+- list
+- exec
+
+The `list` action will list all the services for a stack when no additional
+arguments are given:
+
+```
+compose-flow -e dev service list
+```
+
+When the name of a service is given, the `list` action will list all the
+running containers for the specified service:
+
+```
+compose-flow -e dev service list app
+```
+
+The `exec` action will execute the given command within the specified container.
+For example, the following command will launch an interactive shell in the `app`
+container:
+
+```
+compose-flow -e dev service exec app /bin/bash
+```
 """
 import argparse
 import functools
@@ -20,11 +47,11 @@ CF_REMOTE_USER = os.environ.get('CF_REMOTE_USER', USER)
 
 
 class Service(BaseSubcommand):
-    """
-    Subcommand for executing commands within a service container
-    """
     @classmethod
     def fill_subparser(cls, parser, subparser):
+        subparser.epilog = __doc__
+        subparser.formatter_class = argparse.RawDescriptionHelpFormatter
+
         subparser.add_argument('--user', '-u', help='the user to become int he container')
         subparser.add_argument('--retries', type=int, default=30, help='number of times to retry')
         subparser.add_argument('--ssh', action='store_true', help='ssh to the machine, not the container')
@@ -51,17 +78,26 @@ class Service(BaseSubcommand):
 
     def action_list(self):
         """
-        Lists all containers found for the given service
-        """
-        print('ALL CONTAINERS:\n')
-        for idx, item in enumerate(self.list_containers()):
-            print('\t{}: {}'.format(idx, item))
+        Lists the stack
 
-        print(f'\nSELECTED:\n\t{self.select_container()}')
+        if a service is given, all containers found for the given service are printed
+        otherwise all the services in the stack are listed
+        """
+        service_name = self.service_name
+        if service_name:
+            print('ALL CONTAINERS:\n')
+
+            for idx, item in enumerate(self.list_containers()):
+                print('\t{}: {}'.format(idx, item))
+
+            print(f'\nSELECTED:\n\t{self.select_container()}')
+        else:
+            # print(f'list services for env {self.env_name}\n')
+            print(self.list_services())
 
     @functools.lru_cache()
-    def list_containers(self):
-        service_name = self.service_name
+    def list_containers(self, service_name: str=None):
+        service_name = service_name or self.service_name
 
         command_split = shlex.split(
             f'docker service ps --no-trunc --filter desired-state=running {service_name}'
@@ -95,16 +131,9 @@ class Service(BaseSubcommand):
         """
         Lists all the services for this stack
         """
-        command = sh.docker(*shlex.split('service ls'))
+        command = sh.docker('stack', 'services', self.env.env_name)
 
-        for line in command.stdout.decode('utf8').splitlines()[1:]:
-            line_split = line.split()
-
-            service_name = line_split[1]
-            if not service_name.startswith(self.env.env_name):
-                continue
-
-            print(service_name)
+        return command.stdout.decode('utf8')
 
     def run_service(self):
         line = self.select_container()
@@ -164,6 +193,6 @@ class Service(BaseSubcommand):
 
         service_name = self.args.service
         if not service_name:
-            raise errors.ErrorMessage('service not given on command line')
+            return
 
         return f'{env_name}_{self.args.service}'
