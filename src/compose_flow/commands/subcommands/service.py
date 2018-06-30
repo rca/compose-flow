@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
-Get the first running docker service container
+Subcommand for executing commands within a service container
+
+hi
+
+there
 """
 import argparse
 import functools
@@ -25,6 +29,9 @@ class Service(BaseSubcommand):
     """
     @classmethod
     def fill_subparser(cls, parser, subparser):
+        subparser.epilog = __doc__
+        subparser.formatter_class = argparse.RawDescriptionHelpFormatter
+
         subparser.add_argument('--user', '-u', help='the user to become int he container')
         subparser.add_argument('--retries', type=int, default=30, help='number of times to retry')
         subparser.add_argument('--ssh', action='store_true', help='ssh to the machine, not the container')
