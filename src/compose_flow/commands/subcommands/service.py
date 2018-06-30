@@ -1,10 +1,33 @@
 #!/usr/bin/env python3
 """
-Subcommand for executing commands within a service container
+Subcommand for working with services
 
-hi
+This subcommand provides two actions:
 
-there
+- list
+- exec
+
+The `list` action will list all the services for a stack when no additional
+arguments are given:
+
+```
+compose-flow -e dev service list
+```
+
+When the name of a service is given, the `list` action will list all the
+running containers for the specified service:
+
+```
+compose-flow -e dev service list app
+```
+
+The `exec` action will execute the given command within the specified container.
+For example, the following command will launch an interactive shell in the `app`
+container:
+
+```
+compose-flow -e dev service exec app /bin/bash
+```
 """
 import argparse
 import functools
@@ -24,9 +47,6 @@ CF_REMOTE_USER = os.environ.get('CF_REMOTE_USER', USER)
 
 
 class Service(BaseSubcommand):
-    """
-    Subcommand for executing commands within a service container
-    """
     @classmethod
     def fill_subparser(cls, parser, subparser):
         subparser.epilog = __doc__
