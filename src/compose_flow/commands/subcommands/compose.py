@@ -3,6 +3,7 @@ Compose subcommand
 """
 import argparse
 import logging
+import os
 
 from .passthrough_base import PassthroughBaseSubcommand
 
@@ -29,6 +30,25 @@ class Compose(PassthroughBaseSubcommand):
     def handle(self, extra_args: list=None) -> [None, str]:
         # check the profile to make sure it defines all the needed environment variables
         self.profile.check()
+
+        # check to see if Dockerfile uses the VERSION build arg
+        with open('../Dockerfile', 'r') as fh:
+            has_version_arg = False
+            while True:
+                line = fh.readline()
+                if line == '':
+                    break
+                line = line.strip()
+
+                if 'ARG VERSION' in line:
+                    has_version_arg = True
+                    break
+
+        extra_args = extra_args or self.args.extra_args
+        if has_version_arg and extra_args[0] == 'build' and '--build-arg' not in extra_args:
+            version = os.environ['VERSION']
+
+            extra_args.extend(['--build-arg', f'VERSION={version}'])
 
         super().handle(extra_args=extra_args)
 
