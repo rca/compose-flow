@@ -29,6 +29,7 @@ from .subcommands import find_subcommands, set_default_subparser
 from ..config import DC_CONFIG_ROOT
 from ..errors import CommandError, ErrorMessage
 
+PACKAGE_NAME = __name__.split('.', 1)[0].replace('_', '-')
 PROJECT_NAME = os.path.basename(os.getcwd())
 
 
@@ -68,6 +69,7 @@ class ComposeFlow(object):
             default=PROJECT_NAME,
             help=f'the project name to use, default={PROJECT_NAME}'
         )
+        parser.add_argument('--version', action='store_true', help='print version and exit')
 
         self.subparsers = parser.add_subparsers(dest='command')
 
@@ -79,6 +81,15 @@ class ComposeFlow(object):
         return parser
 
     def run(self):
+        if self.args.version:
+            import pkg_resources  # part of setuptools
+
+            version = pkg_resources.require(PACKAGE_NAME)[0].version
+
+            print(f'{version}')
+
+            return
+
         self.subcommand = self.args.subcommand_cls(self)
 
         try:
