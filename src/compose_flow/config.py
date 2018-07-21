@@ -1,6 +1,8 @@
 import os
 import pathlib
 
+from functools import lru_cache
+
 from compose_flow.utils import yaml_load
 
 
@@ -12,6 +14,7 @@ DC_CONFIG_PATH = os.environ.get('DC_CONFIG_FILE', DEFAULT_DC_CONFIG_FILE)
 DC_CONFIG_ROOT, DC_CONFIG_FILE = os.path.split(DC_CONFIG_PATH)
 
 
+@lru_cache()
 def get_config() -> dict:
     data = None
 
