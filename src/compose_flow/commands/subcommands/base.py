@@ -98,7 +98,7 @@ class BaseSubcommand(ABC):
         config = get_config()
         env = self.workflow.args.environment
 
-        dirty_working_copy_okay = config.get('options', {}).get(env, {}).get(
+        dirty_working_copy_okay = self.workflow.args.dirty or config.get('options', {}).get(env, {}).get(
             'dirty_working_copy_okay', self.dirty_working_copy_okay
         )
 
