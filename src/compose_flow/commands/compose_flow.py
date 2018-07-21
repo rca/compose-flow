@@ -57,6 +57,11 @@ class ComposeFlow(object):
         )
 
         parser.add_argument('-c', '--config-name')
+        parser.add_argument(
+            '--dirty',
+            action='store_true',
+            help='allow dirty working copy for this command'
+        )
         parser.add_argument('-e', '--environment')
         parser.add_argument('-p', '--profile')
         parser.add_argument(
