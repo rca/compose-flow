@@ -3,6 +3,7 @@ import os
 from abc import ABC, abstractclassmethod
 
 from compose_flow import errors
+from compose_flow.config import get_config
 from compose_flow.errors import CommandError, EnvError, NoSuchConfig, \
     NoSuchProfile, NotConnected, ProfileError, TagVersionError
 
@@ -80,8 +81,28 @@ class BaseSubcommand(ABC):
         else:
             self.print_subcommand_help(self.__doc__, error=f'unknown action={action}')
 
-    def is_dirty_working_copy_okay(self, exc):
-        return self.dirty_working_copy_okay
+    def is_dirty_working_copy_okay(self, exc: Exception) -> bool:
+        """
+        Checks to see if the project's compose-flow.yml allows for the env to use a dirty working copy
+
+        To configure an environment to allow a dirty working copy, add the following to the compose-flow.yml
+
+        ```
+        options:
+          env_name:
+            dirty_working_copy_okay: true
+        ```
+
+        This defaults to False
+        """
+        config = get_config()
+        env = self.workflow.args.environment
+
+        dirty_working_copy_okay = config.get('options', {}).get(env, {}).get(
+            'dirty_working_copy_okay', self.dirty_working_copy_okay
+        )
+
+        return dirty_working_copy_okay
 
     def is_env_error_okay(self, exc):
         return False
