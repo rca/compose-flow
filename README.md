@@ -184,6 +184,39 @@ USER_VOL=${RUNTIME_USER}-data
 ```
 
 
+## Working with a dirty working copies
+
+Compose-flow is strict when it comes to pushing out changes with a dirty working copy.  This is so that anything that is deployed to a running environment should be traceable back to a commit in git.  But sometimes that is not desired.
+
+For example, perhaps all you want to do is connect to a running container and your local working copy has some modifications.  Or you are working in a local environment where you want the changes to be dirty yet have the ability to run the software.
+
+
+### The --dirty arg
+
+Compose-flow can be run like so to, for instance, work locally with a ditry working copy:
+
+```
+compose-flow -e local --dirty compose build
+```
+
+Or to exec into a running service:
+
+```
+compose-flow -e prod --dirty service exec app /bin/bash
+```
+
+
+### configuring a dirty environment
+
+Usually it's always okay for a local development environment to be dirty.  In such cases, it's better to simply set it in `compose/compose-flow.yml` once and not have to worry about setting `--dirty` in every command.  The following can be added to your .yml file:
+
+```
+options:
+  local:
+    dirty_working_copy_okay: true
+```
+
+
 ## Tag versioning
 
 Behind the scenes, versions are generated based on git tags with the [tag-version](https://github.com/rca/tag-version) utility.
