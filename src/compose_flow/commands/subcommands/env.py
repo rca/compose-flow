@@ -130,8 +130,10 @@ class Env(ConfigBaseSubcommand):
 
         return data
 
-    def is_dirty_working_copy_okay(self, exc):
-        return self.is_env_modification_action()
+    def is_dirty_working_copy_okay(self, exc: Exception) -> bool:
+        is_dirty_working_copy_okay = super().is_dirty_working_copy_okay(exc)
+
+        return is_dirty_working_copy_okay or self.is_env_modification_action()
 
     def is_env_error_okay(self, exc):
         return self.workflow.args.action in ('push',)

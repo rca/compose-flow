@@ -1,11 +1,13 @@
 """
 Task subcommand
 """
+import logging
 import shlex
 
 from .base import BaseSubcommand
 
 from compose_flow.config import get_config
+from compose_flow.errors import CommandError
 
 
 class Task(BaseSubcommand):
@@ -35,5 +37,20 @@ class Task(BaseSubcommand):
 
         subcommand.run(subcommand_args)
 
-    def is_dirty_working_copy_okay(self, exc):
-        return self.workflow.args.environment in ('local',)
+    def is_dirty_working_copy_okay(self, exc: Exception) -> bool:
+        dirty_working_copy_okay = super().is_dirty_working_copy_okay(exc)
+
+        if not dirty_working_copy_okay and self.workflow.args.environment in ('local',):
+            self.logger.warning((
+                '\n\n'
+                'WARNING: the local environment does not allow a dirty working copy by default.'
+                '\n'
+                'in your compose-flow.yml set `options -> local -> dirty_working_copy_okay` to true'
+                '\n\n'
+            ))
+
+        return dirty_working_copy_okay
+
+    @property
+    def logger(self):
+        return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
