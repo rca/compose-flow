@@ -32,17 +32,20 @@ class Compose(PassthroughBaseSubcommand):
         self.profile.check()
 
         # check to see if Dockerfile uses the VERSION build arg
-        with open('../Dockerfile', 'r') as fh:
-            has_version_arg = False
-            while True:
-                line = fh.readline()
-                if line == '':
-                    break
-                line = line.strip()
+        has_version_arg = False
+        try:
+            with open('../Dockerfile', 'r') as fh:
+                while True:
+                    line = fh.readline()
+                    if line == '':
+                        break
+                    line = line.strip()
 
-                if 'ARG VERSION' in line:
-                    has_version_arg = True
-                    break
+                    if 'ARG VERSION' in line:
+                        has_version_arg = True
+                        break
+        except FileNotFoundError:
+            pass
 
         extra_args = extra_args or self.args.extra_args
         if has_version_arg and extra_args[0] == 'build' and '--build-arg' not in extra_args:
