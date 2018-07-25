@@ -57,6 +57,12 @@ class Profile(BaseSubcommand):
     def fill_subparser(cls, parser, subparser):
         subparser.add_argument('action')
 
+    @property
+    def data(self):
+        compose_content = self.load()
+
+        return yaml_load(compose_content)
+
     def cat(self):
         """
         Prints the loaded compose file to stdout
@@ -69,11 +75,8 @@ class Profile(BaseSubcommand):
         """
         env_data = self.env.data
 
-        compose_content = self.load()
-        data = yaml_load(compose_content)
-
         errors = []
-        for name, service_data in data['services'].items():
+        for name, service_data in self.data['services'].items():
             for item in service_data.get('environment', []):
                 # when a variable has an equal sign, it is setting
                 # the value, so don't check the environment for this variable
