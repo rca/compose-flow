@@ -39,9 +39,12 @@ class Publish(BaseSubcommand):
         return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
     def push(self):
-        docker_image = self.env.data['DOCKER_IMAGE']
+        docker_images = set()
+        for service_data in self.profile.data['services'].values():
+            docker_images.add(service_data.get('image'))
 
-        if self.args.dry_run:
-            self.logger.info(f'docker push {docker_image}')
-        else:
-            sh.docker('push', docker_image, _fg=True)
+        for docker_image im docker_images:
+            if self.args.dry_run:
+                self.logger.info(f'docker push {docker_image}')
+            else:
+                sh.docker('push', docker_image, _fg=True)
