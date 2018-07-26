@@ -21,7 +21,7 @@ def compose_flow():
     """
     Main entrypoint
     """
-    logging.basicConfig(level=logging.WARN)
+    logging.basicConfig(level=logging.INFO)
 
     try:
         response = ComposeFlow().run()
