@@ -146,8 +146,9 @@ class Env(ConfigBaseSubcommand):
         return self.is_env_modification_action()
 
     def is_missing_config_okay(self, exc):
+        subcommand = self.workflow.subcommand
         # the `force` attribute may not exist
-        force = 'force' in self.workflow.subcommand.args and self.workflow.subcommand.args.force
+        force = 'force' in subcommand.args and subcommand.args.force
 
         try:
             action = self.workflow.args.action
@@ -177,24 +178,22 @@ class Env(ConfigBaseSubcommand):
 
             self._config = ''
 
-        # inject the version from tag-version command into the loaded environment
-        tag_version = 'unknown'
-        try:
-            tag_version_command = getattr(sh, 'tag-version')
-        except Exception as exc:
-            print(f'Warning: unable to find tag-version ({exc})\n', file=sys.stderr)
-        else:
+        data = self.data
+        version_var = 'VERSION'
+
+        subcommand = self.workflow.subcommand
+        if subcommand.rw_env or version_var not in data:
+            # default the tag version to the name of the environment
+            tag_version = self.workflow.args.environment
             try:
-                tag_version = tag_version_command().stdout.decode('utf8').strip()
+                tag_version = utils.get_tag_version()
             except Exception as exc:
                 # check if the subcommand is okay with a dirty working copy
-                if not self.workflow.subcommand.is_dirty_working_copy_okay(exc):
+                if not subcommand.is_dirty_working_copy_okay(exc):
                     raise errors.TagVersionError(f'Warning: unable to run tag-version ({exc})\n')
 
-        data = self.data
+            data[version_var] = tag_version
 
-        version_var = 'VERSION'
-        data[version_var] = tag_version
         self._config = self.render(data)
 
         return self._config
