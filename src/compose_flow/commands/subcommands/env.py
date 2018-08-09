@@ -91,8 +91,14 @@ class Env(ConfigBaseSubcommand):
                     data['DOCKER_IMAGE'] = \
                     docker_image
 
-        if 'VERSION' in data and docker_image and ':' in docker_image:
-            data['DOCKER_IMAGE'] = f'{docker_image.split(":", 1)[0]}:{data["VERSION"]}'
+        if docker_image:
+            if ':' not in docker_image:
+                raise EnvironmentError('DOCKER_IMAGE must contain a colon; compose-flow enforces image versioning')
+
+            version = data.get(VERSION_VAR)
+            subcommand = self.workflow.subcommand
+            if subcommand.rw_env:
+                data['DOCKER_IMAGE'] = f'{docker_image.split(":", 1)[0]}:{version}'
 
         # deprecate this env var
         data['CF_ENV_NAME'] = self.project_name
