@@ -14,6 +14,8 @@ from .config_base import ConfigBaseSubcommand
 
 from compose_flow import docker, errors, utils
 
+VERSION_VAR = 'VERSION'
+
 
 class Env(ConfigBaseSubcommand):
     """
@@ -179,10 +181,9 @@ class Env(ConfigBaseSubcommand):
             self._config = ''
 
         data = self.data
-        version_var = 'VERSION'
 
         subcommand = self.workflow.subcommand
-        if subcommand.rw_env or version_var not in data:
+        if subcommand.rw_env or VERSION_VAR not in data:
             # default the tag version to the name of the environment
             tag_version = self.workflow.args.environment
             try:
@@ -192,7 +193,7 @@ class Env(ConfigBaseSubcommand):
                 if not subcommand.is_dirty_working_copy_okay(exc):
                     raise errors.TagVersionError(f'Warning: unable to run tag-version ({exc})\n')
 
-            data[version_var] = tag_version
+            data[VERSION_VAR] = tag_version
 
         self._config = self.render(data)
 
