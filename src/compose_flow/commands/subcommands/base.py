@@ -14,6 +14,9 @@ class BaseSubcommand(ABC):
     """
     dirty_working_copy_okay = False
 
+    # whether the env should be in read/write mode
+    rw_env = False
+
     def __init__(self, workflow):
         self.profile = None  # populated in run()
         self.workflow = workflow
