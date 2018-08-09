@@ -95,7 +95,7 @@ class BaseSubcommand(ABC):
 
         This defaults to False
         """
-        config = get_config()
+        config = get_config() or {}
         env = self.workflow.args.environment
 
         dirty_working_copy_okay = self.workflow.args.dirty or config.get('options', {}).get(env, {}).get(
