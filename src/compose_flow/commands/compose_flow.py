@@ -22,10 +22,12 @@ containers that are easily shared between team members -- and bots -- who need
 to manage running services.
 """
 import argparse
+import logging.config
 import os
 import sys
 
 from .subcommands import find_subcommands, set_default_subparser
+from .. import settings
 from ..config import DC_CONFIG_ROOT
 from ..errors import CommandError, ErrorMessage
 
@@ -63,6 +65,7 @@ class ComposeFlow(object):
             help='allow dirty working copy for this command'
         )
         parser.add_argument('-e', '--environment')
+        parser.add_argument('-l', '--loglevel', default='INFO')
         parser.add_argument('-p', '--profile')
         parser.add_argument(
             '--noop', '--dry-run',
@@ -86,6 +89,11 @@ class ComposeFlow(object):
         return parser
 
     def run(self):
+        # setup the loglevel
+        logging_config = settings.LOGGING
+        logging_config['loggers']['compose_flow']['level'] = self.args.loglevel.upper()
+        logging.config.dictConfig(logging_config)
+
         if self.args.version:
             import pkg_resources  # part of setuptools
 
