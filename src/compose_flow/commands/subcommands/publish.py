@@ -12,8 +12,6 @@ class Publish(BaseSubcommand):
     """
     Subcommand for building and pushing Docker images
     """
-    rw_env = True
-
     def build(self):
         self.compose.run(extra_args=['build'])
 
