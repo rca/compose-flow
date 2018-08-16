@@ -58,7 +58,7 @@ class BaseSubcommand(ABC):
     def env_name(self):
         args = self.workflow.args
 
-        return f'{args.environment}-{args.project_name}'
+        return args.environment
 
     @abstractclassmethod
     def fill_subparser(cls, parser, subparser):
@@ -132,6 +132,12 @@ class BaseSubcommand(ABC):
 
         if error:
             return f'\nError: {error}'
+
+    @property
+    def project_name(self):
+        args = self.workflow.args
+
+        return f'{self.env_name}-{args.project_name}'
 
     def run(self, *args, **kwargs):
         try:
