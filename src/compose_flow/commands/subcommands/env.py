@@ -26,7 +26,7 @@ class Env(ConfigBaseSubcommand):
 
     @property
     def config_name(self):
-        return self.workflow.args.config_name or self.env_name
+        return self.workflow.args.config_name or self.project_name
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
@@ -92,7 +92,11 @@ class Env(ConfigBaseSubcommand):
         if 'VERSION' in data and docker_image and ':' in docker_image:
             data['DOCKER_IMAGE'] = f'{docker_image.split(":", 1)[0]}:{data["VERSION"]}'
 
-        data['CF_ENV_NAME'] = self.env_name
+        # deprecate this env var
+        data['CF_ENV_NAME'] = self.project_name
+
+        data['CF_ENV'] = self.env_name
+        data['CF_PROJECT'] = self.project_name
 
         # render placeholders
         for k, v in data.items():
@@ -218,7 +222,7 @@ class Env(ConfigBaseSubcommand):
         """
         Removes an environment from the swarm
         """
-        docker.remove_config(self.env_name)
+        docker.remove_config(self.project_name)
 
     def write_tag(self) -> None:
         """
