@@ -27,7 +27,7 @@ class Deploy(BaseSubcommand):
           --prune
           --with-registry-auth
           --compose-file {self.profile.filename}
-          {self.env.env_name}"""
+          {self.env.project_name}"""
 
         command_split = shlex.split(command)
 

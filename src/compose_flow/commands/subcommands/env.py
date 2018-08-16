@@ -26,7 +26,7 @@ class Env(ConfigBaseSubcommand):
 
     @property
     def config_name(self):
-        return self.workflow.args.config_name or self.env_name
+        return self.workflow.args.config_name or self.project_name
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
@@ -218,7 +218,7 @@ class Env(ConfigBaseSubcommand):
         """
         Removes an environment from the swarm
         """
-        docker.remove_config(self.env_name)
+        docker.remove_config(self.project_name)
 
     def write_tag(self) -> None:
         """

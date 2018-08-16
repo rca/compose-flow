@@ -21,7 +21,7 @@ class Compose(PassthroughBaseSubcommand):
         command = super().get_command()
 
         command.extend([
-            '--project-name', self.env.env_name,
+            '--project-name', self.env.project_name,
             '-f', self.profile.filename,
         ])
 
