@@ -16,7 +16,7 @@ class Publish(BaseSubcommand):
     remote_action = False
 
     def build(self):
-        compose = self.get_compose(check_profile=False, overlay=False)
+        compose = self.get_compose(check_profile=False)
 
         compose.run(extra_args=['build'])
 

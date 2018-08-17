@@ -31,11 +31,9 @@ class Compose(PassthroughBaseSubcommand):
         if self.env.env_name:
             command.extend(['--project-name', self.env.project_name])
 
-        # add -f when an overlay file is created
-        if self.overlay:
-            command.extend([
-                '-f', self.profile.filename,
-            ])
+        command.extend([
+            '-f', self.profile.filename,
+        ])
 
         return command
 

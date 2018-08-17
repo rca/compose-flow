@@ -21,13 +21,11 @@ class BaseSubcommand(ABC):
     # whether the env should be in read/write mode
     rw_env = False
 
-    def __init__(self, workflow, overlay=True):
+    def __init__(self, workflow, load_cf_env=True):
         self.profile = None  # populated in run()
         self.workflow = workflow
 
-        # whether to overlay the partial files defined in the yml file
-        # when False, the vanilla docker-compose.yml file will be used
-        self.overlay = overlay
+        self.load_cf_env = load_cf_env
 
     @property
     def logger(self):
@@ -170,8 +168,7 @@ class BaseSubcommand(ABC):
         self._check_args()
 
         try:
-            if self.overlay:
-                self._write_profile()
+            self._write_profile()
         except (EnvError, NotConnected, ProfileError, TagVersionError) as exc:
             if not self.is_write_profile_error_okay(exc):
                 raise
