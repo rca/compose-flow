@@ -232,5 +232,7 @@ class BaseSubcommand(ABC):
         """
         from .profile import Profile
 
-        self.profile = Profile(self.workflow)
+        subcommand = self.workflow.subcommand
+
+        self.profile = Profile(self.workflow, load_cf_env=subcommand.load_cf_env)
         self.profile.write()

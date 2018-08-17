@@ -55,7 +55,7 @@ class Env(ConfigBaseSubcommand):
         return self.get_data()
 
     @lru_cache()
-    def get_data(self, load_cf_env: bool=True) -> dict:
+    def get_data(self, load_cf_env: bool=None) -> dict:
         """
         Returns the loaded config as a dictionary
 
@@ -68,6 +68,7 @@ class Env(ConfigBaseSubcommand):
             VERSION_VAR: self.version,
         }
 
+        load_cf_env = load_cf_env or self.workflow.subcommand.load_cf_env
         if not load_cf_env:
             return data
 
