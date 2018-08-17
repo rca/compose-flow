@@ -63,3 +63,8 @@ class Publish(BaseSubcommand):
                 self.logger.info(f'docker push {docker_image}')
             else:
                 sh.docker('push', docker_image, _fg=True)
+
+    def _write_profile(self):
+        """
+        Publish does not write a profile; it uses the vanilla docker-compose.yml file
+        """
