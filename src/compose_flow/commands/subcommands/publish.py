@@ -16,17 +16,16 @@ class Publish(BaseSubcommand):
     remote_action = False
 
     def build(self):
-        self.compose.run(extra_args=['build'])
+        compose = self.get_compose(check_profile=False, overlay=False)
+
+        compose.run(extra_args=['build'])
 
     @property
-    @lru_cache()
     def compose(self):
         """
         Returns a Compose subcommand
         """
-        from .compose import Compose
-
-        return Compose(self.workflow)
+        return self.get_compose()
 
     @classmethod
     def fill_subparser(cls, parser, subparser) -> None:
@@ -34,6 +33,12 @@ class Publish(BaseSubcommand):
 
     def is_missing_env_arg_okay(self):
         return True
+
+    @lru_cache()
+    def get_compose(self, **kwargs):
+        from .compose import Compose
+
+        return Compose(self.workflow, **kwargs)
 
     def handle(self):
         self.build()
