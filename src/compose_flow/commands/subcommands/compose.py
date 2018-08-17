@@ -9,6 +9,8 @@ from .passthrough_base import PassthroughBaseSubcommand
 
 from compose_flow import docker, errors
 
+DEFAULT_COMPOSE_FILENAME = 'docker-compose.yml'
+
 
 class Compose(PassthroughBaseSubcommand):
     """
@@ -20,9 +22,14 @@ class Compose(PassthroughBaseSubcommand):
     def get_command(self):
         command = super().get_command()
 
+        if self.overlay:
+            compose_filename = self.profile.filename
+        else:
+            compose_filename = DEFAULT_COMPOSE_FILENAME
+
         command.extend([
             '--project-name', self.env.project_name,
-            '-f', self.profile.filename,
+            '-f', compose_filename,
         ])
 
         return command

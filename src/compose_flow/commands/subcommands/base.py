@@ -1,3 +1,4 @@
+import logging
 import os
 
 from abc import ABC, abstractclassmethod
@@ -17,9 +18,17 @@ class BaseSubcommand(ABC):
     # whether the env should be in read/write mode
     rw_env = False
 
-    def __init__(self, workflow):
+    def __init__(self, workflow, overlay=True):
         self.profile = None  # populated in run()
         self.workflow = workflow
+
+        # whether to overlay the partial files defined in the yml file
+        # when False, the vanilla docker-compose.yml file will be used
+        self.overlay = overlay
+
+    @property
+    def logger(self):
+        return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
     @property
     def args(self):
@@ -152,7 +161,8 @@ class BaseSubcommand(ABC):
         self._check_args()
 
         try:
-            self._write_profile()
+            if self.overlay:
+                self._write_profile()
         except (EnvError, NotConnected, ProfileError, TagVersionError) as exc:
             if not self.is_write_profile_error_okay(exc):
                 raise
