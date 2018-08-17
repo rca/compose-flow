@@ -15,6 +15,9 @@ class BaseSubcommand(ABC):
     """
     dirty_working_copy_okay = False
 
+    # whether this subcommand should connect to the remote host
+    remote_action = True
+
     # whether the env should be in read/write mode
     rw_env = False
 
@@ -152,8 +155,14 @@ class BaseSubcommand(ABC):
         return f'{self.env_name}-{args.project_name}'
 
     def run(self, *args, **kwargs):
+        subcommand = self.workflow.subcommand
+
         try:
-            self._setup_remote()
+            if subcommand.remote_action:
+                self.logger.debug('setup remote')
+                self._setup_remote()
+            else:
+                self.logger.debug('work locally')
         except errors.NotConnected as exc:
             if not self.is_not_connected_okay(exc):
                 raise
