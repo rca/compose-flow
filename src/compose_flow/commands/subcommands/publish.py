@@ -32,6 +32,9 @@ class Publish(BaseSubcommand):
     def fill_subparser(cls, parser, subparser) -> None:
         pass
 
+    def is_missing_env_arg_okay(self):
+        return True
+
     def handle(self):
         self.build()
 
