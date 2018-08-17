@@ -10,7 +10,7 @@ from boltons.iterutils import remap, get_path, default_enter, default_visit
 from .errors import EnvError, ProfileError
 
 # regular expression for finding variables in docker compose files
-VAR_RE = re.compile(r'\${(?P<varname>.*?)}')
+VAR_RE = re.compile(r'\${(?P<varname>.*?)(?P<junk>[:?].*)?}')
 
 
 # https://gist.github.com/mahmoud/db02d16ac89fa401b968
@@ -82,7 +82,7 @@ def render(content: str, env: dict=None) -> str:
         except KeyError:
             raise EnvError(f'Error: varname={varname} not in environment; cannot render')
 
-        previous_idx = x.end('varname') + 1  # +1 to get rid of variable's `}`
+        previous_idx = x.end('junk') + 1  # +1 to get rid of variable's `}`
 
     rendered += content[previous_idx:]
 
