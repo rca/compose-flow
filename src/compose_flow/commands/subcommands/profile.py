@@ -287,6 +287,11 @@ class Profile(BaseSubcommand):
             return {}
 
         profile_name = self.args.profile
+
+        # when there is no profile name, return just docker-compose.yml
+        if profile_name is None:
+            return ['docker-compose.yml']
+
         try:
             profile = config['profiles'][profile_name]
         except KeyError:
