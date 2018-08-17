@@ -217,6 +217,16 @@ class BaseSubcommand(ABC):
 
         cls.fill_subparser(parser, subparser)
 
+    def update_runtime_environment(self, **kwargs):
+        """
+        Updates os.environ with the current environment
+        """
+        try:
+            os.environ.update(self.env.get_data(**kwargs))
+        except NoSuchConfig as exc:
+            if not self.workflow.subcommand.is_env_error_okay(exc):
+                raise
+
     def _write_profile(self):
         """
         Writes a compiled compose file using the info in the yml file
