@@ -219,10 +219,12 @@ class BaseSubcommand(ABC):
         Updates os.environ with the current environment
         """
         try:
-            os.environ.update(self.env.get_data(**kwargs))
+            runtime_env = self.env.get_data()
         except NoSuchConfig as exc:
             if not self.workflow.subcommand.is_env_error_okay(exc):
                 raise
+        else:
+            os.environ.update(runtime_env)
 
     def _write_profile(self):
         """
