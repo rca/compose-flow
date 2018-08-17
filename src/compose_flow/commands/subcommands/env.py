@@ -90,24 +90,6 @@ class Env(ConfigBaseSubcommand):
 
             data[key] = value
 
-        # TODO: this is hacky because of the back-and-forth relationship
-        # between data() and load() ... gotta fix this.
-        docker_image = data.get('DOCKER_IMAGE')
-        if not docker_image:
-            # when a registry domain is set and the docker image is not found
-            # auto-generate the docker image name
-            registry_domain = os.environ.get('CF_DOCKER_IMAGE_PREFIX')
-            if registry_domain:
-                project_name = self.workflow.args.project_name
-                env = self.workflow.args.environment
-
-                docker_image = f'{registry_domain}/{project_name}:{env}'
-
-                # set the auto-generated docker image name in the environment
-                os.environ['DOCKER_IMAGE'] = \
-                    data['DOCKER_IMAGE'] = \
-                    docker_image
-
         if docker_image:
             if ':' not in docker_image:
                 raise EnvironmentError('DOCKER_IMAGE must contain a colon; compose-flow enforces image versioning')
@@ -157,6 +139,30 @@ class Env(ConfigBaseSubcommand):
                     data[k] = rendered
 
         return data
+
+    @property
+    def docker_image(self) -> str:
+        """
+        Generates a docker image name for this action
+        """
+        registry_domain = os.environ['CF_DOCKER_IMAGE_PREFIX']
+        project_name = self.workflow.args.project_name
+        env = self.workflow.args.environment
+
+        docker_image = f'{registry_domain}/{project_name}:{env}'
+
+        return self.set_docker_tag(docker_image)
+
+    def set_docker_tag(self, docker_image: str) -> str:
+        """
+        Sets the docker image tag based on the current version
+        """
+        if ':' not in docker_image:
+            raise EnvironmentError('compose-flow enforces image versioning; DOCKER_IMAGE must contain a colon')
+
+        return f'{docker_image.split(":", 1)[0]}:{self.version}'
+
+        return docker_image
 
     def is_dirty_working_copy_okay(self, exc: Exception) -> bool:
         is_dirty_working_copy_okay = super().is_dirty_working_copy_okay(exc)
