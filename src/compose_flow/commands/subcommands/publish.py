@@ -31,9 +31,6 @@ class Publish(BaseSubcommand):
     def fill_subparser(cls, parser, subparser) -> None:
         pass
 
-    def is_missing_env_arg_okay(self):
-        return True
-
     @lru_cache()
     def get_compose(self, **kwargs):
         from .compose import Compose
@@ -44,6 +41,9 @@ class Publish(BaseSubcommand):
         self.build()
 
         self.push()
+
+    def is_missing_env_arg_okay(self):
+        return True
 
     @property
     def logger(self):
