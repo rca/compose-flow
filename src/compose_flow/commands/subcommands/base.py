@@ -209,6 +209,9 @@ class BaseSubcommand(ABC):
         cls.fill_subparser(parser, subparser)
 
     def _write_profile(self):
+        """
+        Writes a compiled compose file using the info in the yml file
+        """
         from .profile import Profile
 
         self.profile = Profile(self.workflow)
