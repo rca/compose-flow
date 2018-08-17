@@ -28,15 +28,14 @@ class Compose(PassthroughBaseSubcommand):
     def get_command(self):
         command = super().get_command()
 
-        if self.overlay:
-            compose_filename = self.profile.filename
-        else:
-            compose_filename = DEFAULT_COMPOSE_FILENAME
+        if self.env.env_name:
+            command.extend(['--project-name', self.env.project_name])
 
-        command.extend([
-            '--project-name', self.env.project_name,
-            '-f', compose_filename,
-        ])
+        # add -f when an overlay file is created
+        if self.overlay:
+            command.extend([
+                '-f', self.profile.filename,
+            ])
 
         return command
 
