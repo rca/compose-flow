@@ -30,9 +30,10 @@ from .subcommands import find_subcommands, set_default_subparser
 from .. import settings
 from ..config import DC_CONFIG_ROOT
 from ..errors import CommandError, ErrorMessage
+from ..utils import get_repo_name
 
 PACKAGE_NAME = __name__.split('.', 1)[0].replace('_', '-')
-PROJECT_NAME = os.path.basename(os.getcwd())
+PROJECT_NAME = get_repo_name()
 
 
 class ComposeFlow(object):

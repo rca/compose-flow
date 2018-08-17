@@ -15,6 +15,18 @@ from .errors import EnvError, ProfileError
 VAR_RE = re.compile(r'\${(?P<varname>.*?)(?P<junk>[:?].*)?}')
 
 
+def get_repo_name() -> str:
+    buf = sh.git('remote', '-v').stdout.decode('utf8')
+
+    for line in buf.splitlines():
+        if not ('origin' in line and 'fetch' in line):
+            continue
+
+        return line.split()[1].split('/', 1)[-1].split('.', 1)[0]
+
+    raise EnvError('unable to find origin remote')
+
+
 def get_tag_version() -> str:
     """
     Returns the version of code as returned by the `tag-version` cli command
