@@ -52,10 +52,24 @@ class Env(ConfigBaseSubcommand):
 
     @property
     def data(self) -> dict:
+        return self.get_data()
+
+    @lru_cache()
+    def get_data(self, load_cf_env: bool=True) -> dict:
         """
         Returns the loaded config as a dictionary
+
+        Args:
+            load_cf_env: whether to include the current action's env.  if False, only
+                basic variables are set
         """
-        data = {}
+        data = {
+            'DOCKER_IMAGE': self.docker_image,
+            VERSION_VAR: self.version,
+        }
+
+        if not load_cf_env:
+            return data
 
         env = self.load()
         for line in env.splitlines():
