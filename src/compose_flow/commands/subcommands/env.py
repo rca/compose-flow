@@ -8,6 +8,8 @@ import shlex
 import sys
 import tempfile
 
+from functools import lru_cache
+
 import sh
 
 from .config_base import ConfigBaseSubcommand
@@ -95,10 +97,9 @@ class Env(ConfigBaseSubcommand):
             if ':' not in docker_image:
                 raise EnvironmentError('DOCKER_IMAGE must contain a colon; compose-flow enforces image versioning')
 
-            version = data.get(VERSION_VAR)
             subcommand = self.workflow.subcommand
             if subcommand.rw_env:
-                data['DOCKER_IMAGE'] = f'{docker_image.split(":", 1)[0]}:{version}'
+                data['DOCKER_IMAGE'] = f'{docker_image.split(":", 1)[0]}:{self.version}'
 
         # deprecate this env var
         data['CF_ENV_NAME'] = self.project_name
@@ -190,16 +191,7 @@ class Env(ConfigBaseSubcommand):
 
         subcommand = self.workflow.subcommand
         if subcommand.rw_env or VERSION_VAR not in data:
-            # default the tag version to the name of the environment
-            tag_version = self.workflow.args.environment
-            try:
-                tag_version = utils.get_tag_version()
-            except Exception as exc:
-                # check if the subcommand is okay with a dirty working copy
-                if not subcommand.is_dirty_working_copy_okay(exc):
-                    raise errors.TagVersionError(f'Warning: unable to run tag-version ({exc})\n')
-
-            data[VERSION_VAR] = tag_version
+            data[VERSION_VAR] = self.version
 
         self._config = self.render(data)
 
@@ -229,6 +221,25 @@ class Env(ConfigBaseSubcommand):
         Removes an environment from the swarm
         """
         docker.remove_config(self.project_name)
+
+    @property
+    @lru_cache()
+    def version(self):
+        """
+        Returns a version string for the current version of code
+        """
+        # default the tag version to the name of the environment
+        tag_version = self.workflow.args.environment
+        try:
+            tag_version = utils.get_tag_version()
+        except Exception as exc:
+            subcommand = self.workflow.subcommand
+
+            # check if the subcommand is okay with a dirty working copy
+            if not subcommand.is_dirty_working_copy_okay(exc):
+                raise errors.TagVersionError(f'Warning: unable to run tag-version ({exc})\n')
+
+        return tag_version
 
     def write_tag(self) -> None:
         """
