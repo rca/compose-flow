@@ -22,7 +22,6 @@ class BaseSubcommand(ABC):
     rw_env = False
 
     def __init__(self, workflow, load_cf_env=True):
-        self.profile = None  # populated in run()
         self.workflow = workflow
 
         self.load_cf_env = load_cf_env
@@ -230,9 +229,4 @@ class BaseSubcommand(ABC):
         """
         Writes a compiled compose file using the info in the yml file
         """
-        from .profile import Profile
-
-        subcommand = self.workflow.subcommand
-
-        self.profile = Profile(self.workflow, load_cf_env=subcommand.load_cf_env)
-        self.profile.write()
+        self.workflow.profile.write()

@@ -26,6 +26,8 @@ import logging.config
 import os
 import sys
 
+from functools import lru_cache
+
 from .subcommands import find_subcommands, set_default_subparser
 from .. import settings
 from ..config import DC_CONFIG_ROOT
@@ -88,6 +90,15 @@ class ComposeFlow(object):
         parser.set_default_subparser('help')
 
         return parser
+
+    @property
+    @lru_cache()
+    def profile(self):
+        from .subcommands.profile import Profile
+
+        subcommand = self.subcommand
+
+        return Profile(self, load_cf_env=subcommand.load_cf_env)
 
     def run(self):
         # setup the loglevel

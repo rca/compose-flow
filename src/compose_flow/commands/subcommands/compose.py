@@ -31,8 +31,9 @@ class Compose(PassthroughBaseSubcommand):
         if self.env.env_name:
             command.extend(['--project-name', self.env.project_name])
 
+        profile = self.workflow.profile
         command.extend([
-            '-f', self.profile.filename,
+            '-f', profile.filename,
         ])
 
         return command

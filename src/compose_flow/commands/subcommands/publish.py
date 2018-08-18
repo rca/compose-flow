@@ -60,7 +60,9 @@ class Publish(BaseSubcommand):
 
     def push(self):
         docker_images = set()
-        for service_data in self.profile.data['services'].values():
+
+        profile = self.workflow.profile
+        for service_data in profile.data['services'].values():
             if service_data.get('build'):
                 docker_images.add(service_data.get('image'))
 
