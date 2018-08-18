@@ -257,22 +257,3 @@ class Env(ConfigBaseSubcommand):
                 raise errors.TagVersionError(f'Warning: unable to run tag-version ({exc})\n')
 
         return tag_version
-
-    def write_tag(self) -> None:
-        """
-        Writes the projects tag version into the environment
-
-        This currently writes the tag to the `DOCKER_IMAGE` variable
-        """
-        data = self.data
-
-        image_base = data['DOCKER_IMAGE'].rsplit(':', 1)[0]
-        data['DOCKER_IMAGE'] = f'{image_base}:{data["VERSION"]}'
-
-        with tempfile.NamedTemporaryFile('w+') as fh:
-            fh.write(self.render(data))
-            fh.flush()
-
-            fh.seek(0, 0)
-
-            self.push(path=fh.name)
