@@ -5,12 +5,42 @@ import yaml
 
 from collections import OrderedDict
 
+import sh
+
 from boltons.iterutils import remap, get_path, default_enter, default_visit
 
 from .errors import EnvError, ProfileError
 
 # regular expression for finding variables in docker compose files
 VAR_RE = re.compile(r'\${(?P<varname>.*?)(?P<junk>[:?].*)?}')
+
+
+def get_repo_name() -> str:
+    buf = sh.git('remote', '-v').stdout.decode('utf8')
+
+    for line in buf.splitlines():
+        if not ('origin' in line and 'fetch' in line):
+            continue
+
+        return line.split()[1].split('/', 1)[-1].split('.', 1)[0]
+
+    raise EnvError('unable to find origin remote')
+
+
+def get_tag_version() -> str:
+    """
+    Returns the version of code as returned by the `tag-version` cli command
+    """
+    # inject the version from tag-version command into the loaded environment
+    tag_version = 'unknown'
+    try:
+        tag_version_command = getattr(sh, 'tag-version')
+    except Exception as exc:
+        print(f'Warning: unable to find tag-version ({exc})\n', file=sys.stderr)
+    else:
+        tag_version = tag_version_command().stdout.decode('utf8').strip()
+
+    return tag_version
 
 
 # https://gist.github.com/mahmoud/db02d16ac89fa401b968
