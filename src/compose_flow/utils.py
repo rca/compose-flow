@@ -82,7 +82,11 @@ def render(content: str, env: dict=None) -> str:
         except KeyError:
             raise EnvError(f'Error: varname={varname} not in environment; cannot render')
 
-        previous_idx = x.end('junk') + 1  # +1 to get rid of variable's `}`
+        end = x.end('junk')
+        if end == -1:
+            end = x.end('varname')
+
+        previous_idx = end + 1  # +1 to get rid of variable's `}`
 
     rendered += content[previous_idx:]
 
