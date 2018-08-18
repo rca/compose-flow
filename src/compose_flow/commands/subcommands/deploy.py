@@ -22,13 +22,15 @@ class Deploy(BaseSubcommand):
         return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
     def handle(self):
+        profile = self.workflow.profile
+
         # check the profile to make sure it defines all the needed environment variables
-        self.profile.check()
+        profile.check()
 
         command = f"""docker stack deploy
           --prune
           --with-registry-auth
-          --compose-file {self.profile.filename}
+          --compose-file {profile.filename}
           {self.env.project_name}"""
 
         command_split = shlex.split(command)
