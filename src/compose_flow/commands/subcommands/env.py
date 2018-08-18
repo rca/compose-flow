@@ -257,3 +257,17 @@ class Env(ConfigBaseSubcommand):
                 raise errors.TagVersionError(f'Warning: unable to run tag-version ({exc})\n')
 
         return tag_version
+
+    def write(self) -> None:
+        """
+        Writes the environment into the docker config
+        """
+        data = self.data
+
+        with tempfile.NamedTemporaryFile('w+') as fh:
+            fh.write(self.render(data))
+            fh.flush()
+
+            fh.seek(0, 0)
+
+            self.push(path=fh.name)
