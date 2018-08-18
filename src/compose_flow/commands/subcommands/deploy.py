@@ -40,3 +40,5 @@ class Deploy(BaseSubcommand):
         if not self.args.dry_run:
             executable = getattr(sh, command_split[0])
             executable(*command_split[1:], _env=os.environ)
+
+            self.env.write()
