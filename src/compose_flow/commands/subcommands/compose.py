@@ -19,9 +19,9 @@ class Compose(PassthroughBaseSubcommand):
     command_name = 'docker-compose'
     dirty_working_copy_okay = True
 
-    def __init__(self, *args, **kwargs):
-        self.check_profile = kwargs.pop('check_profile', True)
-        self._version = kwargs.pop('version', None)
+    def __init__(self, *args, check_profile=True, version=None, **kwargs):
+        self.check_profile = check_profile
+        self._version = version
 
         super().__init__(*args, **kwargs)
 
