@@ -41,7 +41,7 @@ class Compose(PassthroughBaseSubcommand):
     def handle(self, extra_args: list=None) -> [None, str]:
         # check the profile to make sure it defines all the needed environment variables
         if self.check_profile:
-            self.profile.check()
+            self.workflow.profile.check()
 
         super().handle(extra_args=extra_args)
 
