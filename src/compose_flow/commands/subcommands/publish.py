@@ -12,7 +12,6 @@ class Publish(BaseSubcommand):
     """
     Subcommand for building and pushing Docker images
     """
-    rw_env = False
     remote_action = False
 
     def __init__(self, *args, **kwargs):
