@@ -16,15 +16,9 @@ VAR_RE = re.compile(r'\${(?P<varname>.*?)(?P<junk>[:?].*)?}')
 
 
 def get_repo_name() -> str:
-    buf = sh.git('remote', '-v').stdout.decode('utf8')
+    repo_name = os.path.basename(os.getcwd())
 
-    for line in buf.splitlines():
-        if not ('origin' in line and 'fetch' in line):
-            continue
-
-        return line.split()[1].split('/', 1)[-1].split('.', 1)[0]
-
-    raise EnvError('unable to find origin remote')
+    return repo_name
 
 
 def get_tag_version() -> str:

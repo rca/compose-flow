@@ -32,10 +32,13 @@ from .subcommands import find_subcommands, set_default_subparser
 from .. import settings
 from ..config import DC_CONFIG_ROOT
 from ..errors import CommandError, ErrorMessage
-from ..utils import get_repo_name
+from ..utils import get_repo_name, yaml_load
 
 PACKAGE_NAME = __name__.split('.', 1)[0].replace('_', '-')
 PROJECT_NAME = get_repo_name()
+
+CF_REMOTES_CONFIG_FILENAME = 'compose_flow.config.yml'
+CF_REMOTES_CONFIG_PATH = os.path.expanduser(f'~/.compose_flow/{CF_REMOTES_CONFIG_FILENAME}')
 
 
 class ComposeFlow(object):
@@ -50,6 +53,20 @@ class ComposeFlow(object):
 
         if os.path.exists(DC_CONFIG_ROOT):
             os.chdir(DC_CONFIG_ROOT)
+
+    @property
+    def app_config(self) -> dict:
+        """
+        Returns the application config
+        """
+        app_config = {}
+
+        config_path = os.environ.get('CF_REMOTES_CONFIG_PATH', CF_REMOTES_CONFIG_PATH)
+        if os.path.exists(config_path):
+            with open(config_path, 'r') as fh:
+                app_config = yaml_load(fh)
+
+        return app_config
 
     def get_argument_parser(self, doc: str=None):
         argparse.ArgumentParser.set_default_subparser = set_default_subparser
