@@ -89,7 +89,17 @@ class Env(ConfigBaseSubcommand):
 
         # replace variables when running a r/w command
         subcommand = self.workflow.subcommand
-        if subcommand.rw_env:
+
+        action = None
+        if 'action' in subcommand.args:
+            action = subcommand.args.action
+
+        initialize = False
+        if action == 'edit' and 'force' in subcommand.args and subcommand.args.force:
+            initialize = True
+
+        # set the variables when the environment is r/w or the
+        if subcommand.rw_env or initialize:
             data.update({
                 'CF_ENV': self.env_name,
                 'CF_PROJECT': self.project_name,
