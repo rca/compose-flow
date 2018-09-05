@@ -63,10 +63,7 @@ class Env(ConfigBaseSubcommand):
             load_cf_env: whether to include the current action's env.  if False, only
                 basic variables are set
         """
-        data = {
-            'DOCKER_IMAGE': self.docker_image,
-            VERSION_VAR: self.version,
-        }
+        data = {}
 
         load_cf_env = load_cf_env or self.workflow.subcommand.load_cf_env
         if not load_cf_env:
@@ -90,15 +87,28 @@ class Env(ConfigBaseSubcommand):
 
             data[key] = value
 
+        # replace variables when running a r/w command
         subcommand = self.workflow.subcommand
-        if subcommand.rw_env:
-            data['DOCKER_IMAGE'] = f'{self.docker_image.split(":", 1)[0]}:{self.version}'
 
-        # deprecate this env var
-        data['CF_ENV_NAME'] = self.project_name
+        action = None
+        if 'action' in subcommand.args:
+            action = subcommand.args.action
 
-        data['CF_ENV'] = self.env_name
-        data['CF_PROJECT'] = self.project_name
+        initialize = False
+        if action == 'edit' and 'force' in subcommand.args and subcommand.args.force:
+            initialize = True
+
+        # set the variables when the environment is r/w or the
+        if subcommand.rw_env or initialize:
+            data.update({
+                'CF_ENV': self.env_name,
+                'CF_PROJECT': self.project_name,
+                'DOCKER_IMAGE': f'{self.docker_image.split(":", 1)[0]}:{self.version}',
+                VERSION_VAR: self.version,
+
+                # deprecate this env var
+                'CF_ENV_NAME': self.project_name,
+            })
 
         # render placeholders
         for k, v in data.items():

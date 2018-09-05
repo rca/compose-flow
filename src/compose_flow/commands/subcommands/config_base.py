@@ -105,5 +105,8 @@ class ConfigBaseSubcommand(BaseSubcommand):
         if not runtime_config:
             data.update(self._rendered_config)
 
+        lines = []
         for k, v in data.items():
-            buf.write(f'{k}={v}\n')
+            lines.append(f'{k}={v}')
+
+        buf.write('\n'.join(sorted(lines)))
