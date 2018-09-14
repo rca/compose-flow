@@ -27,6 +27,7 @@ class Env(ConfigBaseSubcommand):
         super().__init__(*args, *kwargs)
 
         self._config = None
+        self._docker_image = None
 
     @property
     def config_name(self):
@@ -151,13 +152,18 @@ class Env(ConfigBaseSubcommand):
         """
         Generates a docker image name for this action
         """
+        if self._docker_image:
+            return self._docker_image
+
         registry_domain = os.environ['CF_DOCKER_IMAGE_PREFIX']
         project_name = self.workflow.args.project_name
         env = self.workflow.args.environment
 
         docker_image = f'{registry_domain}/{project_name}:{env}'
 
-        return self.set_docker_tag(docker_image)
+        self._docker_image = self.set_docker_tag(docker_image)
+
+        return self._docker_image
 
     def set_docker_tag(self, docker_image: str) -> str:
         """
