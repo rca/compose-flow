@@ -52,41 +52,12 @@ class Env(ConfigBaseSubcommand):
         print(self.render())
 
     @property
-    def data(self) -> dict:
-        return self.get_data()
-
     @lru_cache()
-    def get_data(self, load_cf_env: bool=None) -> dict:
+    def data(self) -> dict:
         """
         Returns the loaded config as a dictionary
-
-        Args:
-            load_cf_env: whether to include the current action's env.  if False, only
-                basic variables are set
         """
-        data = {}
-
-        load_cf_env = load_cf_env or self.workflow.subcommand.load_cf_env
-        if not load_cf_env:
-            return data
-
-        env = self.load()
-        for line in env.splitlines():
-            # skip empty lines
-            if line.strip() == '':
-                continue
-
-            # skip commented lines
-            if line.startswith('#'):
-                continue
-
-            try:
-                key, value = line.split('=', 1)
-            except ValueError as exc:
-                print(f'unable to split line={line}')
-                raise
-
-            data[key] = value
+        data = self.load()
 
         # now that the data from the cf environment is parsed default the
         # docker image to anything that was defined in there.
@@ -95,24 +66,26 @@ class Env(ConfigBaseSubcommand):
         # replace variables when running a r/w command
         subcommand = self.workflow.subcommand
 
+        args = self.workflow.args
+
         action = None
-        if 'action' in subcommand.args:
-            action = subcommand.args.action
+        if 'action' in args:
+            action = args.action
 
         initialize = False
-        if action == 'edit' and 'force' in subcommand.args and subcommand.args.force:
+        if action == 'edit' and 'force' in args and args.force:
             initialize = True
 
         # set the variables when the environment is r/w or the
         if subcommand.rw_env or initialize:
             data.update({
-                'CF_ENV': self.env_name,
-                'CF_PROJECT': self.project_name,
+                'CF_ENV': args.environment,
+                'CF_PROJECT': args.project_name,
                 'DOCKER_IMAGE': f'{self.docker_image.split(":", 1)[0]}:{self.version}',
                 VERSION_VAR: self.version,
 
                 # deprecate this env var
-                'CF_ENV_NAME': self.project_name,
+                'CF_ENV_NAME': args.project_name,
             })
 
         # render placeholders
@@ -209,30 +182,43 @@ class Env(ConfigBaseSubcommand):
     def is_write_profile_error_okay(self, exc):
         return self.is_env_modification_action()
 
-    def load(self) -> str:
+    def load(self) -> dict:
         """
         Loads an environment from the docker swarm config
         """
-        if self._config is not None:
-            return self._config
+        data = {}
 
         try:
-            self._config = docker.get_config(self.config_name)
+            content = docker.get_config(self.config_name)
         except errors.NoSuchConfig as exc:
             if not self.is_missing_config_okay(exc):
                 raise
 
-            self._config = ''
+            content = ''
 
-        data = self.data
+        for idx, line in enumerate(content.splitlines()):
+            # skip empty lines
+            if line.strip() == '':
+                continue
+
+            # skip commented lines
+            if line.strip().startswith('#'):
+                continue
+
+            try:
+                key, value = line.split('=', 1)
+            except ValueError as exc:
+                self.logger.error(f'ERROR: unable to parse line number {idx}, edit your env: {line}')
+
+                raise
+
+            data[key] = value
 
         subcommand = self.workflow.subcommand
         if subcommand.rw_env or VERSION_VAR not in data:
             data[VERSION_VAR] = self.version
 
-        self._config = self.render(data)
-
-        return self._config
+        return data
 
     @property
     def logger(self):

@@ -30,6 +30,6 @@ class PublishTestCase(TestCase):
 
         flow.run()
 
-        env_data = flow.subcommand.env.data
+        env_data = flow.environment.data
 
         self.assertEqual(True, 'VERSION' in env_data)
