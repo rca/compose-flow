@@ -64,24 +64,30 @@ class Workflow(object):
             formatter_class=argparse.RawDescriptionHelpFormatter
         )
 
+        # defaults for these args are set in _set_arg_defaults() below
         parser.add_argument('-c', '--config-name')
+        parser.add_argument('-e', '--environment')
+        parser.add_argument('-p', '--profile')
+        parser.add_argument(
+            '-n', '--project-name',
+            help=f'the project name to use, default={PROJECT_NAME}'
+        )
+        parser.add_argument(
+            '-r', '--remote',
+            help=f'the label of the remote system to connect to, default same name as the environment'
+        )
+
+        # misc args
         parser.add_argument(
             '--dirty',
             action='store_true',
             help='allow dirty working copy for this command'
         )
-        parser.add_argument('-e', '--environment')
         parser.add_argument('-l', '--loglevel', default='INFO')
-        parser.add_argument('-p', '--profile')
         parser.add_argument(
             '--noop', '--dry-run',
             action='store_true', dest='dry_run',
             help='just print command, do not execute'
-        )
-        parser.add_argument(
-            '-n', '--project-name',
-            default=PROJECT_NAME,
-            help=f'the project name to use, default={PROJECT_NAME}'
         )
         parser.add_argument('--version', action='store_true', help='print version and exit')
 

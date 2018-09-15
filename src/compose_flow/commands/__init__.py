@@ -1,1 +1,1 @@
-from .compose_flow import Workflow
+from .workflow import Workflow

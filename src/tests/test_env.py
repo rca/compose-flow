@@ -18,7 +18,7 @@ class EnvTestCase(TestCase):
 
         self.assertEqual(env.config_name, 'test')
 
-    @mock.patch('compose_flow.commands.compose_flow.PROJECT_NAME', new='testdirname')
+    @mock.patch('compose_flow.commands.workflow.PROJECT_NAME', new='testdirname')
     def test_default_config_name(self, *mocks):
         """
         Ensure the default config is given
