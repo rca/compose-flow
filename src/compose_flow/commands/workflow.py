@@ -56,6 +56,17 @@ class Workflow(object):
 
         return app_config
 
+    def _check_version_option(self):
+        version_arg = self.args.version
+        if version_arg:
+            import pkg_resources  # part of setuptools
+
+            version = pkg_resources.require(PACKAGE_NAME)[0].version
+
+            print(f'{version}')
+
+        return version_arg
+
     def get_argument_parser(self, doc: str=None):
         argparse.ArgumentParser.set_default_subparser = set_default_subparser
 
@@ -117,13 +128,7 @@ class Workflow(object):
         logging_config['loggers']['compose_flow']['level'] = self.args.loglevel.upper()
         logging.config.dictConfig(logging_config)
 
-        if self.args.version:
-            import pkg_resources  # part of setuptools
-
-            version = pkg_resources.require(PACKAGE_NAME)[0].version
-
-            print(f'{version}')
-
+        if self._check_version_option:
             return
 
         try:
