@@ -34,6 +34,8 @@ class Workflow(object):
         self.parser = self.get_argument_parser()
         self.args, self.args_remainder = self.parser.parse_known_args(self.argv)
 
+        self._set_arg_defaults()
+
         # the subcommand that is being run; defined in run() below
         self.subcommand = None
 
@@ -132,6 +134,30 @@ class Workflow(object):
             return f'\n{exc}'
         except ErrorMessage as exc:
             return f'\n{exc}'
+
+    def _set_arg_defaults(self):
+        """
+        Sets the default arguments relative to the set variables
+
+        NOTE: an environment can be None!
+        """
+        if self.args.project_name is None:
+            self.args.project_name = PROJECT_NAME
+
+        # when no profile or remote is given, they take on the same as the environment name
+        if self.args.profile is None:
+            self.args.profile = self.args.environment
+
+        if self.args.remote is None:
+            self.args.remote = self.args.environment
+
+        # the config name is generated from the environment and project name
+        if self.args.config_name is None:
+            prefix = ''
+            if self.args.environment:
+                prefix = f'{self.args.environment}-'
+
+            self.args.config_name = f'{prefix}{self.args.project_name}'
 
     @property
     @lru_cache()
