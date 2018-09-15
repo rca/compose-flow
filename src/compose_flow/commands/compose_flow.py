@@ -27,7 +27,7 @@ CF_REMOTES_CONFIG_FILENAME = 'config.yml'
 CF_REMOTES_CONFIG_PATH = os.path.expanduser(f'~/.compose/{CF_REMOTES_CONFIG_FILENAME}')
 
 
-class ComposeFlow(object):
+class Workflow(object):
     def __init__(self, argv=None):
         self.argv = argv or sys.argv[1:]
 

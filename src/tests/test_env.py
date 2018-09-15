@@ -3,7 +3,7 @@ from unittest import TestCase, mock
 
 from compose_flow import utils
 from compose_flow.commands.subcommands.env import Env
-from compose_flow.commands import ComposeFlow
+from compose_flow.commands import Workflow
 
 
 @mock.patch('compose_flow.commands.subcommands.remote.sh')
@@ -13,7 +13,7 @@ class EnvTestCase(TestCase):
         Ensure the config arg updates the config name
         """
         command = shlex.split('-e dev --config-name=test env cat')
-        flow = ComposeFlow(argv=command)
+        flow = Workflow(argv=command)
         env = Env(flow)
 
         self.assertEqual(env.config_name, 'test')
@@ -24,7 +24,7 @@ class EnvTestCase(TestCase):
         Ensure the default config is given
         """
         command = shlex.split('-e dev env cat')
-        flow = ComposeFlow(argv=command)
+        flow = Workflow(argv=command)
         env = Env(flow)
 
         self.assertEqual(env.config_name, 'dev-testdirname')
@@ -44,7 +44,7 @@ class EnvTestCase(TestCase):
         docker_mock.get_config.return_value = f"FOO=1\nBAR=2\nVERSION={version}\nDOCKER_IMAGE={docker_image}"
 
         command = shlex.split('-e dev env cat')
-        flow = ComposeFlow(argv=command)
+        flow = Workflow(argv=command)
 
         flow.run()
 
@@ -72,7 +72,7 @@ class EnvTestCase(TestCase):
         utils_mock.render = utils.render
 
         command = shlex.split('-e dev env cat')
-        flow = ComposeFlow(argv=command)
+        flow = Workflow(argv=command)
 
         flow.run()
 

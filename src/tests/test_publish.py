@@ -3,7 +3,7 @@ import shlex
 from unittest import TestCase, mock
 
 from compose_flow import utils
-from compose_flow.commands import ComposeFlow
+from compose_flow.commands import Workflow
 
 
 @mock.patch('compose_flow.commands.subcommands.env.os')
@@ -23,7 +23,7 @@ class PublishTestCase(TestCase):
         utils_mock.render = utils.render
 
         command = shlex.split('-e dev publish')
-        flow = ComposeFlow(argv=command)
+        flow = Workflow(argv=command)
 
         flow.subcommand.build = mock.Mock()
         flow.subcommand.push = mock.Mock()
