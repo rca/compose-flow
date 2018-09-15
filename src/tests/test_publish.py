@@ -6,6 +6,8 @@ from compose_flow import utils
 from compose_flow.commands import ComposeFlow
 
 
+@mock.patch('compose_flow.commands.subcommands.env.os')
+@mock.patch('compose_flow.commands.subcommands.remote.sh')
 class PublishTestCase(TestCase):
     @mock.patch('compose_flow.commands.subcommands.env.utils')
     @mock.patch('compose_flow.commands.subcommands.env.docker')
@@ -22,6 +24,9 @@ class PublishTestCase(TestCase):
 
         command = shlex.split('-e dev publish')
         flow = ComposeFlow(argv=command)
+
+        flow.subcommand.build = mock.Mock()
+        flow.subcommand.push = mock.Mock()
 
         flow.run()
 

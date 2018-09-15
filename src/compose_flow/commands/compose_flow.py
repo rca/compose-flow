@@ -118,8 +118,6 @@ class ComposeFlow(object):
 
             return
 
-        self.subcommand = self.args.subcommand_cls(self)
-
         try:
             return self.subcommand.run()
         except CommandError as exc:
@@ -128,3 +126,17 @@ class ComposeFlow(object):
             return f'\n{exc}'
         except ErrorMessage as exc:
             return f'\n{exc}'
+
+    @property
+    @lru_cache()
+    def subcommand(self):
+        return self.args.subcommand_cls(self)
+
+    @subcommand.setter
+    def subcommand(self, value):
+        """
+        This can only be used to clear the subcommand
+        """
+        assert value == None
+
+        self.__class__.subcommand.fget.cache_clear()
