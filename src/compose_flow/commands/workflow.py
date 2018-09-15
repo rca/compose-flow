@@ -15,6 +15,7 @@ import sys
 from functools import lru_cache
 
 from .subcommands import find_subcommands, set_default_subparser
+from .subcommands.env import Env
 from .. import settings
 from ..config import DC_CONFIG_ROOT
 from ..errors import CommandError, ErrorMessage
@@ -66,6 +67,14 @@ class Workflow(object):
             print(f'{version}')
 
         return version_arg
+
+    @property
+    @lru_cache()
+    def environment(self):
+        """
+        Returns an Env instance
+        """
+        return Env(self)
 
     def get_argument_parser(self, doc: str=None):
         argparse.ArgumentParser.set_default_subparser = set_default_subparser
@@ -122,6 +131,13 @@ class Workflow(object):
 
         return Profile(self, load_cf_env=subcommand.load_cf_env)
 
+
+    def _render_profile(self):
+        """
+        Writes a compiled compose file using the info in the yml file
+        """
+        self.profile.write()
+
     def run(self):
         # setup the loglevel
         logging_config = settings.LOGGING
@@ -132,7 +148,16 @@ class Workflow(object):
             return
 
         try:
-            return self.subcommand.run()
+            self._setup_remote()
+
+            self._setup_environment()
+
+            self._render_profile()
+
+            # execute the subcommand
+            self.subcommand.run()
+
+            self._write_environment()
         except CommandError as exc:
             self.parser.print_help()
 
@@ -163,6 +188,29 @@ class Workflow(object):
                 prefix = f'{self.args.environment}-'
 
             self.args.config_name = f'{prefix}{self.args.project_name}'
+
+    def _setup_remote(self):
+        """
+        Sets DOCKER_HOST based on the environment
+        """
+        # avoid circular import
+        from .remote import Remote
+
+        remote = Remote(self.workflow)
+
+        try:
+            remote.make_connection(use_existing=True)
+        except (errors.AlreadyConnected, errors.RemoteUndefined):
+            pass
+        except errors.NotConnected as exc:
+            if not self.is_not_connected_okay(exc):
+                raise
+
+        docker_host = remote.docker_host
+        if docker_host:
+            os.environ.update({
+                'DOCKER_HOST': docker_host,
+            })
 
     @property
     @lru_cache()

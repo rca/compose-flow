@@ -30,22 +30,6 @@ class BaseSubcommand(ABC):
     def logger(self):
         return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
-    @property
-    def args(self):
-        return self.workflow.args
-
-    def _check_args(self):
-        """
-        Checks and transforms the command line arguments
-        """
-        args = self.workflow.args
-
-        if None in (args.environment,):
-            if not self.workflow.subcommand.is_missing_env_arg_okay():
-                raise CommandError('Error: environment is required')
-
-        args.profile = args.profile or args.environment
-
     def get_subcommand(self, name:str) -> object:
         """
         Returns the requested subcommand class by name
@@ -55,22 +39,6 @@ class BaseSubcommand(ABC):
         subcommand_cls = get_subcommand_class(name)
 
         return subcommand_cls(self.workflow)
-
-    @property
-    def env(self):
-        """
-        Returns an Env instance
-        """
-        # avoid circular import
-        from .env import Env
-
-        return Env(self.workflow)
-
-    @property
-    def env_name(self):
-        args = self.workflow.args
-
-        return args.environment
 
     @abstractclassmethod
     def fill_subparser(cls, parser, subparser):
@@ -145,24 +113,8 @@ class BaseSubcommand(ABC):
         if error:
             return f'\nError: {error}'
 
-    @property
-    def project_name(self):
-        args = self.workflow.args
-
-        return f'{self.env_name}-{args.project_name}'
-
     def run(self, *args, **kwargs):
         subcommand = self.workflow.subcommand
-
-        try:
-            if subcommand.remote_action:
-                self.logger.debug('setup remote')
-                self._setup_remote()
-            else:
-                self.logger.debug('work locally')
-        except errors.NotConnected as exc:
-            if not self.is_not_connected_okay(exc):
-                raise
 
         self._check_args()
 
@@ -179,29 +131,6 @@ class BaseSubcommand(ABC):
                 raise
 
         return self.handle(*args, **kwargs)
-
-    def _setup_remote(self):
-        """
-        Sets DOCKER_HOST based on the environment
-        """
-        # avoid circular import
-        from .remote import Remote
-
-        remote = Remote(self.workflow)
-
-        try:
-            remote.make_connection(use_existing=True)
-        except (errors.AlreadyConnected, errors.RemoteUndefined):
-            pass
-        except errors.NotConnected as exc:
-            if not self.is_not_connected_okay(exc):
-                raise
-
-        docker_host = remote.docker_host
-        if docker_host:
-            os.environ.update({
-                'DOCKER_HOST': docker_host,
-            })
 
     @classmethod
     def setup_subparser(cls, parser, subparsers):
@@ -224,9 +153,3 @@ class BaseSubcommand(ABC):
                 raise
         else:
             os.environ.update(runtime_env)
-
-    def _write_profile(self):
-        """
-        Writes a compiled compose file using the info in the yml file
-        """
-        self.workflow.profile.write()
