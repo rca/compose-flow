@@ -1,6 +1,10 @@
 # Compose Flow
 
-This utility is built on top of [Docker Compose](https://docs.docker.com/compose/) and [Swarm Mode](https://docs.docker.com/engine/swarm/).  It establishes conventions for publishing Images, deploying [Stacks](https://docs.docker.com/get-started/part5/#prerequisites) across multiple installations (like separate dev and prod Swarms), and working with service containers that are easily shared between team members -- and bots -- who need to manage running services.
+This utility is built on top of [Docker Compose](https://docs.docker.com/compose/) and [Swarm Mode](https://docs.docker.com/engine/swarm/).  It establishes conventions for common workflow tasks that are easily shared between team members -- and butlers -- who need to manage running services.  These tasks include:
+
+- managing [Stacks](https://docs.docker.com/get-started/part5/#prerequisites) across multiple Swarms (like separate dev and prod Swarms)
+- easily connecting to and working with service containers
+- building and publishing images
 
 
 ## Installation
@@ -25,6 +29,7 @@ profiles:
   local:
     - docker-compose.yml
     - docker-compose.local.yml
+
 
 tasks:
   psql:
