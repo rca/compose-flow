@@ -1,18 +1,4 @@
 """
-    ,---,. ,--,
-  ,'  .' ,--.'|
-,---.'   |  | :     ,---.          .---.
-|   |   .:  : '    '   ,'\\        /. ./|
-:   :  : |  ' |   /   /   |    .-'-. ' |
-:   |  |-'  | |  .   ; ,. :   /___/ \\: |
-|   :  ;/|  | :  '   | |: :.-'.. '   ' .
-|   |   .'  : |__'   | .; /___/ \\:     '
-'   :  ' |  | '.'|   :    .   \\  ' .\\
-|   |  | ;  :    ;\\   \\  / \\   \\   ' \\ |
-|   :  \\ |  ,   /  `----'   \\   \\  |--"
-|   | ,'  ---`-'             \\   \\ |
-`----'                        '---"
-
 Compose Flow - Codified workflows for Docker Compose and Swarm
 
 This utility is built on top of Docker Compose and Swarm Mode. It establishes
