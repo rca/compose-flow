@@ -184,6 +184,11 @@ class Env(ConfigBaseSubcommand):
         """
         data = {}
 
+        # when no environment is specified on the command line, do not load any docker config
+        environment = self.workflow.args.environment
+        if not environment:
+            return data
+
         try:
             content = docker.get_config(self.workflow.config_name)
         except errors.NoSuchConfig as exc:

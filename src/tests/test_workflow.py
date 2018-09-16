@@ -15,12 +15,25 @@ class WorkflowTestCase(TestCase):
         docker_mock = mocks[-2]
         docker_mock.get_config.return_value = f"FOO=1\nBAR=2"
 
-    def test_load_env_when_env_specified(self, *mocks):
+    def _setup_utils_mock(self, *mocks):
         utils_mock = mocks[-1]
         utils_mock.get_tag_version.return_value = '0.0.0'
         utils_mock.render.side_effect = lambda x, **kwargs: x
 
+    def test_empty_env_when_no_env_specified(self, *mocks):
         self._setup_docker_config_mock(*mocks)
+        self._setup_utils_mock(*mocks)
+
+        command = shlex.split('env cat')
+        workflow = Workflow(argv=command)
+
+        env = workflow.environment
+
+        self.assertEqual({}, env.data)
+
+    def test_load_env_when_env_specified(self, *mocks):
+        self._setup_docker_config_mock(*mocks)
+        self._setup_utils_mock(*mocks)
 
         command = shlex.split('-e dev env cat')
         workflow = Workflow(argv=command)
