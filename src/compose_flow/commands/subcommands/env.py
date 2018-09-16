@@ -214,10 +214,6 @@ class Env(ConfigBaseSubcommand):
 
             data[key] = value
 
-        subcommand = self.workflow.subcommand
-        if subcommand.rw_env or VERSION_VAR not in data:
-            data[VERSION_VAR] = self.version
-
         return data
 
     @property
