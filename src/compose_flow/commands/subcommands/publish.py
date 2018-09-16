@@ -16,16 +16,19 @@ class Publish(BaseSubcommand):
     remote_action = True
 
     def build(self):
-        compose = self.get_compose(check_profile=False)
+        compose = self.compose
 
-        compose.run(extra_args=['build'])
+        compose.handle(extra_args=['build'])
 
     @property
+    @lru_cache()
     def compose(self):
         """
         Returns a Compose subcommand
         """
-        return self.get_compose()
+        from .compose import Compose
+
+        return Compose(self.workflow)
 
     def do_validate_profile(self):
         return False
@@ -33,12 +36,6 @@ class Publish(BaseSubcommand):
     @classmethod
     def fill_subparser(cls, parser, subparser) -> None:
         pass
-
-    @lru_cache()
-    def get_compose(self, **kwargs):
-        from .compose import Compose
-
-        return Compose(self.workflow, **kwargs)
 
     def handle(self):
         # only load up the basic environment for publish
