@@ -77,12 +77,7 @@ class Env(ConfigBaseSubcommand):
         if self._data:
             return self._data
 
-        # now that the data from the cf environment is parsed default the
-        # docker image to anything that was defined in there.
-        self._docker_image = data.get('DOCKER_IMAGE')
-
-        # replace variables when running a r/w command
-        subcommand = self.workflow.subcommand
+        data = self.load()
 
         args = self.workflow.args
 
@@ -232,6 +227,10 @@ class Env(ConfigBaseSubcommand):
                 raise
 
             data[key] = value
+
+        # now that the data from the cf environment is parsed default the
+        # docker image to anything that was defined in there.
+        self._docker_image = data.get('DOCKER_IMAGE')
 
         return data
 
