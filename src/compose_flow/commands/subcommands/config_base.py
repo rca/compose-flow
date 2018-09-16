@@ -95,11 +95,13 @@ class ConfigBaseSubcommand(BaseSubcommand):
         """
         Saves an environment into the swarm
         """
-        path = path or self.args.path
+        args = self.workflow.args
+
+        path = path or args.path
         if not path:
             return self.print_subcommand_help(__doc__, error='path needed to load')
 
-        docker.load_config(self.config_name, path)
+        docker.load_config(args.config_name, path)
 
     def render_buf(self, buf, data: dict=None, runtime_config: bool=True):
         data = data or self.data

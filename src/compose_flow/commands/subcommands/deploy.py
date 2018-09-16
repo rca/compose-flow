@@ -22,6 +22,8 @@ class Deploy(BaseSubcommand):
         return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
     def handle(self):
+        args = self.workflow.args
+        env = self.workflow.environment
         profile = self.workflow.profile
 
         # check the profile to make sure it defines all the needed environment variables
@@ -31,14 +33,14 @@ class Deploy(BaseSubcommand):
           --prune
           --with-registry-auth
           --compose-file {profile.filename}
-          {self.env.project_name}"""
+          {args.project_name}"""
 
         command_split = shlex.split(command)
 
         self.logger.info(command)
 
-        if not self.args.dry_run:
+        if not args.dry_run:
             executable = getattr(sh, command_split[0])
             executable(*command_split[1:], _env=os.environ)
 
-            self.env.write()
+            env.write()
