@@ -31,6 +31,9 @@ class Env(ConfigBaseSubcommand):
 
         self._data = None
 
+        # when data is modified, set this to True
+        self._data_modified = False
+
     @classmethod
     def fill_subparser(cls, parser, subparser):
         subparser.add_argument('action')
@@ -152,6 +155,11 @@ class Env(ConfigBaseSubcommand):
         return f'{docker_image.split(":", 1)[0]}:{self.version}'
 
         return docker_image
+
+    def update(self, new_data: dict):
+        self.data.update(new_data)
+
+        self._data_modified = True
 
     def is_dirty_working_copy_okay(self, exc: Exception) -> bool:
         is_dirty_working_copy_okay = super().is_dirty_working_copy_okay(exc)
