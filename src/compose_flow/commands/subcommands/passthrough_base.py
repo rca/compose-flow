@@ -32,12 +32,14 @@ class PassthroughBaseSubcommand(BaseSubcommand):
     def handle(self, extra_args:list=None) -> [None, str]:
         command = self.get_command()
 
-        extra_args = extra_args or self.args.extra_args
+        args = self.workflow.args
+
+        extra_args = extra_args or args.extra_args
         command.extend(extra_args)
 
         self.logger.info(' '.join(command))
 
-        if not self.args.dry_run:
+        if not args.dry_run:
             # os.execve(command[0], command, os.environ)
             proc = getattr(sh, command[0])
             proc(*command[1:], _env=os.environ, _fg=True)
