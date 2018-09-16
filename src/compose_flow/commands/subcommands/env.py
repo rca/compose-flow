@@ -62,7 +62,7 @@ class Env(ConfigBaseSubcommand):
         args = self.workflow.args
 
         return {
-            'CF_ENV': args.environment,
+            'CF_ENV': args.environment or '',
             'CF_PROJECT': args.project_name,
             'DOCKER_IMAGE': f'{self.docker_image.split(":", 1)[0]}:{self.version}',
             VERSION_VAR: self.version,
