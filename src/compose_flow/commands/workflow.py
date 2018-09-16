@@ -85,6 +85,9 @@ class Workflow(object):
         if self.subcommand.rw_env:
             environment.update_workflow_env()
 
+        # update the runtime os environment
+        os.environ.update(environment.data)
+
         return environment
 
     def get_argument_parser(self, doc: str=None):

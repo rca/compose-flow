@@ -126,15 +126,3 @@ class BaseSubcommand(ABC):
         subparser.set_defaults(subcommand_cls=cls)
 
         cls.fill_subparser(parser, subparser)
-
-    def update_runtime_environment(self, **kwargs):
-        """
-        Updates os.environ with the current environment
-        """
-        try:
-            runtime_env = self.workflow.environment.data
-        except NoSuchConfig as exc:
-            if not self.workflow.subcommand.is_env_error_okay(exc):
-                raise
-        else:
-            os.environ.update(runtime_env)

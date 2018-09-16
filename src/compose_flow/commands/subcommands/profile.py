@@ -216,8 +216,6 @@ class Profile(BaseSubcommand):
         """
         Processes the profile to generate the compose file
         """
-        self.update_runtime_environment()
-
         filenames = get_overlay_filenames(profile)
 
         # merge multiple files together so that deploying stacks works

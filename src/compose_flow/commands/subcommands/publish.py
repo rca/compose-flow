@@ -51,9 +51,6 @@ class Publish(BaseSubcommand):
         return list(docker_images)
 
     def handle(self):
-        # only load up the basic environment for publish
-        self.update_runtime_environment(load_cf_env=False)
-
         self.build()
 
         self.push()
