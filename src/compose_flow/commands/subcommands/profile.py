@@ -75,7 +75,7 @@ class Profile(BaseSubcommand):
         """
         Checks the profile against some rules
         """
-        env_data = self.env.data
+        env_data = self.workflow.environment.data
 
         errors = []
         for name, service_data in self.data['services'].items():
