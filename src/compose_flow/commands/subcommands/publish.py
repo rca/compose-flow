@@ -37,6 +37,19 @@ class Publish(BaseSubcommand):
     def fill_subparser(cls, parser, subparser) -> None:
         pass
 
+    def get_built_docker_images(self) -> list:
+        """
+        Returns a list of docker images built in the compose file
+        """
+        docker_images = set()
+
+        profile = self.workflow.profile
+        for service_data in profile.data['services'].values():
+            if service_data.get('build'):
+                docker_images.add(service_data.get('image'))
+
+        return list(docker_images)
+
     def handle(self):
         # only load up the basic environment for publish
         self.update_runtime_environment(load_cf_env=False)
@@ -53,14 +66,7 @@ class Publish(BaseSubcommand):
         return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
     def push(self):
-        docker_images = set()
-
-        profile = self.workflow.profile
-        for service_data in profile.data['services'].values():
-            if service_data.get('build'):
-                docker_images.add(service_data.get('image'))
-
-        for docker_image in docker_images:
+        for docker_image in self.get_built_docker_images():
             if len(docker_images) > 1:
                 self.logger.info(f'pushing {docker_image}')
 
