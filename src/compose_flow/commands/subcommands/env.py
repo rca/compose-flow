@@ -124,6 +124,11 @@ class Env(ConfigBaseSubcommand):
 
                     data[k] = rendered
 
+        # set defaults when no value is set
+        for k, v in self.cf_env.items():
+            if k not in data:
+                data[k] = v
+
         self._data = data
 
         return self._data
