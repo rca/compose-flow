@@ -29,10 +29,6 @@ class Env(ConfigBaseSubcommand):
         self._config = None
         self._docker_image = None
 
-    @property
-    def config_name(self):
-        return self.workflow.args.config_name or self.project_name
-
     @classmethod
     def fill_subparser(cls, parser, subparser):
         subparser.add_argument('action')
@@ -44,7 +40,7 @@ class Env(ConfigBaseSubcommand):
         """
         Prints the loaded config to stdout
         """
-        config_name = self.config_name
+        config_name = self.workflow.config_name
 
         if config_name not in docker.get_configs():
             return f'docker config named {config_name} not in swarm'
@@ -189,7 +185,7 @@ class Env(ConfigBaseSubcommand):
         data = {}
 
         try:
-            content = docker.get_config(self.config_name)
+            content = docker.get_config(self.workflow.config_name)
         except errors.NoSuchConfig as exc:
             if not self.is_missing_config_okay(exc):
                 raise

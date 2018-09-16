@@ -71,6 +71,10 @@ class Workflow(object):
         return version_arg
 
     @property
+    def config_name(self):
+        return self.args.config_name or self.project_name
+
+    @property
     @lru_cache()
     def environment(self):
         """
