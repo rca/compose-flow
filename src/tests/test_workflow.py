@@ -10,6 +10,7 @@ TEST_PROJECT_NAME = 'test_project_name'
 
 @mock.patch('compose_flow.commands.subcommands.env.utils')
 @mock.patch('compose_flow.commands.subcommands.env.docker')
+@mock.patch('compose_flow.commands.subcommands.publish.sh')
 class WorkflowTestCase(TestCase):
     def _setup_docker_config_mock(self, *mocks):
         docker_mock = mocks[-2]
