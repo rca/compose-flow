@@ -80,7 +80,12 @@ class Workflow(object):
         """
         Returns an Env instance
         """
-        return Env(self)
+        environment = Env(self)
+
+        if self.subcommand.rw_env:
+            environment.update_workflow_env()
+
+        return environment
 
     def get_argument_parser(self, doc: str=None):
         argparse.ArgumentParser.set_default_subparser = set_default_subparser
