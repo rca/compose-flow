@@ -11,23 +11,27 @@ class EnvTestCase(TestCase):
     def test_config_name_arg(self, *mocks):
         """
         Ensure the config arg updates the config name
+
+        TODO: this should move to test_workflow
         """
         command = shlex.split('-e dev --config-name=test env cat')
         flow = Workflow(argv=command)
         env = Env(flow)
 
-        self.assertEqual(env.config_name, 'test')
+        self.assertEqual(flow.config_name, 'test')
 
     @mock.patch('compose_flow.commands.workflow.PROJECT_NAME', new='testdirname')
     def test_default_config_name(self, *mocks):
         """
         Ensure the default config is given
+
+        TODO: this should move to test_workflow
         """
         command = shlex.split('-e dev env cat')
         flow = Workflow(argv=command)
         env = Env(flow)
 
-        self.assertEqual(env.config_name, 'dev-testdirname')
+        self.assertEqual(flow.config_name, 'dev-testdirname')
 
     @mock.patch('compose_flow.commands.subcommands.env.docker')
     def test_load_ro(self, *mocks):
