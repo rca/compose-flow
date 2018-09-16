@@ -21,10 +21,8 @@ class BaseSubcommand(ABC):
     # whether the env should be in read/write mode
     rw_env = False
 
-    def __init__(self, workflow, load_cf_env=True):
+    def __init__(self, workflow):
         self.workflow = workflow
-
-        self.load_cf_env = load_cf_env
 
     @property
     def logger(self):
@@ -114,22 +112,6 @@ class BaseSubcommand(ABC):
             return f'\nError: {error}'
 
     def run(self, *args, **kwargs):
-        subcommand = self.workflow.subcommand
-
-        self._check_args()
-
-        try:
-            self._write_profile()
-        except (EnvError, NotConnected, ProfileError, TagVersionError) as exc:
-            if not self.is_write_profile_error_okay(exc):
-                raise
-        except NoSuchConfig as exc:
-            if not self.is_missing_config_okay(exc):
-                raise
-        except NoSuchProfile as exc:
-            if not self.is_missing_profile_okay(exc):
-                raise
-
         return self.handle(*args, **kwargs)
 
     @classmethod
@@ -147,7 +129,7 @@ class BaseSubcommand(ABC):
         Updates os.environ with the current environment
         """
         try:
-            runtime_env = self.env.get_data()
+            runtime_env = self.workflow.environment.data
         except NoSuchConfig as exc:
             if not self.workflow.subcommand.is_env_error_okay(exc):
                 raise

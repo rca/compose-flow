@@ -100,12 +100,14 @@ class Remote(BaseSubcommand):
             # when called by another command, the arg may not exist
             pass
 
+        args = self.workflow.args
+
         if not self._host:
             data = self.workflow.app_config
-            environment = self.args.environment
+            environment = args.environment
 
             try:
-                self._host = data['remotes'][self.args.environment]['ssh']
+                self._host = data['remotes'][args.environment]['ssh']
             except KeyError:
                 # it's perfectly fine to not have a remote config for an environment
                 pass

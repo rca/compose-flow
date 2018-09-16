@@ -15,12 +15,6 @@ class Publish(BaseSubcommand):
     rw_env = True
     remote_action = True
 
-    def __init__(self, *args, **kwargs):
-        if 'load_cf_env' not in kwargs:
-            kwargs['load_cf_env'] = self.rw_env
-
-        super().__init__(*args, **kwargs)
-
     def build(self):
         compose = self.get_compose(check_profile=False)
 

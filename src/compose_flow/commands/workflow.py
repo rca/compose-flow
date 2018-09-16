@@ -10,13 +10,17 @@ to manage running services.
 import argparse
 import logging.config
 import os
+import pkg_resources  # part of setuptools
 import sys
 
 from functools import lru_cache
 
 from .subcommands import find_subcommands, set_default_subparser
 from .subcommands.env import Env
-from .. import settings
+from .subcommands.profile import Profile
+from .subcommands.remote import Remote
+
+from .. import errors, settings
 from ..config import DC_CONFIG_ROOT
 from ..errors import CommandError, ErrorMessage
 from ..utils import get_repo_name, yaml_load
@@ -60,8 +64,6 @@ class Workflow(object):
     def _check_version_option(self):
         version_arg = self.args.version
         if version_arg:
-            import pkg_resources  # part of setuptools
-
             version = pkg_resources.require(PACKAGE_NAME)[0].version
 
             print(f'{version}')
@@ -125,12 +127,9 @@ class Workflow(object):
     @property
     @lru_cache()
     def profile(self):
-        from .subcommands.profile import Profile
-
         subcommand = self.subcommand
 
-        return Profile(self, load_cf_env=subcommand.load_cf_env)
-
+        return Profile(self)
 
     def _render_profile(self):
         """
@@ -144,13 +143,11 @@ class Workflow(object):
         logging_config['loggers']['compose_flow']['level'] = self.args.loglevel.upper()
         logging.config.dictConfig(logging_config)
 
-        if self._check_version_option:
+        if self._check_version_option():
             return
 
         try:
             self._setup_remote()
-
-            self._setup_environment()
 
             self._render_profile()
 
@@ -193,10 +190,7 @@ class Workflow(object):
         """
         Sets DOCKER_HOST based on the environment
         """
-        # avoid circular import
-        from .remote import Remote
-
-        remote = Remote(self.workflow)
+        remote = Remote(self)
 
         try:
             remote.make_connection(use_existing=True)
@@ -225,3 +219,8 @@ class Workflow(object):
         assert value == None
 
         self.__class__.subcommand.fget.cache_clear()
+
+    def _write_environment(self):
+        """
+        Writes environment back out to the docker config
+        """

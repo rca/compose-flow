@@ -8,8 +8,32 @@ from compose_flow.commands import Workflow
 TEST_PROJECT_NAME = 'test_project_name'
 
 
-@mock.patch('compose_flow.commands.workflow.PROJECT_NAME', new=TEST_PROJECT_NAME)
 class WorkflowTestCase(TestCase):
+    @mock.patch('compose_flow.commands.workflow.print')
+    @mock.patch('compose_flow.commands.workflow.pkg_resources')
+    def test_version(self, *mocks):
+        """
+        Ensure the --version arg just returns the version
+        """
+        version = '0.0.0-test'
+
+        pkg_resources_mock = mocks[0]
+        pkg_resources_mock.require.return_value = [mock.Mock(version=version)]
+
+        command = shlex.split('--version')
+        workflow = Workflow(argv=command)
+
+        workflow.run()
+
+        print_mock = mocks[1]
+        print_mock.assert_called_with(version)
+
+
+@mock.patch('compose_flow.commands.workflow.PROJECT_NAME', new=TEST_PROJECT_NAME)
+class WorkflowArgsTestCase(TestCase):
+    """
+    Tests for parsing command line arguments
+    """
     def test_sensible_defaults_no_env(self, *mocks):
         """
         Test sensible defaults when no environment is defined

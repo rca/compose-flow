@@ -4,9 +4,17 @@ from compose_flow.commands.subcommands.profile import Profile
 
 
 class ProfileTestCase(TestCase):
-    def test_expand_services(self, *mocks):
-        workflow = mock.Mock()
+    def setUp(self):
+        self.workflow = mock.Mock()
 
+    def test_profile_no_compose_dir(self, *mocks):
+        """
+        when there is no compose directory, do not attempt to render a profile
+        """
+        profile = Profile(self.workflow)
+
+
+    def test_expand_services(self, *mocks):
         data = {
             'services': {
                 'foo': {
@@ -44,7 +52,7 @@ class ProfileTestCase(TestCase):
             },
         }
 
-        profile = Profile(workflow)
+        profile = Profile(self.workflow)
         new_data = profile._check_cf_config(data)
 
         self.assertEqual(len(new_data['services']), 3)

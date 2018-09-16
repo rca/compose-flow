@@ -51,7 +51,9 @@ class Profile(BaseSubcommand):
         """
         Returns the filename for this profile
         """
-        return f'compose-flow-{self.args.profile}.yml'
+        args = self.workflow.args
+
+        return f'compose-flow-{args.profile}.yml'
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
