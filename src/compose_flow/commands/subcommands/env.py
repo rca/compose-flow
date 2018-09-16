@@ -29,6 +29,8 @@ class Env(ConfigBaseSubcommand):
         self._config = None
         self._docker_image = None
 
+        self._data = None
+
     @classmethod
     def fill_subparser(cls, parser, subparser):
         subparser.add_argument('action')
@@ -48,12 +50,12 @@ class Env(ConfigBaseSubcommand):
         print(self.render())
 
     @property
-    @lru_cache()
     def data(self) -> dict:
         """
         Returns the loaded config as a dictionary
         """
-        data = self.load()
+        if self._data:
+            return self._data
 
         # now that the data from the cf environment is parsed default the
         # docker image to anything that was defined in there.
@@ -118,7 +120,9 @@ class Env(ConfigBaseSubcommand):
 
                     data[k] = rendered
 
-        return data
+        self._data = data
+
+        return self._data
 
     @property
     def docker_image(self) -> str:
