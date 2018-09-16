@@ -26,9 +26,6 @@ class Deploy(BaseSubcommand):
         env = self.workflow.environment
         profile = self.workflow.profile
 
-        # check the profile to make sure it defines all the needed environment variables
-        profile.check()
-
         command = f"""docker stack deploy
           --prune
           --with-registry-auth
