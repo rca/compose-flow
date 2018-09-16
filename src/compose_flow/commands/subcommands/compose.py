@@ -38,13 +38,6 @@ class Compose(PassthroughBaseSubcommand):
 
         return command
 
-    def handle(self, extra_args: list=None) -> [None, str]:
-        # check the profile to make sure it defines all the needed environment variables
-        if self.check_profile:
-            self.workflow.profile.check()
-
-        super().handle(extra_args=extra_args)
-
     @property
     def logger(self) -> logging.Logger:
         return logging.getLogger(f'{__name__}.{self.__class__.__name__}')

@@ -138,12 +138,6 @@ class Workflow(object):
     def profile(self):
         return Profile(self)
 
-    def _render_profile(self):
-        """
-        Writes a compiled compose file using the info in the yml file
-        """
-        self.profile.write()
-
     def run(self):
         # setup the loglevel
         logging_config = settings.LOGGING
@@ -156,7 +150,7 @@ class Workflow(object):
         try:
             self._setup_remote()
 
-            self._render_profile()
+            self._setup_profile()
 
             # execute the subcommand
             self.subcommand.handle()
@@ -192,6 +186,24 @@ class Workflow(object):
                 prefix = f'{self.args.environment}-'
 
             self.args.config_name = f'{prefix}{self.args.project_name}'
+
+    def _setup_profile(self):
+        """
+        Sets up the workflow's profile
+
+        Retrieves the profile and validates it depending on the action being
+        taken, and renders a compose file using the info in the yml file
+        """
+        if not self.subcommand.setup_profile:
+            return
+
+        profile = self.profile
+
+        # determine if the profile needs to be validated
+        if self.subcommand.do_validate_profile():
+            profile.check()
+
+        profile.write()
 
     def _setup_remote(self):
         """

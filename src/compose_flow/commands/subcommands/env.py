@@ -23,6 +23,8 @@ class Env(ConfigBaseSubcommand):
     """
     Subcommand for managing environment
     """
+    setup_profile = False
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, *kwargs)
 

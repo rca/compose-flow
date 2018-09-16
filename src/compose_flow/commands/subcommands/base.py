@@ -21,12 +21,18 @@ class BaseSubcommand(ABC):
     # whether the env should be in read/write mode
     rw_env = False
 
+    # by default commands setup render a profile compose file
+    setup_profile = True
+
     def __init__(self, workflow):
         self.workflow = workflow
 
     @property
     def logger(self):
         return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
+
+    def do_validate_profile(self):
+        return True
 
     def get_subcommand(self, name:str) -> object:
         """

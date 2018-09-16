@@ -27,6 +27,9 @@ class Publish(BaseSubcommand):
         """
         return self.get_compose()
 
+    def do_validate_profile(self):
+        return False
+
     @classmethod
     def fill_subparser(cls, parser, subparser) -> None:
         pass
