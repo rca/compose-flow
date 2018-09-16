@@ -60,9 +60,9 @@ class EnvTestCase(TestCase):
     @mock.patch('compose_flow.commands.subcommands.env.Env.rw_env', new=True)
     @mock.patch('compose_flow.commands.subcommands.env.utils')
     @mock.patch('compose_flow.commands.subcommands.env.docker')
-    def test_load_rw(self, *mocks):
+    def test_update_version(self, *mocks):
         """
-        Ensures that env.load sets the VERSION var
+        Ensures that version in env is updated when the publish command is run
         """
         version = '1.2.3'
         new_version = '0.9.999'
@@ -75,12 +75,12 @@ class EnvTestCase(TestCase):
         utils_mock.get_tag_version.return_value = new_version
         utils_mock.render = utils.render
 
-        command = shlex.split('-e dev env cat')
+        command = shlex.split('-e dev')
         flow = Workflow(argv=command)
 
-        flow.run()
+        env = Env(flow)
 
-        env = flow.subcommand
+        env.update_workflow_env()
 
         self.assertEqual(utils_mock.get_tag_version.return_value, env.data['VERSION'])
         self.assertEqual(f'foo:{new_version}', env.data['DOCKER_IMAGE'])

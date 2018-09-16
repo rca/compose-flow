@@ -20,7 +20,7 @@ class WorkflowTestCase(TestCase):
         utils_mock.get_tag_version.return_value = '0.0.0'
         utils_mock.render.side_effect = lambda x, **kwargs: x
 
-    def test_empty_env_when_no_env_specified(self, *mocks):
+    def test_default_env_when_no_env_specified(self, *mocks):
         self._setup_docker_config_mock(*mocks)
         self._setup_utils_mock(*mocks)
 
@@ -29,7 +29,7 @@ class WorkflowTestCase(TestCase):
 
         env = workflow.environment
 
-        self.assertEqual({}, env.data)
+        self.assertEqual(['CF_ENV', 'CF_ENV_NAME', 'CF_PROJECT', 'DOCKER_IMAGE', 'VERSION'], sorted(env.data.keys()))
 
     def test_load_env_when_env_specified(self, *mocks):
         self._setup_docker_config_mock(*mocks)
@@ -40,7 +40,9 @@ class WorkflowTestCase(TestCase):
 
         env = workflow.environment
 
-        self.assertEqual({'FOO': '1', 'BAR': '2'}, env.data)
+        self.assertEqual(['BAR', 'CF_ENV', 'CF_ENV_NAME', 'CF_PROJECT', 'DOCKER_IMAGE', 'FOO', 'VERSION'], sorted(env.data.keys()))
+        self.assertEqual('1', env.data['FOO'])
+        self.assertEqual('2', env.data['BAR'])
 
     @mock.patch('compose_flow.commands.workflow.print')
     @mock.patch('compose_flow.commands.workflow.pkg_resources')
