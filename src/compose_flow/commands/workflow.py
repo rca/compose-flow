@@ -152,7 +152,7 @@ class Workflow(object):
             self._render_profile()
 
             # execute the subcommand
-            self.subcommand.run()
+            self.subcommand.handle()
 
             self._write_environment()
         except CommandError as exc:

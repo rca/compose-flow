@@ -111,9 +111,6 @@ class BaseSubcommand(ABC):
         if error:
             return f'\nError: {error}'
 
-    def run(self, *args, **kwargs):
-        return self.handle(*args, **kwargs)
-
     @classmethod
     def setup_subparser(cls, parser, subparsers):
         name = cls.__name__.lower()
