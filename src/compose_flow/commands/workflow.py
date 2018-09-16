@@ -131,8 +131,6 @@ class Workflow(object):
     @property
     @lru_cache()
     def profile(self):
-        subcommand = self.subcommand
-
         return Profile(self)
 
     def _render_profile(self):
