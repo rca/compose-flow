@@ -53,6 +53,23 @@ class Env(ConfigBaseSubcommand):
         print(self.render())
 
     @property
+    def cf_env(self):
+        """
+        Returns defaults for the environment
+        """
+        args = self.workflow.args
+
+        return {
+            'CF_ENV': args.environment,
+            'CF_PROJECT': args.project_name,
+            'DOCKER_IMAGE': f'{self.docker_image.split(":", 1)[0]}:{self.version}',
+            VERSION_VAR: self.version,
+
+            # deprecate this env var
+            'CF_ENV_NAME': args.project_name,
+        }
+
+    @property
     def data(self) -> dict:
         """
         Returns the loaded config as a dictionary
@@ -72,22 +89,6 @@ class Env(ConfigBaseSubcommand):
         action = None
         if 'action' in args:
             action = args.action
-
-        initialize = False
-        if action == 'edit' and 'force' in args and args.force:
-            initialize = True
-
-        # set the variables when the environment is r/w or the
-        if subcommand.rw_env or initialize:
-            data.update({
-                'CF_ENV': args.environment,
-                'CF_PROJECT': args.project_name,
-                'DOCKER_IMAGE': f'{self.docker_image.split(":", 1)[0]}:{self.version}',
-                VERSION_VAR: self.version,
-
-                # deprecate this env var
-                'CF_ENV_NAME': args.project_name,
-            })
 
         # render placeholders
         for k, v in data.items():
@@ -253,6 +254,14 @@ class Env(ConfigBaseSubcommand):
         Removes an environment from the swarm
         """
         docker.remove_config(self.project_name)
+
+    def update_workflow_env(self):
+        """
+        Overwrites the cf environment in the data dictionary
+
+        Even if values are already set, overwrite them with current values
+        """
+        self.data.update(self.cf_env)
 
     @property
     @lru_cache()
