@@ -88,8 +88,10 @@ class Service(BaseSubcommand):
         subparser.add_argument('service', nargs='?', help='The desired service')
 
     def action_exec(self):
+        args = self.workflow.args
+
         result = None
-        for i in range(self.args.retries):
+        for i in range(args.retries):
             try:
                 result = self.run_service()
             except errors.NoContainer:
@@ -157,6 +159,7 @@ class Service(BaseSubcommand):
         return proc.stdout.decode('utf8')
 
     def run_service(self):
+        args = self.workflow.args
         line = self.select_container()
 
         container_info = line.strip()
@@ -174,8 +177,8 @@ class Service(BaseSubcommand):
         host_info = f'{CF_REMOTE_USER}@{container_host}'
 
         docker_user = ''
-        if self.args.user:
-            docker_user = f'--user {self.args.user} '
+        if args.user:
+            docker_user = f'--user {args.user} '
 
         command = f'ssh -t {host_info}'
         docker_command = (
@@ -183,10 +186,10 @@ class Service(BaseSubcommand):
             f' {" ".join(self.workflow.args_remainder)}'
         )
 
-        if self.args.sudo:
+        if args.sudo:
             docker_command = f'sudo {docker_command}'
 
-        if not self.args.ssh:
+        if not args.ssh:
             command = f'{command} {docker_command}'
         else:
             sys.stderr.write(f'docker_command: {docker_command}\n')
@@ -197,23 +200,25 @@ class Service(BaseSubcommand):
         os.execvp(command[0], command)
 
     def select_container(self):
+        args = self.workflow.args
         containers = self.list_containers()
 
-        if self.args.random:
+        if args.random:
             return random.choice(containers)
         else:
-            return containers[self.args.container]
+            return containers[args.container]
 
     @property
     def service_name(self):
-        service_name = self.args.service_name
+        args = self.workflow.args
+        env = self.workflow.environment
+
+        service_name = args.service_name
         if service_name:
             return service_name
 
-        project_name = self.env.project_name
-
-        service_name = self.args.service
+        service_name = args.service
         if not service_name:
             return
 
-        return f'{project_name}_{self.args.service}'
+        return f'{args.config_name}_{args.service}'
