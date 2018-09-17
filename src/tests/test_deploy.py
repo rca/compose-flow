@@ -36,3 +36,6 @@ class DeployTestCase(BaseTestCase):
 
         # make sure the environment write call is made
         workflow.environment.write.assert_called()
+
+        # make sure the profile is checked
+        workflow.profile.check.assert_called()
