@@ -196,9 +196,10 @@ class Env(ConfigBaseSubcommand):
         return self.is_env_modification_action()
 
     def is_missing_config_okay(self, exc):
+        args = self.workflow.args
         subcommand = self.workflow.subcommand
         # the `force` attribute may not exist
-        force = 'force' in subcommand.args and subcommand.args.force
+        force = 'force' in args and args.force
 
         try:
             action = self.workflow.args.action
