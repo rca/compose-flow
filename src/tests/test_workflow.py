@@ -60,6 +60,22 @@ class WorkflowTestCase(BaseTestCase):
         self.assertEqual('1', env.data['FOO'])
         self.assertEqual('2', env.data['BAR'])
 
+    @mock.patch('compose_flow.commands.workflow.Workflow.subcommand', new_callable=mock.PropertyMock)
+    def test_setup_environment_flag(self, *mocks):
+        """
+        Ensures the environment cache is set to an empty dictionary when
+        a workflow environment should not be setup
+        """
+        subcommand_mock = mocks[0]
+        subcommand_mock.return_value.setup_environment = False
+
+        command = shlex.split('-e dev env cat')
+        workflow = Workflow(argv=command)
+
+        workflow._setup_environment()
+
+        self.assertEqual({}, workflow.environment._data)
+
     @mock.patch('compose_flow.commands.workflow.print')
     @mock.patch('compose_flow.commands.workflow.pkg_resources')
     def test_version(self, *mocks):

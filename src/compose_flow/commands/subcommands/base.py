@@ -29,6 +29,9 @@ class BaseSubcommand(ABC):
     # whether the env should be in read/write mode
     rw_env = False
 
+    # by default command setup the workflow environment
+    setup_environment = True
+
     # by default commands setup render a profile compose file
     setup_profile = True
 

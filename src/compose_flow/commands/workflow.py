@@ -161,6 +161,8 @@ class Workflow(object):
             return
 
         try:
+            self._setup_environment()
+
             self._setup_remote()
 
             self._setup_profile()
@@ -199,6 +201,13 @@ class Workflow(object):
                 prefix = f'{self.args.environment}-'
 
             self.args.config_name = f'{prefix}{self.args.project_name}'
+
+    def _setup_environment(self):
+        """
+        Sets up the workflow environment
+        """
+        if not self.subcommand.setup_environment:
+            self.environment._data = {}
 
     def _setup_profile(self):
         """
