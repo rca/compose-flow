@@ -43,7 +43,10 @@ class PublishTestCase(BaseTestCase):
         flow.subcommand.check = mock.Mock()
         flow.subcommand.push = mock.Mock()
 
-        with mock.patch('compose_flow.commands.workflow.Workflow.profile', new_callable=mock.PropertyMock) as profile_mock:
+        with mock.patch(
+            'compose_flow.commands.workflow.Workflow.profile',
+            new_callable=mock.PropertyMock,
+        ) as profile_mock:
             flow.run()
 
             profile_mock.return_value.write.assert_called_with()

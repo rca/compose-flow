@@ -202,6 +202,7 @@ class Workflow(object):
         Retrieves the profile and validates it depending on the action being
         taken, and renders a compose file using the info in the yml file
         """
+
         if not self.subcommand.setup_profile:
             return
 
