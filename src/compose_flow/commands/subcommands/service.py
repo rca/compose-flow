@@ -46,6 +46,10 @@ CF_REMOTE_USER = os.environ.get('CF_REMOTE_USER', USER)
 
 
 class Service(BaseSubcommand):
+    setup_environment = False
+
+    setup_profile = False
+
     @classmethod
     def fill_subparser(cls, parser, subparser):
         subparser.epilog = __doc__
