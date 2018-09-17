@@ -30,7 +30,7 @@ class Env(ConfigBaseSubcommand):
         self._config = None
         self._docker_image = None
 
-        self._data = {}
+        self._data = None
 
         # when data is modified, set this to True
         self._data_modified = False
@@ -83,7 +83,7 @@ class Env(ConfigBaseSubcommand):
         """
         Returns the loaded config as a dictionary
         """
-        if self._data:
+        if self._data is not None:
             return self._data
 
         data = self.load()
@@ -177,12 +177,16 @@ class Env(ConfigBaseSubcommand):
         When persistable is True, the values being set are flagged for persisting into the docker config
         and the _data_modified flag is set
         """
-        self._data.update(new_data)
+        data = self._data or {}
+
+        data.update(new_data)
 
         if persistable:
             self._persistable_keys.extend(list(new_data.keys()))
 
             self._data_modified = True
+
+        self._data = data
 
     def is_dirty_working_copy_okay(self, exc: Exception) -> bool:
         is_dirty_working_copy_okay = super().is_dirty_working_copy_okay(exc)

@@ -21,6 +21,24 @@ class EnvTestCase(BaseTestCase):
 
         self.assertEqual(flow.config_name, 'test')
 
+    def test_data_not_loaded_when_cache_is_empty_dict(self, *mocks):
+        workflow = mock.MagicMock()
+        workflow.args.environment = None
+        workflow.args.iter.return_value = []
+
+        env = Env(workflow)
+
+        # setup mocks on the env instance
+        env.load = mock.Mock()
+        env.load.return_value = {}
+
+        # prime the cache with an empty dict to ensure load is not called
+        env._data = {}
+
+        env.data
+
+        env.load.assert_not_called()
+
     @mock.patch('compose_flow.commands.workflow.PROJECT_NAME', new='testdirname')
     def test_default_config_name(self, *mocks):
         """
