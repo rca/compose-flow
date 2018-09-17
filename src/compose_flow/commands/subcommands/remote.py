@@ -166,7 +166,9 @@ class Remote(BaseSubcommand):
         self.close(do_print=False)
 
         # very low-level command that does not need workflow environment
-        self.execute(f'ssh -Nf -L {socket_path}:/var/run/docker.sock {host}', _env=os.environ)
+        self.execute(
+            f'ssh -Nf -L {socket_path}:/var/run/docker.sock {host}', _env=os.environ
+        )
 
     def print_eval_hint(self):
         print(
