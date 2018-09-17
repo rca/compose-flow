@@ -39,7 +39,7 @@ import sys
 import time
 
 from .base import BaseSubcommand
-from compose_flow import errors
+from compose_flow import errors, shell
 
 USER = os.environ.get('USER', 'nobody')
 CF_REMOTE_USER = os.environ.get('CF_REMOTE_USER', USER)
@@ -195,9 +195,8 @@ class Service(BaseSubcommand):
             sys.stderr.write(f'docker_command: {docker_command}\n')
 
         logging.debug(f'command={command}')
-        command = command.split()
 
-        os.execvp(command[0], command)
+        return shell.execute(command, os.environ, _fg=True)
 
     def select_container(self):
         args = self.workflow.args
