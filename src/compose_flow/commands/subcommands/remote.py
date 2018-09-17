@@ -93,23 +93,15 @@ class Remote(BaseSubcommand):
         if self._host is not None:
             return self._host
 
-        try:
-            self._host = self.args.host
-        except AttributeError:
-            # when called by another command, the arg may not exist
-            pass
-
         args = self.workflow.args
+        data = self.workflow.app_config
+        environment = args.environment
 
-        if not self._host:
-            data = self.workflow.app_config
-            environment = args.environment
-
-            try:
-                self._host = data['remotes'][args.environment]['ssh']
-            except KeyError:
-                # it's perfectly fine to not have a remote config for an environment
-                pass
+        try:
+            self._host = data['remotes'][environment]['ssh']
+        except KeyError:
+            # it's perfectly fine to not have a remote config for an environment
+            pass
 
         return self._host
 
