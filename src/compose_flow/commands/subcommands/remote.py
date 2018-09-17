@@ -44,6 +44,8 @@ class Remote(BaseSubcommand):
             print(f'unset DOCKER_HOST')
 
     def connect(self):
+        remote_host = self.get_remote_host()
+
         try:
             self.make_connection()
         except errors.AlreadyConnected:
