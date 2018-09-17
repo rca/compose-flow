@@ -58,6 +58,8 @@ class EnvTestCase(BaseTestCase):
         self.assertEqual(version, env.data['VERSION'])
         self.assertEqual(docker_image, env.data['DOCKER_IMAGE'])
 
+        self.assertEqual(['BAR', 'DOCKER_IMAGE', 'FOO', 'VERSION'], sorted(env._persistable_keys))
+
     @mock.patch('compose_flow.commands.subcommands.env.Env.rw_env', new=True)
     @mock.patch('compose_flow.commands.subcommands.env.utils')
     @mock.patch('compose_flow.commands.subcommands.env.docker')

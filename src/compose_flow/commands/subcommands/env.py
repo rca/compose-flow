@@ -29,10 +29,13 @@ class Env(ConfigBaseSubcommand):
         self._config = None
         self._docker_image = None
 
-        self._data = None
+        self._data = {}
 
         # when data is modified, set this to True
         self._data_modified = False
+
+        # keys that will be persisted to the docker config
+        self._persistable_keys = []
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
@@ -157,10 +160,19 @@ class Env(ConfigBaseSubcommand):
 
         return docker_image
 
-    def update(self, new_data: dict):
-        self.data.update(new_data)
+    def update(self, new_data: dict, persistable: bool=True):
+        """
+        Updates the environment data with the new given data
 
-        self._data_modified = True
+        When persistable is True, the values being set are flagged for persisting into the docker config
+        and the _data_modified flag is set
+        """
+        self._data.update(new_data)
+
+        if persistable:
+            self._persistable_keys.extend(list(new_data.keys()))
+
+            self._data_modified = True
 
     def is_dirty_working_copy_okay(self, exc: Exception) -> bool:
         is_dirty_working_copy_okay = super().is_dirty_working_copy_okay(exc)
@@ -227,6 +239,9 @@ class Env(ConfigBaseSubcommand):
                 raise
 
             data[key] = value
+
+        # all values from the docker config are persistable
+        self.update(data)
 
         # now that the data from the cf environment is parsed default the
         # docker image to anything that was defined in there.

@@ -224,9 +224,9 @@ class Workflow(object):
 
         docker_host = remote.docker_host
         if docker_host:
-            os.environ.update({
+            self.environment.update({
                 'DOCKER_HOST': docker_host,
-            })
+            }, persistable=False)
 
     @property
     @lru_cache()
