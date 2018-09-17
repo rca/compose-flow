@@ -4,8 +4,6 @@ import os
 
 from distutils.spawn import find_executable
 
-import sh
-
 from .base import BaseSubcommand
 
 from compose_flow import errors
@@ -37,12 +35,12 @@ class PassthroughBaseSubcommand(BaseSubcommand):
         extra_args = extra_args or args.extra_args
         command.extend(extra_args)
 
-        self.logger.info(' '.join(command))
+        command_s = ' '.join(command)
+
+        self.logger.info(command_s)
 
         if not args.dry_run:
-            # os.execve(command[0], command, os.environ)
-            proc = getattr(sh, command[0])
-            proc(*command[1:], _env=os.environ, _fg=True)
+            self.execute(command_s)
 
     @property
     def logger(self) -> logging.Logger:

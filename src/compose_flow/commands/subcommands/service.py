@@ -34,7 +34,6 @@ import functools
 import logging
 import os
 import random
-import sh
 import shlex
 import sys
 import time
@@ -99,12 +98,9 @@ class Service(BaseSubcommand):
     def list_containers(self, service_name: str=None):
         service_name = service_name or self.service_name
 
-        command_split = shlex.split(
-            f'docker service ps --no-trunc --filter desired-state=running {service_name}'
-        )
+        command = f'docker service ps --no-trunc --filter desired-state=running {service_name}'
 
-        sh_command = getattr(sh, command_split[0])
-        proc = sh_command(*command_split[1:])
+        proc = self.execute(command)
 
         # note; because this is being cached, create a list
         # instead of a generator becuase a generator can only
@@ -131,9 +127,9 @@ class Service(BaseSubcommand):
         """
         Lists all the services for this stack
         """
-        command = sh.docker('stack', 'services', self.env.project_name)
+        proc = self.execute(f'docker stack services {self.workflow.args.project_name}')
 
-        return command.stdout.decode('utf8')
+        return proc.stdout.decode('utf8')
 
     def run_service(self):
         line = self.select_container()

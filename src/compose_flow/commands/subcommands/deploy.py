@@ -2,8 +2,6 @@ import logging
 import os
 import shlex
 
-import sh
-
 from .base import BaseSubcommand
 
 
@@ -32,12 +30,9 @@ class Deploy(BaseSubcommand):
           --compose-file {profile.filename}
           {args.project_name}"""
 
-        command_split = shlex.split(command)
-
         self.logger.info(command)
 
         if not args.dry_run:
-            executable = getattr(sh, command_split[0])
-            executable(*command_split[1:], _env=os.environ)
+            self.execute(command)
 
             env.write()

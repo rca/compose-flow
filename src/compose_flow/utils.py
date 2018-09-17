@@ -5,9 +5,9 @@ import yaml
 
 from collections import OrderedDict
 
-import sh
-
 from boltons.iterutils import remap, get_path, default_enter, default_visit
+
+from compose_flow import shell
 
 from .errors import EnvError, ProfileError
 
@@ -28,11 +28,11 @@ def get_tag_version() -> str:
     # inject the version from tag-version command into the loaded environment
     tag_version = 'unknown'
     try:
-        tag_version_command = getattr(sh, 'tag-version')
+        proc = shell.execute('tag-version', os.environ)
     except Exception as exc:
         print(f'Warning: unable to find tag-version ({exc})\n', file=sys.stderr)
     else:
-        tag_version = tag_version_command().stdout.decode('utf8').strip()
+        tag_version = proc.stdout.decode('utf8').strip()
 
     return tag_version
 

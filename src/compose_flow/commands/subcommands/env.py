@@ -10,8 +10,6 @@ import tempfile
 
 from functools import lru_cache
 
-import sh
-
 from .config_base import ConfigBaseSubcommand
 
 from compose_flow import docker, errors, utils

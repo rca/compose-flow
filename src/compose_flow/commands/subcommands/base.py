@@ -3,7 +3,7 @@ import os
 
 from abc import ABC, abstractclassmethod
 
-from compose_flow import errors
+from compose_flow import errors, shell
 from compose_flow.config import get_config
 from compose_flow.errors import CommandError, EnvError, NoSuchConfig, \
     NoSuchProfile, NotConnected, ProfileError, TagVersionError
@@ -33,6 +33,12 @@ class BaseSubcommand(ABC):
 
     def do_validate_profile(self):
         return True
+
+    def execute(self, command: str, **kwargs):
+        """
+        Executes the given command
+        """
+        return shell.execute(command, self.workflow.environment.data, **kwargs)
 
     def get_subcommand(self, name:str) -> object:
         """

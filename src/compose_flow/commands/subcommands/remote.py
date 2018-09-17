@@ -5,11 +5,9 @@ import os
 import re
 import sys
 
-import sh
-
 from .base import BaseSubcommand
 
-from compose_flow import errors
+from compose_flow import errors, shell
 from compose_flow.errors import EnvError, ErrorMessage
 
 UNIX_PREFIX = 'unix://'
@@ -36,7 +34,7 @@ class Remote(BaseSubcommand):
                 print(f'closing pids {pids_s}', file=sys.stderr)
 
             for pid in pids:
-                sh.kill(pid)
+                self.execute(f'kill {pid}')
 
         self.remove_socket()
 
@@ -71,8 +69,8 @@ class Remote(BaseSubcommand):
         pgrep_search = f'ssh -Nf -L {socket}'
 
         try:
-            proc = sh.pgrep('-f', pgrep_search)
-        except sh.ErrorReturnCode_1:
+            proc = self.execute(f'pgrep -f "{pgrep_search}"')
+        except shell.ErrorReturnCode_1:
             pass
         else:
             for item in proc.stdout.decode('utf8').strip().splitlines():
@@ -168,7 +166,7 @@ class Remote(BaseSubcommand):
 
         self.close(do_print=False)
 
-        sh.ssh('-Nf', '-L', f'{socket_path}:/var/run/docker.sock', host)
+        self.execute(f'ssh -Nf -L {socket_path}:/var/run/docker.sock {host}')
 
     def print_eval_hint(self):
         print(

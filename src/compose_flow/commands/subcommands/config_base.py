@@ -3,9 +3,7 @@ import shlex
 import sys
 import tempfile
 
-import sh
-
-from compose_flow import docker
+from compose_flow import docker, shell
 
 from .base import BaseSubcommand
 
@@ -29,8 +27,8 @@ class ConfigBaseSubcommand(BaseSubcommand):
         Checks to see if Docker is setup as a swarm
         """
         try:
-            sh.docker('config', 'ls')
-        except sh.ErrorReturnCode_1 as exc:
+            self.execute('docker config ls')
+        except shell.ErrorReturnCode_1 as exc:
             message = exc.stderr.decode('utf8').strip().lower()
 
             if 'this node is not a swarm manager' in message:
@@ -48,11 +46,7 @@ class ConfigBaseSubcommand(BaseSubcommand):
 
             editor = os.environ.get('EDITOR', os.environ.get('VISUAL', 'vi'))
 
-            command = shlex.split(f'{editor} {path}')
-
-            # os.execve(command[0], command, os.environ)
-            proc = getattr(sh, command[0])
-            proc(*command[1:], _env=os.environ, _fg=True)
+            self.execute(f'{editor} {path}')
 
             self.push(path)
 
@@ -61,13 +55,15 @@ class ConfigBaseSubcommand(BaseSubcommand):
         Prompts to initialize a local swarm
         """
         try:
-            sh.docker('config', 'ls')
+            self.execute('docker config ls')
         except:
             pass
         else:
             return
 
-        docker_host = os.environ.get('DOCKER_HOST')
+        environment = self.workflow.environment
+
+        docker_host = environment.data.get('DOCKER_HOST')
         if docker_host:
             docker_host_message = f'docker host at {docker_host}'
         else:
@@ -89,7 +85,7 @@ class ConfigBaseSubcommand(BaseSubcommand):
                 init_swarm = False
 
         if init_swarm:
-            sh.docker('swarm', 'init')
+            self.execute('docker swarm init')
 
     def push(self, path:str=None) -> None:
         """

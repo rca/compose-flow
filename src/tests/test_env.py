@@ -6,7 +6,7 @@ from compose_flow.commands.subcommands.env import Env
 from compose_flow.commands import Workflow
 
 
-@mock.patch('compose_flow.commands.subcommands.remote.sh')
+@mock.patch('compose_flow.shell.sh')
 class EnvTestCase(TestCase):
     def test_config_name_arg(self, *mocks):
         """

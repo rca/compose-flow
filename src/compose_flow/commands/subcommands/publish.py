@@ -2,8 +2,6 @@ import logging
 
 from functools import lru_cache
 
-import sh
-
 from .base import BaseSubcommand
 # from .compose import Compose
 
@@ -70,4 +68,4 @@ class Publish(BaseSubcommand):
             if self.args.dry_run:
                 self.logger.info(f'docker push {docker_image}')
             else:
-                sh.docker('push', docker_image, _fg=True)
+                self.execute(f'docker push {docker_image}', _fg=True)

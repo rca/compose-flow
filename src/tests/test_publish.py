@@ -7,8 +7,7 @@ from compose_flow.commands import Workflow
 
 
 @mock.patch('compose_flow.commands.subcommands.env.os')
-@mock.patch('compose_flow.commands.subcommands.remote.sh')
-@mock.patch('compose_flow.commands.subcommands.passthrough_base.sh')
+@mock.patch('compose_flow.shell.sh')
 class PublishTestCase(TestCase):
     @mock.patch('compose_flow.commands.subcommands.env.utils')
     @mock.patch('compose_flow.commands.subcommands.env.docker')
