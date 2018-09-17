@@ -211,7 +211,7 @@ class Workflow(object):
         if self.subcommand.do_validate_profile():
             profile.check()
 
-        profile.write()
+        self._write_profile()
 
     def _setup_remote(self):
         """
@@ -249,3 +249,6 @@ class Workflow(object):
         """
         Writes environment back out to the docker config
         """
+
+    def _write_profile(self):
+        self.profile.write()
