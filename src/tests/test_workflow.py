@@ -5,13 +5,14 @@ from unittest import TestCase, mock
 from compose_flow import utils
 from compose_flow.commands import Workflow
 
+from tests import BaseTestCase
+
 TEST_PROJECT_NAME = 'test_project_name'
 
 
 @mock.patch('compose_flow.commands.subcommands.env.utils')
 @mock.patch('compose_flow.commands.subcommands.env.docker')
-@mock.patch('compose_flow.shell.sh')
-class WorkflowTestCase(TestCase):
+class WorkflowTestCase(BaseTestCase):
     def _setup_docker_config_mock(self, *mocks):
         docker_mock = mocks[-2]
         docker_mock.get_config.return_value = f"FOO=1\nBAR=2"

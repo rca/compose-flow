@@ -5,9 +5,10 @@ from compose_flow import utils
 from compose_flow.commands.subcommands.env import Env
 from compose_flow.commands import Workflow
 
+from tests import BaseTestCase
 
-@mock.patch('compose_flow.shell.sh')
-class EnvTestCase(TestCase):
+
+class EnvTestCase(BaseTestCase):
     def test_config_name_arg(self, *mocks):
         """
         Ensure the config arg updates the config name

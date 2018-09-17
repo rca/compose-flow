@@ -1,6 +1,5 @@
-from unittest import TestCase, mock
-
 from compose_flow.commands.subcommands.base import BaseSubcommand
+from tests import BaseTestCase, mock
 
 
 class TestSubcommand(BaseSubcommand):
@@ -8,14 +7,15 @@ class TestSubcommand(BaseSubcommand):
         pass
 
 
-@mock.patch('compose_flow.shell.sh')
-class BaseTestCase(TestCase):
+class BaseSubcommandTestCase(BaseTestCase):
     def test_execute(self, *mocks):
+        print(mocks)
+
         workflow = mock.Mock()
         command = TestSubcommand(workflow)
 
         proc = command.execute('docker ps')
 
         # make sure that sh was executed with the workflow environment
-        sh_mock = mocks[-1]
+        sh_mock = self.sh_mock
         sh_mock.docker.assert_called_with('ps', _env=workflow.environment.data)

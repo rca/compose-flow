@@ -5,10 +5,11 @@ from unittest import TestCase, mock
 from compose_flow import utils
 from compose_flow.commands import Workflow
 
+from tests import BaseTestCase
+
 
 @mock.patch('compose_flow.commands.subcommands.env.os')
-@mock.patch('compose_flow.shell.sh')
-class DeployTestCase(TestCase):
+class DeployTestCase(BaseTestCase):
     @mock.patch('compose_flow.commands.subcommands.env.Env.rw_env', new=True)
     @mock.patch('compose_flow.commands.subcommands.env.utils')
     @mock.patch('compose_flow.commands.subcommands.env.docker')
