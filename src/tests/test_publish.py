@@ -35,6 +35,24 @@ class PublishTestCase(BaseTestCase):
 
         self.assertEqual(True, 'VERSION' in env_data)
 
+    def test_publish_with_missing_env_vars(self, *mocks):
+        command = shlex.split('publish')
+        flow = Workflow(argv=command)
+
+        flow.subcommand.build = mock.Mock()
+        flow.subcommand.check = mock.Mock()
+        flow.subcommand.push = mock.Mock()
+
+        with mock.patch('compose_flow.commands.workflow.Workflow.profile', new_callable=mock.PropertyMock) as profile_mock:
+            flow.run()
+
+            profile_mock.return_value.write.assert_called_with()
+
+        flow.subcommand.push.assert_called()
+
+        # make sure check is not called
+        flow.subcommand.check.assert_not_called()
+
     @mock.patch('compose_flow.commands.subcommands.env.Env.rw_env', new=True)
     @mock.patch('compose_flow.commands.subcommands.env.utils')
     @mock.patch('compose_flow.commands.subcommands.env.docker')
