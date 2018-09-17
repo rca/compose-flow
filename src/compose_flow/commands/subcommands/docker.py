@@ -8,4 +8,5 @@ class Docker(PassthroughBaseSubcommand):
     """
     Subcommand for running docker commands
     """
+
     command_name = 'docker'

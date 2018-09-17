@@ -90,14 +90,13 @@ class Workflow(object):
 
         return environment
 
-    def get_argument_parser(self, doc: str=None):
+    def get_argument_parser(self, doc: str = None):
         argparse.ArgumentParser.set_default_subparser = set_default_subparser
 
         doc = doc or __doc__
 
         parser = argparse.ArgumentParser(
-            epilog=doc,
-            formatter_class=argparse.RawDescriptionHelpFormatter
+            epilog=doc, formatter_class=argparse.RawDescriptionHelpFormatter
         )
 
         # defaults for these args are set in _set_arg_defaults() below
@@ -105,27 +104,33 @@ class Workflow(object):
         parser.add_argument('-e', '--environment')
         parser.add_argument('-p', '--profile')
         parser.add_argument(
-            '-n', '--project-name',
-            help=f'the project name to use, default={PROJECT_NAME}'
+            '-n',
+            '--project-name',
+            help=f'the project name to use, default={PROJECT_NAME}',
         )
         parser.add_argument(
-            '-r', '--remote',
-            help=f'the label of the remote system to connect to, default same name as the environment'
+            '-r',
+            '--remote',
+            help=f'the label of the remote system to connect to, default same name as the environment',
         )
 
         # misc args
         parser.add_argument(
             '--dirty',
             action='store_true',
-            help='allow dirty working copy for this command'
+            help='allow dirty working copy for this command',
         )
         parser.add_argument('-l', '--loglevel', default='INFO')
         parser.add_argument(
-            '--noop', '--dry-run',
-            action='store_true', dest='dry_run',
-            help='just print command, do not execute'
+            '--noop',
+            '--dry-run',
+            action='store_true',
+            dest='dry_run',
+            help='just print command, do not execute',
         )
-        parser.add_argument('--version', action='store_true', help='print version and exit')
+        parser.add_argument(
+            '--version', action='store_true', help='print version and exit'
+        )
 
         self.subparsers = parser.add_subparsers(dest='command')
 
@@ -224,9 +229,7 @@ class Workflow(object):
 
         docker_host = remote.docker_host
         if docker_host:
-            self.environment.update({
-                'DOCKER_HOST': docker_host,
-            }, persistable=False)
+            self.environment.update({'DOCKER_HOST': docker_host}, persistable=False)
 
     @property
     @lru_cache()

@@ -23,11 +23,13 @@ class PassthroughBaseSubcommand(BaseSubcommand):
         # check to make sure the command is installed
         command_path = find_executable(self.command_name)
         if command_path is None:
-            raise errors.ErrorMessage(f'{self.command_name} not found in PATH; is it installed?')
+            raise errors.ErrorMessage(
+                f'{self.command_name} not found in PATH; is it installed?'
+            )
 
         return [command_path]
 
-    def handle(self, extra_args:list=None) -> [None, str]:
+    def handle(self, extra_args: list = None) -> [None, str]:
         command = self.get_command()
 
         args = self.workflow.args

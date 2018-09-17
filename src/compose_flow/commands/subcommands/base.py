@@ -5,14 +5,22 @@ from abc import ABC, abstractclassmethod
 
 from compose_flow import errors, shell
 from compose_flow.config import get_config
-from compose_flow.errors import CommandError, EnvError, NoSuchConfig, \
-    NoSuchProfile, NotConnected, ProfileError, TagVersionError
+from compose_flow.errors import (
+    CommandError,
+    EnvError,
+    NoSuchConfig,
+    NoSuchProfile,
+    NotConnected,
+    ProfileError,
+    TagVersionError,
+)
 
 
 class BaseSubcommand(ABC):
     """
     Parent class for any subcommand class
     """
+
     dirty_working_copy_okay = False
 
     # whether this subcommand should connect to the remote host
@@ -40,7 +48,7 @@ class BaseSubcommand(ABC):
         """
         return shell.execute(command, self.workflow.environment.data, **kwargs)
 
-    def get_subcommand(self, name:str) -> object:
+    def get_subcommand(self, name: str) -> object:
         """
         Returns the requested subcommand class by name
         """
@@ -88,9 +96,9 @@ class BaseSubcommand(ABC):
         config = get_config() or {}
         env = self.workflow.args.environment
 
-        dirty_working_copy_okay = self.workflow.args.dirty or config.get('options', {}).get(env, {}).get(
-            'dirty_working_copy_okay', self.dirty_working_copy_okay
-        )
+        dirty_working_copy_okay = self.workflow.args.dirty or config.get(
+            'options', {}
+        ).get(env, {}).get('dirty_working_copy_okay', self.dirty_working_copy_okay)
 
         return dirty_working_copy_okay
 

@@ -18,7 +18,9 @@ class DeployTestCase(BaseTestCase):
         Ensures that version in env is written to the docker config
         """
         docker_mock = mocks[0]
-        docker_mock.get_config.return_value = f"FOO=1\nBAR=2\nVERSION=1.0\nDOCKER_IMAGE=foo:dev"
+        docker_mock.get_config.return_value = (
+            f"FOO=1\nBAR=2\nVERSION=1.0\nDOCKER_IMAGE=foo:dev"
+        )
 
         utils_mock = mocks[1]
         utils_mock.get_tag_version.return_value = '0.0.1-test'

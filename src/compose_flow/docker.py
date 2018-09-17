@@ -41,7 +41,7 @@ def get_config(name: str) -> str:
     return base64.b64decode(config_data).decode('utf8')
 
 
-def load_config(name: str, path:str) -> None:
+def load_config(name: str, path: str) -> None:
     """
     Loads config into swarm
     """
@@ -50,7 +50,8 @@ def load_config(name: str, path:str) -> None:
 
     shell.exeucte(f'docker config create {name} {path}')
 
-def remove_config(name:str) -> None:
+
+def remove_config(name: str) -> None:
     """
     Removes a config from the swarm
     """

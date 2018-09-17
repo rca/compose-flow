@@ -18,6 +18,7 @@ class Remote(BaseSubcommand):
     """
     Subcommand for connecting to a remote docker swarm
     """
+
     def __init__(self, *args, **kwargs):
         self._host = kwargs.pop('host', None)
 
@@ -171,7 +172,7 @@ class Remote(BaseSubcommand):
     def print_eval_hint(self):
         print(
             'copy and paste the commands below or run this command wrapped in an eval statement:\n',
-            file=sys.stderr
+            file=sys.stderr,
         )
 
     def remove_socket(self):
@@ -206,7 +207,9 @@ class Remote(BaseSubcommand):
             message = f'environment set to {docker_host}, but no ssh connection found'
         elif pids:
             pids_s = ", ".join([f'{x}' for x in pids])
-            message = f'ssh connection found at pids {pids_s}, but environment not setup'
+            message = (
+                f'ssh connection found at pids {pids_s}, but environment not setup'
+            )
         else:
             message = 'Not connected'
 

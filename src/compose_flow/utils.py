@@ -75,9 +75,11 @@ def remerge(target_list, sourced=False):
 
     for t_name, target in target_list:
         if sourced:
+
             def remerge_visit(path, key, value):
                 source_map[path + (key,)] = t_name
                 return True
+
         else:
             remerge_visit = default_visit
 
@@ -88,7 +90,7 @@ def remerge(target_list, sourced=False):
     return ret, source_map
 
 
-def render(content: str, env: dict=None) -> str:
+def render(content: str, env: dict = None) -> str:
     """
     Renders the variables in the file
     """
@@ -98,13 +100,17 @@ def render(content: str, env: dict=None) -> str:
     env = env or os.environ
 
     for x in VAR_RE.finditer(content):
-        rendered += content[previous_idx:x.start('varname')-2]  # -2 to get rid of variable's `${`
+        rendered += content[
+            previous_idx : x.start('varname') - 2
+        ]  # -2 to get rid of variable's `${`
 
         varname = x.group('varname')
         try:
             rendered += env[varname]
         except KeyError:
-            raise EnvError(f'Error: varname={varname} not in environment; cannot render')
+            raise EnvError(
+                f'Error: varname={varname} not in environment; cannot render'
+            )
 
         end = x.end('junk')
         if end == -1:
@@ -130,14 +136,17 @@ def yaml_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
 
     >>> ordered_load(stream, yaml.SafeLoader)
     """
+
     class OrderedLoader(Loader):
         pass
+
     def construct_mapping(loader, node):
         loader.flatten_mapping(node)
         return object_pairs_hook(loader.construct_pairs(node))
+
     OrderedLoader.add_constructor(
-        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-        construct_mapping)
+        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping
+    )
     return yaml.load(stream, OrderedLoader)
 
 
@@ -147,12 +156,15 @@ def yaml_dump(data, stream=None, Dumper=yaml.Dumper, **kwds):
 
     >>> ordered_dump(data, Dumper=yaml.SafeDumper)
     """
+
     class OrderedDumper(Dumper):
         pass
+
     def _dict_representer(dumper, data):
         return dumper.represent_mapping(
-            yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-            data.items())
+            yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, data.items()
+        )
+
     OrderedDumper.add_representer(OrderedDict, _dict_representer)
 
     # set the default_flow_style to False if not set

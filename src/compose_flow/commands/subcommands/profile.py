@@ -46,6 +46,7 @@ class Profile(BaseSubcommand):
     """
     Subcommand for managing profiles
     """
+
     @property
     def filename(self) -> str:
         """
@@ -106,15 +107,24 @@ class Profile(BaseSubcommand):
                 _service['deploy'].pop('replicas')
 
                 if increment_config:
-                    for _increment_config_name, _increment_config_data in increment_config.items():
+                    for (
+                        _increment_config_name,
+                        _increment_config_data,
+                    ) in increment_config.items():
                         fn_name = f'cf_config_expand_increment_{_increment_config_name}'
-                        _service = getattr(self, fn_name)(_increment_config_data, idx, _service)
+                        _service = getattr(self, fn_name)(
+                            _increment_config_data, idx, _service
+                        )
 
                 data['services'][_service_name] = _service
 
-    def cf_config_expand_increment_env(self, increment_config: dict, item_index: int, service: dict) -> dict:
+    def cf_config_expand_increment_env(
+        self, increment_config: dict, item_index: int, service: dict
+    ) -> dict:
         if not isinstance(service['environment'], list):
-            raise NotImplementedError('environment dictionary is not supported, use list format')
+            raise NotImplementedError(
+                'environment dictionary is not supported, use list format'
+            )
 
         new_env = []
         for item in service['environment']:
@@ -137,7 +147,9 @@ class Profile(BaseSubcommand):
 
         return service
 
-    def cf_config_expand_increment_ports(self, increment_config: dict, item_index: int, service: dict) -> dict:
+    def cf_config_expand_increment_ports(
+        self, increment_config: dict, item_index: int, service: dict
+    ) -> dict:
         new_ports = []
 
         for item in service['ports']:
@@ -204,7 +216,9 @@ class Profile(BaseSubcommand):
 
                 _env = environments.get(val)
                 if not _env:
-                    raise EnvError(f'Unable to find val={val} to copy into service_name={service_name}')
+                    raise EnvError(
+                        f'Unable to find val={val} to copy into service_name={service_name}'
+                    )
 
                 new_env.update(_env)
 

@@ -9,6 +9,7 @@ class Deploy(BaseSubcommand):
     """
     Subcommand for deploying an image to the docker swarm
     """
+
     rw_env = True
 
     @classmethod

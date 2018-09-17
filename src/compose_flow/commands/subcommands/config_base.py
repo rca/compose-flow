@@ -50,7 +50,7 @@ class ConfigBaseSubcommand(BaseSubcommand):
 
             self.push(path)
 
-    def init_swarm(self, prompt: bool=False) -> None:
+    def init_swarm(self, prompt: bool = False) -> None:
         """
         Prompts to initialize a local swarm
         """
@@ -87,7 +87,7 @@ class ConfigBaseSubcommand(BaseSubcommand):
         if init_swarm:
             self.execute('docker swarm init')
 
-    def push(self, path:str=None) -> None:
+    def push(self, path: str = None) -> None:
         """
         Saves an environment into the swarm
         """
@@ -99,7 +99,7 @@ class ConfigBaseSubcommand(BaseSubcommand):
 
         docker.load_config(args.config_name, path)
 
-    def render_buf(self, buf, data: dict=None, runtime_config: bool=True):
+    def render_buf(self, buf, data: dict = None, runtime_config: bool = True):
         data = data or self.data
 
         # reset runtime variables

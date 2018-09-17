@@ -10,9 +10,7 @@ def execute(command: str, env, **kwargs):
     """
     command_split = shlex.split(command)
 
-    kwargs.update(dict(
-        _env=env,
-    ))
+    kwargs.update(dict(_env=env))
 
     proc = getattr(sh, command_split[0])
 

@@ -51,14 +51,35 @@ class Service(BaseSubcommand):
         subparser.epilog = __doc__
         subparser.formatter_class = argparse.RawDescriptionHelpFormatter
 
-        subparser.add_argument('--user', '-u', help='the user to become int he container')
-        subparser.add_argument('--retries', type=int, default=30, help='number of times to retry')
-        subparser.add_argument('--ssh', action='store_true', help='ssh to the machine, not the container')
-        subparser.add_argument('--sudo', action='store_true', help='use sudo to run the docker command remotely')
-        subparser.add_argument('--list', action='store_true', help='list available containers')
-        subparser.add_argument('--container', type=int, default=0, help='which numbered container to select, default=0')
-        subparser.add_argument('--random', action='store_true', help='pick a random matching container')
-        subparser.add_argument('--service-name', help='full service name to use instead of generated')
+        subparser.add_argument(
+            '--user', '-u', help='the user to become int he container'
+        )
+        subparser.add_argument(
+            '--retries', type=int, default=30, help='number of times to retry'
+        )
+        subparser.add_argument(
+            '--ssh', action='store_true', help='ssh to the machine, not the container'
+        )
+        subparser.add_argument(
+            '--sudo',
+            action='store_true',
+            help='use sudo to run the docker command remotely',
+        )
+        subparser.add_argument(
+            '--list', action='store_true', help='list available containers'
+        )
+        subparser.add_argument(
+            '--container',
+            type=int,
+            default=0,
+            help='which numbered container to select, default=0',
+        )
+        subparser.add_argument(
+            '--random', action='store_true', help='pick a random matching container'
+        )
+        subparser.add_argument(
+            '--service-name', help='full service name to use instead of generated'
+        )
         subparser.add_argument('action', help='The action to run')
         subparser.add_argument('service', nargs='?', help='The desired service')
 
@@ -95,7 +116,7 @@ class Service(BaseSubcommand):
             print(self.list_services())
 
     @functools.lru_cache()
-    def list_containers(self, service_name: str=None):
+    def list_containers(self, service_name: str = None):
         service_name = service_name or self.service_name
 
         command = f'docker service ps --no-trunc --filter desired-state=running {service_name}'
@@ -150,7 +171,7 @@ class Service(BaseSubcommand):
 
         docker_user = ''
         if self.args.user:
-              docker_user = f'--user {self.args.user} '
+            docker_user = f'--user {self.args.user} '
 
         command = f'ssh -t {host_info}'
         docker_command = (

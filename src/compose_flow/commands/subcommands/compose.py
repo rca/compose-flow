@@ -16,6 +16,7 @@ class Compose(PassthroughBaseSubcommand):
     """
     Subcommand for running compose commands
     """
+
     command_name = 'docker-compose'
     dirty_working_copy_okay = True
 
@@ -31,9 +32,7 @@ class Compose(PassthroughBaseSubcommand):
         command.extend(['--project-name', self.workflow.args.project_name])
 
         profile = self.workflow.profile
-        command.extend([
-            '-f', profile.filename,
-        ])
+        command.extend(['-f', profile.filename])
 
         return command
 

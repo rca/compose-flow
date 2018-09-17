@@ -31,7 +31,10 @@ class WorkflowTestCase(BaseTestCase):
 
         env = workflow.environment
 
-        self.assertEqual(['CF_ENV', 'CF_ENV_NAME', 'CF_PROJECT', 'DOCKER_IMAGE', 'VERSION'], sorted(env.data.keys()))
+        self.assertEqual(
+            ['CF_ENV', 'CF_ENV_NAME', 'CF_PROJECT', 'DOCKER_IMAGE', 'VERSION'],
+            sorted(env.data.keys()),
+        )
 
     def test_load_env_when_env_specified(self, *mocks):
         self._setup_docker_config_mock(*mocks)
@@ -42,7 +45,18 @@ class WorkflowTestCase(BaseTestCase):
 
         env = workflow.environment
 
-        self.assertEqual(['BAR', 'CF_ENV', 'CF_ENV_NAME', 'CF_PROJECT', 'DOCKER_IMAGE', 'FOO', 'VERSION'], sorted(env.data.keys()))
+        self.assertEqual(
+            [
+                'BAR',
+                'CF_ENV',
+                'CF_ENV_NAME',
+                'CF_PROJECT',
+                'DOCKER_IMAGE',
+                'FOO',
+                'VERSION',
+            ],
+            sorted(env.data.keys()),
+        )
         self.assertEqual('1', env.data['FOO'])
         self.assertEqual('2', env.data['BAR'])
 
@@ -71,6 +85,7 @@ class WorkflowArgsTestCase(TestCase):
     """
     Tests for parsing command line arguments
     """
+
     def test_sensible_defaults_no_env(self, *mocks):
         """
         Test sensible defaults when no environment is defined

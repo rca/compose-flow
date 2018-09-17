@@ -47,7 +47,9 @@ class PublishTestCase(BaseTestCase):
         docker_image = 'foo:bar'
 
         docker_mock = mocks[0]
-        docker_mock.get_config.return_value = f"FOO=1\nBAR=2\nVERSION={version}\nDOCKER_IMAGE={docker_image}"
+        docker_mock.get_config.return_value = (
+            f"FOO=1\nBAR=2\nVERSION={version}\nDOCKER_IMAGE={docker_image}"
+        )
 
         utils_mock = mocks[1]
         utils_mock.get_tag_version.return_value = new_version

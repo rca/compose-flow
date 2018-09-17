@@ -5,12 +5,11 @@ from compose_flow import utils
 
 class RenderTestCase(TestCase):
     def test_multiple_subs_on_same_line(self, *mocks):
-        env = {
-            'JOB_NAME': 'the-job',
-            'BUILD_NUMBER': '1234',
-        }
+        env = {'JOB_NAME': 'the-job', 'BUILD_NUMBER': '1234'}
 
-        content = '      - /tmp/jenkins/${JOB_NAME}/${BUILD_NUMBER}:/usr/local/src/results'
+        content = (
+            '      - /tmp/jenkins/${JOB_NAME}/${BUILD_NUMBER}:/usr/local/src/results'
+        )
 
         rendered = utils.render(content, env=env)
 

@@ -21,6 +21,7 @@ class Env(ConfigBaseSubcommand):
     """
     Subcommand for managing environment
     """
+
     setup_profile = False
 
     def __init__(self, *args, **kwargs):
@@ -41,8 +42,14 @@ class Env(ConfigBaseSubcommand):
     def fill_subparser(cls, parser, subparser):
         subparser.add_argument('action')
         subparser.add_argument('path', nargs='*')
-        subparser.add_argument('-f', '--force', action='store_true', help='edit even if no config found')
-        subparser.add_argument('--variables', action='store_true', help='show runtime variables instead of values')
+        subparser.add_argument(
+            '-f', '--force', action='store_true', help='edit even if no config found'
+        )
+        subparser.add_argument(
+            '--variables',
+            action='store_true',
+            help='show runtime variables instead of values',
+        )
 
     def cat(self) -> str:
         """
@@ -67,7 +74,6 @@ class Env(ConfigBaseSubcommand):
             'CF_PROJECT': args.project_name,
             'DOCKER_IMAGE': f'{self.docker_image.split(":", 1)[0]}:{self.version}',
             VERSION_VAR: self.version,
-
             # deprecate this env var
             'CF_ENV_NAME': args.project_name,
         }
@@ -101,7 +107,9 @@ class Env(ConfigBaseSubcommand):
 
             new_val = os.environ.get(location_ref)
             if new_val is None:
-                raise errors.RuntimeEnvError(f'runtime substitution for {k}={v} not found')
+                raise errors.RuntimeEnvError(
+                    f'runtime substitution for {k}={v} not found'
+                )
 
             data[k] = new_val
 
@@ -154,13 +162,15 @@ class Env(ConfigBaseSubcommand):
         Sets the docker image tag based on the current version
         """
         if ':' not in docker_image:
-            raise EnvironmentError('compose-flow enforces image versioning; DOCKER_IMAGE must contain a colon')
+            raise EnvironmentError(
+                'compose-flow enforces image versioning; DOCKER_IMAGE must contain a colon'
+            )
 
         return f'{docker_image.split(":", 1)[0]}:{self.version}'
 
         return docker_image
 
-    def update(self, new_data: dict, persistable: bool=True):
+    def update(self, new_data: dict, persistable: bool = True):
         """
         Updates the environment data with the new given data
 
@@ -234,7 +244,9 @@ class Env(ConfigBaseSubcommand):
             try:
                 key, value = line.split('=', 1)
             except ValueError as exc:
-                self.logger.error(f'ERROR: unable to parse line number {idx}, edit your env: {line}')
+                self.logger.error(
+                    f'ERROR: unable to parse line number {idx}, edit your env: {line}'
+                )
 
                 raise
 
@@ -253,7 +265,7 @@ class Env(ConfigBaseSubcommand):
     def logger(self):
         return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
-    def render(self, data:dict=None) -> str:
+    def render(self, data: dict = None) -> str:
         """
         Returns a rendered file in .env file format
         """
@@ -297,7 +309,9 @@ class Env(ConfigBaseSubcommand):
 
             # check if the subcommand is okay with a dirty working copy
             if not subcommand.is_dirty_working_copy_okay(exc):
-                raise errors.TagVersionError(f'Warning: unable to run tag-version ({exc})\n')
+                raise errors.TagVersionError(
+                    f'Warning: unable to run tag-version ({exc})\n'
+                )
 
         return tag_version
 

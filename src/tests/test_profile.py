@@ -13,7 +13,6 @@ class ProfileTestCase(TestCase):
         """
         profile = Profile(self.workflow)
 
-
     def test_expand_services(self, *mocks):
         data = {
             'services': {
@@ -25,30 +24,19 @@ class ProfileTestCase(TestCase):
                         'SPARK_WORKER_PORT=8888',
                         'SPARK_WORKER_WEBUI_PORT=8080',
                     ],
-                    'ports': [
-                        '8000:8000',
-                    ],
-                    'deploy': {
-                        'replicas': 3,
-                    },
-                },
+                    'ports': ['8000:8000'],
+                    'deploy': {'replicas': 3},
+                }
             },
-
             'compose_flow': {
                 'expand': {
                     'foo': {
                         'increment': {
-                            'env': [
-                                'SPARK_WORKER_PORT',
-                                'SPARK_WORKER_WEBUI_PORT',
-                            ],
-                            'ports': {
-                                'source_port': True,
-                                'destination_port': True,
-                            },
-                        },
-                    },
-                },
+                            'env': ['SPARK_WORKER_PORT', 'SPARK_WORKER_WEBUI_PORT'],
+                            'ports': {'source_port': True, 'destination_port': True},
+                        }
+                    }
+                }
             },
         }
 
@@ -61,7 +49,7 @@ class ProfileTestCase(TestCase):
 
         self.assertEqual(
             [x['ports'] for x in new_data['services'].values()],
-            [['8000:8000'], ['8001:8001'], ['8002:8002']]
+            [['8000:8000'], ['8001:8001'], ['8002:8002']],
         )
 
         self.assertEqual(
@@ -70,5 +58,5 @@ class ProfileTestCase(TestCase):
                 ['FOO=1', 'SPARK_WORKER_PORT=8888', 'SPARK_WORKER_WEBUI_PORT=8080'],
                 ['FOO=1', 'SPARK_WORKER_PORT=8889', 'SPARK_WORKER_WEBUI_PORT=8081'],
                 ['FOO=1', 'SPARK_WORKER_PORT=8890', 'SPARK_WORKER_WEBUI_PORT=8082'],
-            ]
+            ],
         )

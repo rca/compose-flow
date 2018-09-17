@@ -46,7 +46,9 @@ class EnvTestCase(BaseTestCase):
         docker_image = 'foo:bar'
 
         docker_mock = mocks[0]
-        docker_mock.get_config.return_value = f"FOO=1\nBAR=2\nVERSION={version}\nDOCKER_IMAGE={docker_image}"
+        docker_mock.get_config.return_value = (
+            f"FOO=1\nBAR=2\nVERSION={version}\nDOCKER_IMAGE={docker_image}"
+        )
 
         command = shlex.split('-e dev env cat')
         flow = Workflow(argv=command)
@@ -58,7 +60,9 @@ class EnvTestCase(BaseTestCase):
         self.assertEqual(version, env.data['VERSION'])
         self.assertEqual(docker_image, env.data['DOCKER_IMAGE'])
 
-        self.assertEqual(['BAR', 'DOCKER_IMAGE', 'FOO', 'VERSION'], sorted(env._persistable_keys))
+        self.assertEqual(
+            ['BAR', 'DOCKER_IMAGE', 'FOO', 'VERSION'], sorted(env._persistable_keys)
+        )
 
     @mock.patch('compose_flow.commands.subcommands.env.Env.rw_env', new=True)
     @mock.patch('compose_flow.commands.subcommands.env.utils')
@@ -72,7 +76,9 @@ class EnvTestCase(BaseTestCase):
         docker_image = 'foo:bar'
 
         docker_mock = mocks[0]
-        docker_mock.get_config.return_value = f"FOO=1\nBAR=2\nVERSION={version}\nDOCKER_IMAGE={docker_image}"
+        docker_mock.get_config.return_value = (
+            f"FOO=1\nBAR=2\nVERSION={version}\nDOCKER_IMAGE={docker_image}"
+        )
 
         utils_mock = mocks[1]
         utils_mock.get_tag_version.return_value = new_version
