@@ -238,7 +238,11 @@ class Workflow(object):
 
         docker_host = remote.docker_host
         if docker_host:
-            self.environment.update({'DOCKER_HOST': docker_host}, persistable=False)
+            # one of the very few exceptions of updating the os environment directly
+            # the docker host is low level in that it's not possible to run docker
+            # commands on remote hosts if this is not set before those commands are
+            # attempted.
+            os.environ.update({'DOCKER_HOST': docker_host})
 
     @property
     @lru_cache()
