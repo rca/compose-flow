@@ -3,7 +3,6 @@ import logging
 from functools import lru_cache
 
 from .base import BaseSubcommand
-# from .compose import Compose
 
 
 class Publish(BaseSubcommand):
