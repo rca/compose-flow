@@ -44,7 +44,10 @@ class Remote(BaseSubcommand):
             print(f'unset DOCKER_HOST')
 
     def connect(self):
-        self.make_connection()
+        try:
+            self.make_connection()
+        except errors.AlreadyConnected:
+            pass
 
         if remote_host != self.socket_path:
             self.print_eval_hint()
