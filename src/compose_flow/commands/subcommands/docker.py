@@ -10,3 +10,7 @@ class Docker(PassthroughBaseSubcommand):
     """
 
     command_name = 'docker'
+
+    setup_environment = False
+
+    setup_profile = False
