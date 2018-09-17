@@ -299,7 +299,7 @@ class Profile(BaseSubcommand):
         if not config:
             return {}
 
-        profile_name = self.args.profile
+        profile_name = self.workflow.args.profile
 
         # when there is no profile name, return just docker-compose.yml
         if profile_name is None:
