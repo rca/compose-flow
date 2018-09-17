@@ -223,6 +223,9 @@ class Workflow(object):
         """
         Sets DOCKER_HOST based on the environment
         """
+        if not self.subcommand.remote_action:
+            return
+
         remote = Remote(self)
 
         try:
