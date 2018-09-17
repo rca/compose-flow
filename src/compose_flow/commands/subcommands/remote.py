@@ -73,7 +73,8 @@ class Remote(BaseSubcommand):
         pgrep_search = f'ssh -Nf -L {socket}'
 
         try:
-            proc = self.execute(f'pgrep -f "{pgrep_search}"')
+            # very low-level command that does not need workflow environment
+            proc = self.execute(f'pgrep -f "{pgrep_search}"', _env=os.environ)
         except shell.ErrorReturnCode_1:
             pass
         else:
@@ -162,7 +163,8 @@ class Remote(BaseSubcommand):
 
         self.close(do_print=False)
 
-        self.execute(f'ssh -Nf -L {socket_path}:/var/run/docker.sock {host}')
+        # very low-level command that does not need workflow environment
+        self.execute(f'ssh -Nf -L {socket_path}:/var/run/docker.sock {host}', _env=os.environ)
 
     def print_eval_hint(self):
         print(

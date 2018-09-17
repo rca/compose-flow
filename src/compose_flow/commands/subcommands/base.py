@@ -46,7 +46,11 @@ class BaseSubcommand(ABC):
         """
         Executes the given command
         """
-        return shell.execute(command, self.workflow.environment.data, **kwargs)
+        # get the environment from kwargs or else use the workflow environment
+        # use the `or` syntax so that the environment data is not evaluated unless env is not passed in
+        env = kwargs.pop('_env', None) or self.workflow.environment.data
+
+        return shell.execute(command, env, **kwargs)
 
     def get_subcommand(self, name: str) -> object:
         """
