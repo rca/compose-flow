@@ -54,12 +54,17 @@ class Workflow(object):
         """
         app_config = {}
 
-        config_path = os.environ.get('CF_REMOTES_CONFIG_PATH', CF_REMOTES_CONFIG_PATH)
+        config_path = self.app_config_path
         if os.path.exists(config_path):
             with open(config_path, 'r') as fh:
                 app_config = yaml_load(fh)
 
         return app_config
+
+    @property
+    @lru_cache()
+    def app_config_path(self):
+        return os.environ.get('CF_REMOTES_CONFIG_PATH', CF_REMOTES_CONFIG_PATH)
 
     def _check_version_option(self):
         version_arg = self.args.version
