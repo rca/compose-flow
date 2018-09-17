@@ -10,7 +10,7 @@ class ShellTestCase(BaseTestCase):
         """
         Ensure the shell's execution is done with the passed in environment
         """
-        env = mock.Mock()
+        env = {}
 
         shell.execute('docker ps', env)
 

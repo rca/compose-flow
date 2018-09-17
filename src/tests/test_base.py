@@ -12,8 +12,9 @@ class BaseSubcommandTestCase(BaseTestCase):
         print(mocks)
 
         workflow = mock.Mock()
-        command = TestSubcommand(workflow)
+        workflow.environment.data = {}
 
+        command = TestSubcommand(workflow)
         proc = command.execute('docker ps')
 
         # make sure that sh was executed with the workflow environment
