@@ -5,6 +5,8 @@ import copy
 import os
 import tempfile
 
+from functools import lru_cache
+
 from .base import BaseSubcommand
 
 from compose_flow.compose import get_overlay_filenames
@@ -13,9 +15,6 @@ from compose_flow.errors import EnvError, NoSuchConfig, NoSuchProfile, ProfileEr
 from compose_flow.utils import remerge, render, yaml_dump, yaml_load
 
 COPY_ENV_VAR = 'CF_COPY_ENV_FROM'
-
-# keep track of written profiles in order to prevent writing them twice
-WRITTEN_PROFILES = []
 
 
 def get_kv(item: str) -> tuple:
@@ -313,15 +312,10 @@ class Profile(BaseSubcommand):
 
         return profile
 
+    @lru_cache()
     def write(self) -> None:
         """
         Writes the loaded compose file to disk
         """
-        # do not write profiles more than once per execution
-        if self.filename in WRITTEN_PROFILES:
-            return
-
         with open(self.filename, 'w') as fh:
             fh.write(self.load())
-
-        WRITTEN_PROFILES.append(self.filename)

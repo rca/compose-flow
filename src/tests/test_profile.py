@@ -60,3 +60,16 @@ class ProfileTestCase(TestCase):
                 ['FOO=1', 'SPARK_WORKER_PORT=8890', 'SPARK_WORKER_WEBUI_PORT=8082'],
             ],
         )
+
+    @mock.patch('compose_flow.commands.subcommands.profile.open')
+    def test_profile_writes_once(self, *mocks):
+        open_mock = mocks[0]
+
+        profile = Profile(self.workflow)
+        profile.load = mock.Mock()
+
+        profile.write()
+        profile.write()
+        profile.write()
+
+        self.assertEqual(1, open_mock.call_count)
