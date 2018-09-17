@@ -42,7 +42,7 @@ class PassthroughBaseSubcommand(BaseSubcommand):
         self.logger.info(command_s)
 
         if not args.dry_run:
-            self.execute(command_s)
+            self.execute(command_s, _fg=True)
 
     @property
     def logger(self) -> logging.Logger:
