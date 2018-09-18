@@ -29,7 +29,7 @@ class PassthroughBaseSubcommand(BaseSubcommand):
 
         return [command_path]
 
-    def handle(self, extra_args: list = None, log_output=False) -> [None, str]:
+    def handle(self, extra_args: list = None, log_output: bool = False) -> [None, str]:
         command = self.get_command()
 
         args = self.workflow.args
