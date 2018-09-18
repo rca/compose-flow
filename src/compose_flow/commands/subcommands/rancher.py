@@ -4,7 +4,9 @@ Compose subcommand
 from .passthrough_base import PassthroughBaseSubcommand
 import yaml
 import sh
+import os
 from compose_flow.config import get_config
+from compose_flow import shell
 
 CLUSTER_LS_FORMAT = '{{.Cluster.Name}}: {{.Cluster.ID}}'
 PROJECT_LS_FORMAT = '{{.Project.Name}}: {{.Project.ID}}'
@@ -21,6 +23,12 @@ class Rancher(PassthroughBaseSubcommand):
 
     setup_profile = False
 
+    def execute(self, command: str, **kwargs):
+        """
+        Executes the given command
+        """
+        return shell.execute(command, os.environ)
+
     def switch_context(self):
         '''
         Switch Rancher CLI context to target specified cluster based on environment
@@ -28,7 +36,7 @@ class Rancher(PassthroughBaseSubcommand):
         '''
         # Get the cluster ID for the specified target environment
         cluster_ls_command = self.command_name + f" cluster ls --format '{CLUSTER_LS_FORMAT}'"
-        clusters = yaml.load(self.execute(cluster_ls_command))
+        clusters = yaml.load(str(self.execute(cluster_ls_command)))
 
         target_cluster_name = self.workflow.args.environment
         target_cluster_id = clusters[target_cluster_name]
@@ -53,7 +61,7 @@ class Rancher(PassthroughBaseSubcommand):
             else:
                 raise
 
-    def handle(self):
+    def handle(self, extra_args: list = None) -> [None, str]:
         self.switch_context()
 
-        super().handle()
+        return super().handle(log_output=True)
