@@ -14,22 +14,31 @@ class Deploy(BaseSubcommand):
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
-        pass
+        subparser.add_argument('action', nargs='?', default='docker')
 
     @property
     def logger(self):
         return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
+    def build_docker_command(self):
+        return f"""docker stack deploy
+            --prune
+            --with-registry-auth
+            --compose-file {profile.filename}
+            {args.config_name}"""
+
     def handle(self):
         args = self.workflow.args
         env = self.workflow.environment
         profile = self.workflow.profile
+        action = args.action
 
-        command = f"""docker stack deploy
-          --prune
-          --with-registry-auth
-          --compose-file {profile.filename}
-          {args.config_name}"""
+        try:
+            action_method = getattr(self, 'build_' + action + '_command')
+        except AttributeError:
+            self.logger.error("Unknown deployment platform:", action)
+
+        command = action_method()
 
         self.logger.info(command)
 
