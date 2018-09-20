@@ -24,8 +24,8 @@ class Deploy(BaseSubcommand):
         return f"""docker stack deploy
             --prune
             --with-registry-auth
-            --compose-file {profile.filename}
-            {args.config_name}"""
+            --compose-file {self.workflow.profile.filename}
+            {self.workflow.args.config_name}"""
 
     def handle(self):
         args = self.workflow.args
