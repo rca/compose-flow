@@ -30,13 +30,12 @@ class Deploy(BaseSubcommand):
     def handle(self):
         args = self.workflow.args
         env = self.workflow.environment
-        profile = self.workflow.profile
         action = args.action
 
         try:
             action_method = getattr(self, 'build_' + action + '_command')
         except AttributeError:
-            self.logger.error("Unknown deployment platform:", action)
+            self.logger.error("Unknown deployment platform: %s", action)
 
         command = action_method()
 
