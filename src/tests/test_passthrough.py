@@ -12,12 +12,9 @@ class BaseSubcommandTestCase(BaseTestCase):
     def test_execute(self, *mocks):
         workflow = mock.Mock()
 
-        os_mock = mocks[0]
-        os_mock.environ = {'HOME': '/tmp/test_home'}
-
         command = TestPassthroughSubcommand(workflow)
         proc = command.execute('docker ps')
 
         # make sure that sh was executed with the workflow environment
         sh_mock = self.sh_mock
-        sh_mock.docker.assert_called_with('ps', _env=os_mock.environ)
+        sh_mock.docker.assert_called_with('ps', _env=workflow.environment.data.copy())
