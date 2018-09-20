@@ -70,7 +70,7 @@ class TagVersionError(Exception):
     """
 
     def __init__(
-        self, message: str, shell_exception: Exception, tag_version: str = None
+            self, message: str, shell_exception: Exception, tag_version: str = None
     ):
         self.message = message
         self.shell_exception = shell_exception
