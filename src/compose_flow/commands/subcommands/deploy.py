@@ -3,9 +3,10 @@ import os
 import shlex
 
 from .base import BaseSubcommand
+from .rancher_mixin import RancherMixIn
 
 
-class Deploy(BaseSubcommand):
+class Deploy(BaseSubcommand, RancherMixIn):
     """
     Subcommand for deploying an image to the docker swarm
     """
@@ -26,6 +27,20 @@ class Deploy(BaseSubcommand):
             --with-registry-auth
             --compose-file {self.workflow.profile.filename}
             {self.workflow.args.config_name}"""
+
+    def build_rancher_command(self):
+        self.switch_context()
+
+        command = ''
+
+        for app in self.get_apps():
+            # check if app is already installed - if so upgrade, if not install
+            continue
+
+        for manifest in self.get_manifests():
+            command += 'rancher kubectl apply -f {}\n'.format(manifest)
+
+        return command
 
     def handle(self):
         args = self.workflow.args
