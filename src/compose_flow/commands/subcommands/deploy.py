@@ -21,24 +21,24 @@ class Deploy(BaseSubcommand, RancherMixIn):
     def logger(self):
         return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
-    def build_docker_command(self):
+    def build_docker_command(self) -> str:
         return f"""docker stack deploy
             --prune
             --with-registry-auth
             --compose-file {self.workflow.profile.filename}
             {self.workflow.args.config_name}"""
 
-    def build_rancher_command(self):
+    def build_rancher_command(self) -> list:
         self.switch_context()
 
-        command = ''
+        command = []
 
         for app in self.get_apps():
             # check if app is already installed - if so upgrade, if not install
-            continue
+            command.append(self.get_app_deploy_command(app))
 
         for manifest in self.get_manifests():
-            command += 'rancher kubectl apply -f {}\n'.format(manifest)
+            command.append(self.get_manifest_deploy_command(manifest))
 
         return command
 
@@ -57,6 +57,11 @@ class Deploy(BaseSubcommand, RancherMixIn):
         self.logger.info(command)
 
         if not args.dry_run:
-            self.execute(command)
+            if isinstance(command, list):
+                # If multiple commands are returned, run them one by one
+                for c in command:
+                    self.execute(c)
+            else:
+                self.execute(command)
 
             env.write()

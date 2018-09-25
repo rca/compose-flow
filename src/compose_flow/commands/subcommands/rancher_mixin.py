@@ -19,7 +19,7 @@ class RancherMixIn(object):
 
     def get_rancher_config_section(self):
         config = get_config()
-        target_project_name = config['rancher']
+        return config['rancher']
 
     def switch_context(self):
         '''
@@ -40,6 +40,7 @@ class RancherMixIn(object):
         base_context_switch_command = self.command_name + " context switch "
         name_context_switch_command = base_context_switch_command + target_project_name
         try:
+            self.logger.info(name_context_switch_command)
             self.execute(name_context_switch_command)
         except sh.ErrorReturnCode_1 as exc:  # pylint: disable=E1101
             stderr = exc.stderr
@@ -49,14 +50,30 @@ class RancherMixIn(object):
                 target_project_id = str([o for o in opts if target_cluster_id in o][0])
 
                 id_context_switch_command = base_context_switch_command + target_project_id
+                self.logger.info(id_context_switch_command)
                 self.execute(id_context_switch_command)
             else:
                 raise
 
-    def get_apps(self):
+    def get_app_deploy_command(self, app: dict) -> str:
+        '''
+        Construct command to install or upgrade a Rancher app
+        depending on whether or not it is already deployed.
+        '''
+        apps = str(self.execute("rancher apps ls --format '{{.App.Name}}'"))
+        if app.name in apps:
+            return f'rancher apps upgrade --answers {app.answers} {app.name} {app.version}'
+        else:
+            return f'rancher apps install --answers {app.answers} --namespace {app.namespace} --version {app.version} {app.chart} {app.name}'
+
+    def get_manifest_deploy_command(self, manifest_path: str) -> str:
+        '''Construct command to apply a Kubernetes YAML manifest using the Rancher CLI.'''
+        return f'rancher kubectl apply -f {manifest_path}'
+
+    def get_apps(self) -> list:
         rancher_config = self.get_rancher_config_section()
         return rancher_config.get('apps', [])
 
-    def get_manifests(self):
+    def get_manifests(self) -> list:
         rancher_config = self.get_rancher_config_section()
         return rancher_config.get('manifests', [])
