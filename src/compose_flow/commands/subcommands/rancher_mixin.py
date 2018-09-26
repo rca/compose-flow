@@ -32,7 +32,7 @@ class RancherMixIn(object):
         and specified project name from compose-flow.yml
         '''
         # Get the cluster ID for the specified target environment
-        cluster_ls_command = self.command_name + f" cluster ls --format '{CLUSTER_LS_FORMAT}'"
+        cluster_ls_command = f"rancher cluster ls --format '{CLUSTER_LS_FORMAT}'"
         clusters = yaml.load(str(self.execute(cluster_ls_command)))
 
         target_cluster_name = self.workflow.args.environment
@@ -42,7 +42,7 @@ class RancherMixIn(object):
         rancher_config = self.get_rancher_config_section()
         target_project_name = rancher_config['project']
 
-        base_context_switch_command = self.command_name + " context switch "
+        base_context_switch_command = "rancher context switch "
         name_context_switch_command = base_context_switch_command + target_project_name
         try:
             self.logger.info(name_context_switch_command)
@@ -66,11 +66,16 @@ class RancherMixIn(object):
         depending on whether or not it is already deployed.
         '''
         apps = str(self.execute("rancher apps ls --format '{{.App.Name}}'"))
-        rendered_path = self.render_answers(app.answers, app.name)
-        if app.name in apps:
-            return f'rancher apps upgrade --answers {rendered_path} {app.name} {app.version}'
+        app_name = app['name']
+        version = app['version']
+        namespace = app['namespace']
+        chart = app['chart']
+
+        rendered_path = self.render_answers(app['answers'], app_name)
+        if app_name in apps:
+            return f'rancher apps upgrade --answers {rendered_path} {app_name} {version}'
         else:
-            return f'rancher apps install --answers {rendered_path} --namespace {app.namespace} --version {app.version} {app.chart} {app.name}'
+            return f'rancher apps install --answers {rendered_path} --namespace {namespace} --version {version} {chart} {app_name}'
 
     def get_manifest_deploy_command(self, manifest_path: str) -> str:
         '''Construct command to apply a Kubernetes YAML manifest using the Rancher CLI.'''
@@ -87,7 +92,7 @@ class RancherMixIn(object):
 
     def get_manifest_filename(self, manifest_path: str) -> str:
         args = self.workflow.args
-        escaped_path = manifest_path.replace('./', '').replace('../', '').replace('/', '-')
+        escaped_path = manifest_path.replace('../', '').replace('./', '').replace('/', '-')
         return f'compose-flow-{args.profile}-manifest-{escaped_path}'
 
     def get_answers_filename(self, app_name: str) -> str:
@@ -95,10 +100,21 @@ class RancherMixIn(object):
         return f'compose-flow-{args.profile}-{app_name}-answers.yml'
 
     def render_single_yaml(self, input_path: str, output_path: str) -> None:
-        '''Read in single YAML file from specified path, render environment variables, then write out to a known location in the working dir.'''
+        '''
+        Read in single YAML file from specified path, render environment variables,
+        then write out to a known location in the working dir.
+        '''
+        self.logger.info("Rendering YAML at %s to %s", input_path, output_path)
+
+        # TODO: Add support for multiple YAML documents in a single file
         with open(input_path, 'r') as fh:
-            content = yaml_load(fh)
-        rendered = render(content, env=self.workflow.environment.data)
+            try:
+                content = yaml_load(fh)
+            except yaml.composer.ComposerError:
+                self.logger.exception("Each manifest file must contain a single YAML document!")
+                raise
+
+        rendered = render(yaml_dump(content), env=self.workflow.environment.data)
 
         with open(output_path, 'w') as fh:
             yaml_dump(rendered, fh)
