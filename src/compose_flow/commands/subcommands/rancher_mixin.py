@@ -103,7 +103,7 @@ class RancherMixIn(object):
         with open(output_path, 'w') as fh:
             yaml_dump(rendered, fh)
 
-    @lru_cache
+    @lru_cache()
     def render_manifest(self, manifest_path: str) -> str:
         '''Render the specified manifest YAML and return the path to the rendered file.'''
         rendered_path = self.get_manifest_filename(manifest_path)
@@ -111,7 +111,7 @@ class RancherMixIn(object):
 
         return rendered_path
 
-    @lru_cache
+    @lru_cache()
     def render_answers(self, answers_path: str, app_name: str) -> str:
         '''Render the specified manifest YAML and return the path to the rendered file.'''
         rendered_path = self.get_answers_filename(app_name)
