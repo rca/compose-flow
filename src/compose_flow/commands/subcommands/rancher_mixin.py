@@ -92,7 +92,7 @@ class RancherMixIn(object):
 
     def get_manifest_filename(self, manifest_path: str) -> str:
         args = self.workflow.args
-        escaped_path = manifest_path.replace('../', '').replace('./', '').replace('/', '-')
+        escaped_path = manifest_path.replace('../', '').replace('./', '').replace('/', '-').replace('.yaml', '.yml')
         return f'compose-flow-{args.profile}-manifest-{escaped_path}'
 
     def get_answers_filename(self, app_name: str) -> str:
