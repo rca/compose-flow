@@ -80,7 +80,7 @@ class RancherMixIn(object):
     def get_manifest_deploy_command(self, manifest_path: str) -> str:
         '''Construct command to apply a Kubernetes YAML manifest using the Rancher CLI.'''
         rendered_path = self.render_manifest(manifest_path)
-        return f'rancher kubectl apply -f {rendered_path}'
+        return f'rancher kubectl apply --validate -f {rendered_path}'
 
     def get_apps(self) -> list:
         rancher_config = self.get_rancher_config_section()
@@ -117,7 +117,7 @@ class RancherMixIn(object):
         rendered = render(yaml_dump(content), env=self.workflow.environment.data)
 
         with open(output_path, 'w') as fh:
-            yaml_dump(rendered, fh)
+            fh.write(rendered)
 
     @lru_cache()
     def render_manifest(self, manifest_path: str) -> str:
