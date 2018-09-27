@@ -22,6 +22,7 @@ class RancherMixIn(object):
     Mix-in for managing Rancher CLI context
     """
 
+    @lru_cache()
     def get_rancher_config_section(self):
         config = get_config()
         return config['rancher']
@@ -82,13 +83,30 @@ class RancherMixIn(object):
         rendered_path = self.render_manifest(manifest_path)
         return f'rancher kubectl apply --validate -f {rendered_path}'
 
+    def get_extra_section(self, rancher_config: str, section: str) -> list:
+        extras = rancher_config.get('extras')
+        if extras:
+            env_extras = extras.get(self.workflow.args.profile)
+            if env_extras:
+                return env_extras.get(section, [])
+
+        return []
+
     def get_apps(self) -> list:
         rancher_config = self.get_rancher_config_section()
-        return rancher_config.get('apps', [])
+
+        default_apps = rancher_config.get('apps', [])
+        extra_apps = self.get_extra_section(rancher_config, 'apps')
+
+        return default_apps + extra_apps
 
     def get_manifests(self) -> list:
         rancher_config = self.get_rancher_config_section()
-        return rancher_config.get('manifests', [])
+
+        default_manifests = rancher_config.get('manifests', [])
+        extra_manifests = self.get_extra_section(rancher_config, 'manifests')
+
+        return default_manifests + extra_manifests
 
     def get_manifest_filename(self, manifest_path: str) -> str:
         args = self.workflow.args

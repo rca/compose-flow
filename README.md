@@ -307,7 +307,20 @@ rancher:
   # Raw Kubernetes YAML to be directly applied
   # Must include name and namespace metadata
   manifests:
-  - redis-ingress.yaml
+  - ./redis-ingress.yaml
+
+  # Per-environment extra apps and manifests
+  extras:
+    prod:
+      apps:
+        - name: redis-backup
+          namespace: redis
+          chart: custom-redis-backup-chart
+          answers: redis-backup-answers.yaml
+          version: 0.0.1
+      manifests:
+        - ./redis-lb.yaml
+
 ```
 
 Once configured, run the following command to deploy a `compose-flow` project to a Rancher-managed cluster named `dev`:
