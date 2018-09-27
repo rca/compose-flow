@@ -18,7 +18,7 @@ class Task(BaseSubcommand):
     def handle(self):
         config = get_config()
 
-        task_name = self.args.name
+        task_name = self.workflow.args.name
         try:
             task = config['tasks'][task_name]
         except KeyError:
@@ -41,7 +41,7 @@ class Task(BaseSubcommand):
         if remainder:
             subcommand_args.extend(remainder)
 
-        subcommand.run(subcommand_args)
+        subcommand.handle(subcommand_args)
 
     def is_dirty_working_copy_okay(self, exc: Exception) -> bool:
         dirty_working_copy_okay = super().is_dirty_working_copy_okay(exc)
