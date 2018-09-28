@@ -103,10 +103,12 @@ class RancherMixIn(object):
         else:
             return f'rancher apps install --answers {rendered_path} --namespace {namespace} --version {version} {chart} {app_name}'
 
-    def get_manifest_deploy_command(self, manifest_path: str) -> str:
+    def get_manifest_deploy_command(self, manifest_path: str, namespace: str, deploy_label: str, prune: bool = False) -> str:
         '''Construct command to apply a Kubernetes YAML manifest using the Rancher CLI.'''
         rendered_path = self.render_manifest(manifest_path)
-        return f'rancher kubectl apply --validate -f {rendered_path}'
+        prune_str = ' --prune' if prune else ''
+        namespace_str = f'--namespace {namespace} ' if namespace else ''
+        return f'rancher kubectl {namespace_str}apply -l deploy={deploy_label} --validate -f {rendered_path}{prune_str}'
 
     def get_extra_section(self, section: str) -> list:
         extras = self.rancher_config.get('extras')

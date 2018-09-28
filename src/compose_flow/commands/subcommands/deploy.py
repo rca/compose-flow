@@ -45,19 +45,30 @@ class Deploy(BaseSubcommand, RancherMixIn):
         self.switch_context()
 
         command = []
+        deploy_label = self.workflow.args.config_name
 
         for app in self.get_apps():
             # check if app is already installed - if so upgrade, if not install
             command.append(self.get_app_deploy_command(app))
 
         for manifest in self.get_manifests():
+            if isinstance(manifest, dict):
+                path = manifest['path']
+                deploy_label = manifest.get('label')
+                namespace = manifest.get('namespace')
+                prune = True if deploy_label else False
+                manifest = path
+            else:
+                deploy_label = None
+                prune = False
+
             if os.path.isdir(manifest):
                 m_path = pathlib.Path(manifest)
                 manifests = m_path.glob('**/*.y?ml')
                 for m in manifests:
-                    command.append(self.get_manifest_deploy_command(str(m)))
+                    command.append(self.get_manifest_deploy_command(str(m), namespace, deploy_label, prune))
             elif os.path.isfile(manifest):
-                command.append(self.get_manifest_deploy_command(manifest))
+                command.append(self.get_manifest_deploy_command(manifest,namespace, deploy_label, prune))
             else:
                 raise MissingManifestError("Missing manifest at path: {}".format(manifest))
 
