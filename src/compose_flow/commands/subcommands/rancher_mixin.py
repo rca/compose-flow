@@ -8,11 +8,16 @@ import os
 from functools import lru_cache
 
 from compose_flow.config import get_config
-from compose_flow import shell
 from compose_flow.utils import render, yaml_load, yaml_dump
 
 CLUSTER_LS_FORMAT = '{{.Cluster.Name}}: {{.Cluster.ID}}'
 PROJECT_LS_FORMAT = '{{.Project.Name}}: {{.Project.ID}}'
+
+EXCLUDE_PROFILES = ['local']
+
+
+class InvalidTargetClusterError(Exception):
+    pass
 
 
 class RancherMixIn(object):
@@ -20,32 +25,49 @@ class RancherMixIn(object):
     Mix-in for managing Rancher CLI context
     """
 
+    @property
     @lru_cache()
-    def get_rancher_config_section(self):
+    def rancher_config(self):
         config = get_config()
         return config['rancher']
+
+    @property
+    @lru_cache()
+    def cluster_listing(self):
+        cluster_ls_command = f"rancher cluster ls --format '{CLUSTER_LS_FORMAT}'"
+        return yaml.load(str(self.execute(cluster_ls_command)).strip())
+
+
+    @property
+    def cluster_name(self):
+        '''
+        Get the cluster name for the specified target environment.
+
+        If profile_name is in the compose-flow.yml Rancher cluster mapping,
+        use its value - otherwise use workflow.args.profile
+        '''
+        profile_name = self.workflow.args.profile
+        cluster_mapping = self.rancher_config.get('clusters', {})
+
+        if profile_name in EXCLUDE_PROFILES:
+            raise InvalidTargetClusterError(
+                "Invalid profile '{0}' for default cluster logic - please "
+                "specify an explicit cluster mapping in compose-flow.yml and "
+                "use a profile other than '{0}'".format(profile_name))
+
+        return cluster_mapping.get(profile_name, profile_name)
+
+    @property
+    def cluster_id(self):
+        return self.cluster_listing[self.cluster_name]
 
     def switch_context(self):
         '''
         Switch Rancher CLI context to target specified cluster based on environment
         and specified project name from compose-flow.yml
         '''
-        rancher_config = self.get_rancher_config_section()
-
-        # Get the cluster ID for the specified target environment
-        cluster_ls_command = f"rancher cluster ls --format '{CLUSTER_LS_FORMAT}'"
-        clusters = yaml.load(str(self.execute(cluster_ls_command)).strip())
-
-        env_name = self.workflow.args.environment
-        cluster_mapping = rancher_config.get('clusters', {})
-
-        # If env_name is a key, use its value - otherwise use env_name
-        target_cluster_name = cluster_mapping.get(env_name, env_name)
-
-        target_cluster_id = clusters[target_cluster_name]
-
         # Get the project name specified in compose-flow.yml
-        target_project_name = rancher_config['project']
+        target_project_name = self.rancher_config['project']
 
         base_context_switch_command = "rancher context switch "
         name_context_switch_command = base_context_switch_command + target_project_name
@@ -55,10 +77,13 @@ class RancherMixIn(object):
         except sh.ErrorReturnCode_1 as exc:  # pylint: disable=E1101
             stderr = str(exc.stderr)
             if 'Multiple resources of type project found for name' in stderr:
-                self.logger.info("Multiple clusters have a project called %s - switching context by Project ID", target_project_name)
+                self.logger.info(
+                    "Multiple clusters have a project called %s - "
+                    "switching context by Project ID", target_project_name
+                )
                 # Choose the one that matches target cluster ID
                 opts = stderr[stderr.find('[')+1:stderr.find(']')].split(' ')
-                target_project_id = [o for o in opts if target_cluster_id in o][0]
+                target_project_id = [o for o in opts if self.cluster_id in o][0]
 
                 id_context_switch_command = base_context_switch_command + target_project_id
                 self.logger.info(id_context_switch_command)
@@ -88,8 +113,8 @@ class RancherMixIn(object):
         rendered_path = self.render_manifest(manifest_path)
         return f'rancher kubectl apply --validate -f {rendered_path}'
 
-    def get_extra_section(self, rancher_config: str, section: str) -> list:
-        extras = rancher_config.get('extras')
+    def get_extra_section(self, section: str) -> list:
+        extras = self.rancher_config.get('extras')
         if extras:
             env_extras = extras.get(self.workflow.args.profile)
             if env_extras:
@@ -98,18 +123,14 @@ class RancherMixIn(object):
         return []
 
     def get_apps(self) -> list:
-        rancher_config = self.get_rancher_config_section()
-
-        default_apps = rancher_config.get('apps', [])
-        extra_apps = self.get_extra_section(rancher_config, 'apps')
+        default_apps = self.rancher_config.get('apps', [])
+        extra_apps = self.get_extra_section('apps')
 
         return default_apps + extra_apps
 
     def get_manifests(self) -> list:
-        rancher_config = self.get_rancher_config_section()
-
-        default_manifests = rancher_config.get('manifests', [])
-        extra_manifests = self.get_extra_section(rancher_config, 'manifests')
+        default_manifests = self.rancher_config.get('manifests', [])
+        extra_manifests = self.get_extra_section('manifests')
 
         return default_manifests + extra_manifests
 
