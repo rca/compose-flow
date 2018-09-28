@@ -3,10 +3,9 @@ Compose subcommand
 """
 import yaml
 import sh
-import os
-
 from functools import lru_cache
 
+from compose_flow.errors import InvalidTargetClusterError
 from compose_flow.config import get_config
 from compose_flow.utils import render, yaml_load, yaml_dump
 
@@ -14,10 +13,6 @@ CLUSTER_LS_FORMAT = '{{.Cluster.Name}}: {{.Cluster.ID}}'
 PROJECT_LS_FORMAT = '{{.Project.Name}}: {{.Project.ID}}'
 
 EXCLUDE_PROFILES = ['local']
-
-
-class InvalidTargetClusterError(Exception):
-    pass
 
 
 class RancherMixIn(object):
@@ -135,13 +130,11 @@ class RancherMixIn(object):
         return default_manifests + extra_manifests
 
     def get_manifest_filename(self, manifest_path: str) -> str:
-        args = self.workflow.args
         escaped_path = manifest_path.replace('../', '').replace('./', '').replace('/', '-').replace('.yaml', '.yml')
-        return f'compose-flow-{args.profile}-manifest-{escaped_path}'
+        return f'compose-flow-{self.cluster_name}-manifest-{escaped_path}'
 
     def get_answers_filename(self, app_name: str) -> str:
-        args = self.workflow.args
-        return f'compose-flow-{args.profile}-{app_name}-answers.yml'
+        return f'compose-flow-{self.cluster_name}-{app_name}-answers.yml'
 
     def render_single_yaml(self, input_path: str, output_path: str) -> None:
         '''

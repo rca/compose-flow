@@ -1,12 +1,16 @@
 import logging
 import os
-import shlex
+import pathlib
+
+
+from compose_flow.errors import MissingManifestError
 
 from .base import BaseSubcommand
 from .rancher_mixin import RancherMixIn
 
 ACTIONS = ['rancher', 'docker']
 PROFILE_ACTIONS = ['docker']
+
 
 class Deploy(BaseSubcommand, RancherMixIn):
     """
@@ -47,7 +51,15 @@ class Deploy(BaseSubcommand, RancherMixIn):
             command.append(self.get_app_deploy_command(app))
 
         for manifest in self.get_manifests():
-            command.append(self.get_manifest_deploy_command(manifest))
+            if os.path.isdir(manifest):
+                m_path = pathlib.Path(manifest)
+                manifests = m_path.glob('**/*.y?ml')
+                for m in manifests:
+                    command.append(self.get_manifest_deploy_command(str(m)))
+            elif os.path.isfile(manifest):
+                command.append(self.get_manifest_deploy_command(manifest))
+            else:
+                raise MissingManifestError("Missing manifest at path: {}".format(manifest))
 
         return command
 
