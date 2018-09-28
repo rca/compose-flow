@@ -5,6 +5,8 @@ import shlex
 from .base import BaseSubcommand
 from .rancher_mixin import RancherMixIn
 
+ACTIONS = ['rancher', 'docker']
+PROFILE_ACTIONS = ['docker']
 
 class Deploy(BaseSubcommand, RancherMixIn):
     """
@@ -15,11 +17,18 @@ class Deploy(BaseSubcommand, RancherMixIn):
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
-        subparser.add_argument('action', nargs='?', default='docker')
+        subparser.add_argument('action', nargs='?', default='docker', choices=ACTIONS)
 
     @property
     def logger(self):
         return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
+
+    @property
+    def setup_profile(self):
+        if self.workflow.args.action in PROFILE_ACTIONS:
+            return True
+        else:
+            return False
 
     def build_docker_command(self) -> str:
         return f"""docker stack deploy

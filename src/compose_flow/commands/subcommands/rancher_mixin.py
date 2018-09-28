@@ -11,8 +11,6 @@ from compose_flow.config import get_config
 from compose_flow import shell
 from compose_flow.utils import render, yaml_load, yaml_dump
 
-from .passthrough_base import PassthroughBaseSubcommand
-
 CLUSTER_LS_FORMAT = '{{.Cluster.Name}}: {{.Cluster.ID}}'
 PROJECT_LS_FORMAT = '{{.Project.Name}}: {{.Project.ID}}'
 
