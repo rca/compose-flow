@@ -32,15 +32,21 @@ class RancherMixIn(object):
         Switch Rancher CLI context to target specified cluster based on environment
         and specified project name from compose-flow.yml
         '''
+        rancher_config = self.get_rancher_config_section()
+
         # Get the cluster ID for the specified target environment
         cluster_ls_command = f"rancher cluster ls --format '{CLUSTER_LS_FORMAT}'"
-        clusters = yaml.load(str(self.execute(cluster_ls_command)))
+        clusters = yaml.load(str(self.execute(cluster_ls_command)).strip())
 
-        target_cluster_name = self.workflow.args.environment
+        env_name = self.workflow.args.environment
+        cluster_mapping = rancher_config.get('clusters', {})
+
+        # If env_name is a key, use its value - otherwise use env_name
+        target_cluster_name = cluster_mapping.get(env_name, env_name)
+
         target_cluster_id = clusters[target_cluster_name]
 
         # Get the project name specified in compose-flow.yml
-        rancher_config = self.get_rancher_config_section()
         target_project_name = rancher_config['project']
 
         base_context_switch_command = "rancher context switch "
@@ -49,11 +55,12 @@ class RancherMixIn(object):
             self.logger.info(name_context_switch_command)
             self.execute(name_context_switch_command)
         except sh.ErrorReturnCode_1 as exc:  # pylint: disable=E1101
-            stderr = exc.stderr
+            stderr = str(exc.stderr)
             if 'Multiple resources of type project found for name' in stderr:
+                self.logger.info("Multiple clusters have a project called %s - switching context by Project ID", target_project_name)
                 # Choose the one that matches target cluster ID
-                opts = stderr[stderr.find(b'[')+1:stderr.find(b']')]
-                target_project_id = str([o for o in opts if target_cluster_id in o][0])
+                opts = stderr[stderr.find('[')+1:stderr.find(']')].split(' ')
+                target_project_id = [o for o in opts if target_cluster_id in o][0]
 
                 id_context_switch_command = base_context_switch_command + target_project_id
                 self.logger.info(id_context_switch_command)
