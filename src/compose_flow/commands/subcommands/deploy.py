@@ -59,6 +59,7 @@ class Deploy(BaseSubcommand, RancherMixIn):
                 prune = True if deploy_label else False
                 manifest = path
             else:
+                namespace = None
                 deploy_label = None
                 prune = False
 
@@ -68,7 +69,7 @@ class Deploy(BaseSubcommand, RancherMixIn):
                 for m in manifests:
                     command.append(self.get_manifest_deploy_command(str(m), namespace, deploy_label, prune))
             elif os.path.isfile(manifest):
-                command.append(self.get_manifest_deploy_command(manifest,namespace, deploy_label, prune))
+                command.append(self.get_manifest_deploy_command(manifest, namespace, deploy_label, prune))
             else:
                 raise MissingManifestError("Missing manifest at path: {}".format(manifest))
 

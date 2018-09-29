@@ -14,6 +14,7 @@ PROJECT_LS_FORMAT = '{{.Project.Name}}: {{.Project.ID}}'
 
 EXCLUDE_PROFILES = ['local']
 
+NONFATAL_ERROR_MESSAGES = ['strconv.ParseFloat: parsing "25360052Ki": invalid syntax']
 
 class RancherMixIn(object):
     """
@@ -30,7 +31,11 @@ class RancherMixIn(object):
     @lru_cache()
     def cluster_listing(self):
         cluster_ls_command = f"rancher cluster ls --format '{CLUSTER_LS_FORMAT}'"
-        return yaml.load(str(self.execute(cluster_ls_command)).strip())
+        output = str(self.execute(cluster_ls_command)).strip()
+        for err in NONFATAL_ERROR_MESSAGES:
+            if err in output:
+                output = output.replace(err, '')
+        return yaml.load(output)
 
 
     @property
@@ -108,7 +113,8 @@ class RancherMixIn(object):
         rendered_path = self.render_manifest(manifest_path)
         prune_str = ' --prune' if prune else ''
         namespace_str = f'--namespace {namespace} ' if namespace else ''
-        return f'rancher kubectl {namespace_str}apply -l deploy={deploy_label} --validate -f {rendered_path}{prune_str}'
+        deploy_label_str = '-l deploy={deploy_label} ' if deploy_label else ''
+        return f'rancher kubectl {namespace_str}apply {deploy_label_str}--validate -f {rendered_path}{prune_str}'
 
     def get_extra_section(self, section: str) -> list:
         extras = self.rancher_config.get('extras')
