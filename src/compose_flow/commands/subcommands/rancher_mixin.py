@@ -1,11 +1,14 @@
 """
 Compose subcommand
 """
-import yaml
-import sh
 from functools import lru_cache
+import os
+import pathlib
+import sh
+import yaml
 
-from compose_flow.errors import InvalidTargetClusterError
+
+from compose_flow.errors import InvalidTargetClusterError, MissingManifestError
 from compose_flow.config import get_config
 from compose_flow.utils import render, yaml_load, yaml_dump
 
@@ -15,6 +18,7 @@ PROJECT_LS_FORMAT = '{{.Project.Name}}: {{.Project.ID}}'
 EXCLUDE_PROFILES = ['local']
 
 NONFATAL_ERROR_MESSAGES = ['strconv.ParseFloat: parsing "25360052Ki": invalid syntax']
+
 
 class RancherMixIn(object):
     """
@@ -108,13 +112,31 @@ class RancherMixIn(object):
         else:
             return f'rancher apps install --answers {rendered_path} --namespace {namespace} --version {version} {chart} {app_name}'
 
-    def get_manifest_deploy_command(self, manifest_path: str, namespace: str, deploy_label: str, prune: bool = False) -> str:
+    def get_manifest_deploy_command(self, manifest: dict) -> str:
         '''Construct command to apply a Kubernetes YAML manifest using the Rancher CLI.'''
-        rendered_path = self.render_manifest(manifest_path)
-        prune_str = ' --prune' if prune else ''
+
+        deploy_label = self.workflow.args.config_name
+
+        raw_path = manifest['path']
+        deploy_label = manifest.get('label')
+        namespace = manifest.get('namespace')
+
         namespace_str = f'--namespace {namespace} ' if namespace else ''
-        deploy_label_str = '-l deploy={deploy_label} ' if deploy_label else ''
-        return f'rancher kubectl {namespace_str}apply {deploy_label_str}--validate -f {rendered_path}{prune_str}'
+        deploy_label_str = '-l deploy={deploy_label} --prune ' if deploy_label else ''
+
+        command = f'rancher kubectl {namespace_str}apply {deploy_label_str}--validate -f '
+
+        if os.path.isdir(raw_path):
+
+            rendered_path = self.render_nested_manifests(raw_path)
+            command += rendered_path + ' --recursive'
+        elif os.path.isfile(raw_path):
+            rendered_path = self.render_manifest(raw_path)
+            command += rendered_path
+        else:
+            raise MissingManifestError("Missing manifest at path: {}".format(manifest))
+
+        return command
 
     def get_extra_section(self, section: str) -> list:
         extras = self.rancher_config.get('extras')
@@ -138,7 +160,14 @@ class RancherMixIn(object):
         return default_manifests + extra_manifests
 
     def get_manifest_filename(self, manifest_path: str) -> str:
-        escaped_path = manifest_path.replace('../', '').replace('./', '').replace('/', '-').replace('.yaml', '.yml')
+        escaped_path = (
+            manifest_path
+            .replace('../', '')
+            .replace('./', '')
+            .replace('/', '-')
+            .replace('.yaml', '.yml')
+            .rstrip('-')
+        )
         return f'compose-flow-{self.cluster_name}-manifest-{escaped_path}'
 
     def get_answers_filename(self, app_name: str) -> str:
@@ -170,6 +199,24 @@ class RancherMixIn(object):
         rendered_path = self.get_manifest_filename(manifest_path)
         self.render_single_yaml(manifest_path, rendered_path)
 
+        return rendered_path
+
+    @lru_cache()
+    def render_nested_manifests(self, dir_path: str) -> str:
+        directory = pathlib.Path(dir_path)
+        manifests = directory.glob('**/*.y?ml')
+        rendered_path = self.get_manifest_filename(dir_path)
+
+        for manifest in manifests:
+            render_dest = os.path.join(
+                rendered_path,
+                str(manifest).lstrip(dir_path)
+            )
+            print(render_dest)
+            parent_dest = os.path.dirname(render_dest)
+
+            os.makedirs(parent_dest, mode=0o750, exist_ok=True)
+            self.render_single_yaml(manifest, render_dest)
         return rendered_path
 
     @lru_cache()
