@@ -41,7 +41,6 @@ class RancherMixIn(object):
                 output = output.replace(err, '')
         return yaml.load(output)
 
-
     @property
     def cluster_name(self):
         '''
@@ -137,6 +136,12 @@ class RancherMixIn(object):
             raise MissingManifestError("Missing manifest at path: {}".format(manifest))
 
         return command
+
+    def get_rke_deploy_command(self):
+        raw_config = get_config()['rke']['config']
+        rendered_config = f'compose-flow-{self.workflow.args.profile}-rke.yml'
+        self.render_single_yaml(raw_config, rendered_config)
+        return f'rke up --config {rendered_config}'
 
     def get_extra_section(self, section: str) -> list:
         extras = self.rancher_config.get('extras')

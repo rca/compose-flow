@@ -3,7 +3,7 @@ import logging
 from .base import BaseSubcommand
 from .rancher_mixin import RancherMixIn
 
-ACTIONS = ['rancher', 'docker']
+ACTIONS = ['rancher', 'docker', 'rke']
 PROFILE_ACTIONS = ['docker']
 
 
@@ -51,6 +51,9 @@ class Deploy(BaseSubcommand, RancherMixIn):
             command.append(self.get_manifest_deploy_command(manifest))
 
         return command
+
+    def build_rke_command(self) -> str:
+        return self.get_rke_deploy_command()
 
     def handle(self):
         args = self.workflow.args
