@@ -7,10 +7,10 @@ import sh
 import os
 from compose_flow.config import get_config
 from compose_flow import shell
-from .rancher_mixin import RancherMixIn
+from .kube_mixin import KubeMixIn
 
 
-class Rancher(PassthroughBaseSubcommand, RancherMixIn):
+class Rancher(PassthroughBaseSubcommand, KubeMixIn):
     """
     Subcommand for running rancher CLI commands
     """

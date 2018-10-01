@@ -1,13 +1,13 @@
 import logging
 
 from .base import BaseSubcommand
-from .rancher_mixin import RancherMixIn
+from .kube_mixin import KubeMixIn
 
-ACTIONS = ['rancher', 'docker', 'rke']
+ACTIONS = ['rancher', 'docker', 'rke', 'helm']
 PROFILE_ACTIONS = ['docker']
 
 
-class Deploy(BaseSubcommand, RancherMixIn):
+class Deploy(BaseSubcommand, KubeMixIn):
     """
     Subcommand for deploying an image to the docker swarm
     """
@@ -54,6 +54,13 @@ class Deploy(BaseSubcommand, RancherMixIn):
 
     def build_rke_command(self) -> str:
         return self.get_rke_deploy_command()
+
+    def build_helm_command(self) -> str:
+        command = []
+
+        for app in self.get_helm_apps():
+            command.append(self.get_app_deploy_command(app, target='helm'))
+        return command
 
     def handle(self):
         args = self.workflow.args

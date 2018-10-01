@@ -20,16 +20,19 @@ EXCLUDE_PROFILES = ['local']
 NONFATAL_ERROR_MESSAGES = ['strconv.ParseFloat: parsing "25360052Ki": invalid syntax']
 
 
-class RancherMixIn(object):
+class KubeMixIn(object):
     """
-    Mix-in for managing Rancher CLI context
+    Mix-in for Kubernetes and Rancher CLI interactions
     """
 
     @property
     @lru_cache()
+    def config(self):
+        return get_config()
+
+    @property
     def rancher_config(self):
-        config = get_config()
-        return config['rancher']
+        return self.config['rancher']
 
     @property
     @lru_cache()
@@ -94,22 +97,49 @@ class RancherMixIn(object):
             else:
                 raise
 
-    def get_app_deploy_command(self, app: dict) -> str:
+    def list_helm_apps(self) -> str:
+        return str(self.execute("helm ls -q --all"))
+
+    def list_rancher_apps(self) -> str:
+        return str(self.execute("rancher apps ls --format '{{.App.Name}}'"))
+
+    def get_rancher_app_install_command(
+            self, app_name: str, rendered_path: str,
+            namespace: str, chart: str, version: str):
+        return f'rancher apps install --answers {rendered_path} --namespace {namespace} --version {version} {chart} {app_name}'
+
+    def get_helm_app_install_command(
+            self, app_name: str, rendered_path: str,
+            namespace: str, chart: str, version: str):
+        return f'helm install --name {app_name} -f {rendered_path} --namespace {namespace} --version {version} {chart}'
+
+    def get_rancher_app_upgrade_command(self, app_name: str, rendered_path: str, chart: str, version: str):
+        return f'rancher apps upgrade --answers {rendered_path} {app_name} {version}'
+
+    def get_helm_app_upgrade_command(self, app_name: str, rendered_path: str, chart: str, version: str):
+        return f'helm upgrade {app_name} {chart} -f {rendered_path} --version {version}'
+
+    def get_app_deploy_command(self, app: dict, target: str = 'rancher') -> str:
         '''
         Construct command to install or upgrade a Rancher app
         depending on whether or not it is already deployed.
         '''
-        apps = str(self.execute("rancher apps ls --format '{{.App.Name}}'"))
+
         app_name = app['name']
         version = app['version']
         namespace = app['namespace']
         chart = app['chart']
 
         rendered_path = self.render_answers(app['answers'], app_name)
-        if app_name in apps:
-            return f'rancher apps upgrade --answers {rendered_path} {app_name} {version}'
+
+        app_list = getattr(self, f'list_{target}_apps')()
+        upgrade_command_method = getattr(self, f'get_{target}_app_upgrade_command')
+        install_command_method = getattr(self, f'get_{target}_app_install_command')
+
+        if app_name in app_list:
+            return upgrade_command_method(app_name, rendered_path, chart, version)
         else:
-            return f'rancher apps install --answers {rendered_path} --namespace {namespace} --version {version} {chart} {app_name}'
+            return install_command_method(app_name, rendered_path, namespace, chart, version)
 
     def get_manifest_deploy_command(self, manifest: dict) -> str:
         '''Construct command to apply a Kubernetes YAML manifest using the Rancher CLI.'''
@@ -151,6 +181,9 @@ class RancherMixIn(object):
                 return env_extras.get(section, [])
 
         return []
+
+    def get_helm_apps(self) -> list:
+        return self.config['helm']
 
     def get_apps(self) -> list:
         default_apps = self.rancher_config.get('apps', [])
