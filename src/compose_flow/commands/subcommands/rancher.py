@@ -1,12 +1,7 @@
 """
-Compose subcommand
+Rancher CLI subcommand
 """
 from .passthrough_base import PassthroughBaseSubcommand
-import yaml
-import sh
-import os
-from compose_flow.config import get_config
-from compose_flow import shell
 from .kube_mixin import KubeMixIn
 
 
