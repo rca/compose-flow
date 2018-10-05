@@ -46,7 +46,7 @@ class ConfigBaseSubcommand(BaseSubcommand):
 
             editor = os.environ.get('EDITOR', os.environ.get('VISUAL', 'vi'))
 
-            self.execute(f'{editor} {path}')
+            self.execute(f'{editor} {path}', _fg=True)
 
             self.push(path)
 

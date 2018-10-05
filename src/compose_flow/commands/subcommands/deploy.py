@@ -29,7 +29,7 @@ class Deploy(BaseSubcommand):
           --prune
           --with-registry-auth
           --compose-file {profile.filename}
-          {args.project_name}"""
+          {args.config_name}"""
 
         self.logger.info(command)
 

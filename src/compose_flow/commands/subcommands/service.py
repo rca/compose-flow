@@ -154,7 +154,7 @@ class Service(BaseSubcommand):
         """
         Lists all the services for this stack
         """
-        proc = self.execute(f'docker stack services {self.workflow.args.project_name}')
+        proc = self.execute(f'docker stack services {self.workflow.args.config_name}')
 
         return proc.stdout.decode('utf8')
 
