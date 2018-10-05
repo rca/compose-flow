@@ -102,7 +102,7 @@ class EnvTestCase(BaseTestCase):
         utils_mock.get_tag_version.return_value = new_version
         utils_mock.render = utils.render
 
-        command = shlex.split('-e dev')
+        command = shlex.split('-e dev publish')
         flow = Workflow(argv=command)
 
         env = Env(flow)

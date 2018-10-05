@@ -32,7 +32,7 @@ class WorkflowTestCase(BaseTestCase):
         env = workflow.environment
 
         self.assertEqual(
-            ['CF_ENV', 'CF_ENV_NAME', 'CF_PROJECT', 'DOCKER_IMAGE', 'VERSION'],
+            ['CF_ENV', 'CF_ENV_NAME', 'CF_PROJECT'],
             sorted(env.data.keys()),
         )
 
@@ -51,9 +51,7 @@ class WorkflowTestCase(BaseTestCase):
                 'CF_ENV',
                 'CF_ENV_NAME',
                 'CF_PROJECT',
-                'DOCKER_IMAGE',
                 'FOO',
-                'VERSION',
             ],
             sorted(env.data.keys()),
         )

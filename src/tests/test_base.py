@@ -8,9 +8,8 @@ class TestSubcommand(BaseSubcommand):
 
 
 class BaseSubcommandTestCase(BaseTestCase):
+    @mock.patch('compose_flow.shell.OS_ENV_INCLUDES', new_callable=dict)
     def test_execute(self, *mocks):
-        print(mocks)
-
         workflow = mock.Mock()
         workflow.environment.data = {}
 
