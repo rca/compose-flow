@@ -69,7 +69,7 @@ class BaseSubcommand(ABC):
 
         return subcommand_cls(self.workflow)
 
-    @abstractclassmethod
+    @classmethod
     def fill_subparser(cls, parser, subparser):
         """
         Stub for adding arguments to this subcommand's subparser
