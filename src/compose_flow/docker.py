@@ -11,7 +11,7 @@ def get_configs() -> list:
     """
     Returns a list of config names found in the swarm
     """
-    proc = shell.execute(f'docker config ls --format "{{ .Name }}"', os.environ)
+    proc = shell.execute('docker config ls --format "{{ .Name }}"', os.environ)
 
     return proc.stdout.decode('utf8').splitlines()
 
