@@ -12,6 +12,7 @@ class Publish(BaseSubcommand):
 
     rw_env = True
     remote_action = True
+    update_version_env_vars = True
 
     def build(self):
         compose = self.compose

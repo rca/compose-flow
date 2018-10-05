@@ -9,8 +9,8 @@ class Deploy(BaseSubcommand):
     """
     Subcommand for deploying an image to the docker swarm
     """
-
     rw_env = True
+    update_version_env_vars = True
 
     @classmethod
     def fill_subparser(cls, parser, subparser):

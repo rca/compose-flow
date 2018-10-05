@@ -35,6 +35,10 @@ class BaseSubcommand(ABC):
     # by default commands setup render a profile compose file
     setup_profile = True
 
+    # when creating a workflow environment, whether variables that reference
+    # the project version should be updated (i.e. DOCKER_IMAGE)
+    update_version_env_vars = False
+
     def __init__(self, workflow):
         self.workflow = workflow
 

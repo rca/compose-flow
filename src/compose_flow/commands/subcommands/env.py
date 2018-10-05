@@ -14,6 +14,7 @@ from .config_base import ConfigBaseSubcommand
 
 from compose_flow import docker, errors, utils
 
+DOCKER_IMAGE_VAR = 'DOCKER_IMAGE'
 VERSION_VAR = 'VERSION'
 
 
@@ -72,8 +73,6 @@ class Env(ConfigBaseSubcommand):
         return {
             'CF_ENV': args.environment or '',
             'CF_PROJECT': args.project_name,
-            'DOCKER_IMAGE': f'{self.docker_image.split(":", 1)[0]}:{self.version}',
-            VERSION_VAR: self.version,
             # deprecate this env var
             'CF_ENV_NAME': args.project_name,
         }
@@ -134,6 +133,12 @@ class Env(ConfigBaseSubcommand):
         for k, v in self.cf_env.items():
             if k not in data:
                 data[k] = v
+
+        if self.workflow.subcommand.update_version_env_vars:
+            data.update({
+                DOCKER_IMAGE_VAR: self.set_docker_tag(self.docker_image),
+                VERSION_VAR: self.version,
+            })
 
         self._data = data
 

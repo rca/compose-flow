@@ -16,9 +16,9 @@ class Compose(PassthroughBaseSubcommand):
     """
     Subcommand for running compose commands
     """
-
     command_name = 'docker-compose'
     dirty_working_copy_okay = True
+    update_version_env_vars = True
 
     def __init__(self, *args, check_profile=True, version=None, **kwargs):
         self.check_profile = check_profile
