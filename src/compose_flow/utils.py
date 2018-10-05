@@ -112,6 +112,8 @@ def render(content: str, env: dict = None) -> str:
 
     env = env or os.environ
 
+    errors = []
+
     for x in VAR_RE.finditer(content):
         rendered += content[
             previous_idx : x.start('varname') - 2
@@ -121,9 +123,9 @@ def render(content: str, env: dict = None) -> str:
         try:
             rendered += env[varname]
         except KeyError:
-            raise EnvError(
-                f'Error: varname={varname} not in environment; cannot render'
-            )
+            rendered += '*** MISSING_ENVIRONMENT_VAR ***'
+
+            errors.append(f'{varname} not found in environment')
 
         end = x.end('junk')
         if end == -1:
@@ -132,6 +134,14 @@ def render(content: str, env: dict = None) -> str:
         previous_idx = end + 1  # +1 to get rid of variable's `}`
 
     rendered += content[previous_idx:]
+
+    logger = logging.getLogger(__name__)
+
+    if errors:
+        logger.error(rendered)
+        logger.error('\n'.join(errors))
+
+        raise EnvError('Rendering error')
 
     return rendered
 
