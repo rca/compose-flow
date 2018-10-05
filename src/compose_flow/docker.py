@@ -45,7 +45,8 @@ def load_config(name: str, path: str) -> None:
     """
     Loads config into swarm
     """
-    if name in get_configs():
+    configs = get_configs()
+    if name in configs:
         remove_config(name)
 
     shell.execute(f'docker config create {name} {path}', os.environ)
