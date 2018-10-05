@@ -37,7 +37,9 @@ class PassthroughBaseSubcommand(BaseSubcommand):
         extra_args = extra_args or args.extra_args
         command.extend(extra_args)
 
-        command_s = ' '.join(command)
+        # if there is a space in one of the command arguments, use repr() to
+        # quote it properly when it contains a space
+        command_s = ' '.join([x if ' ' not in x else repr(x) for x in command])
 
         self.logger.info(command_s)
 
