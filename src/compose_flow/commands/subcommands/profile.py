@@ -262,6 +262,42 @@ class Profile(BaseSubcommand):
             # drop the compose_flow section if it exists
             data.pop('compose_flow', None)
 
+            # for each service inject DOCKER_STACK and DOCKER_SERVICE
+            for service_name, service_data in data.get('services', {}).items():
+                service_environment = service_data.setdefault('environment', [])
+
+                # convert the service_environment into a dict
+                service_environment_d = {}
+                for item in service_environment:
+                    item_split = item.split('=', 1)
+                    k = item_split[0]
+
+                    if len(item_split) > 1:
+                        v = item_split[1]
+                    else:
+                        v = None
+
+                    service_environment_d[k] = v
+
+                for k, v in (
+                            ('DOCKER_SERVICE', service_name),
+                            ('DOCKER_STACK', self.workflow.args.config_name)
+                        ):
+                    if k not in service_environment_d:
+                        service_environment_d[k] = v
+
+                # reconstruct the k=v list honoring empty values
+                service_environment_l = []
+                for k, v in service_environment_d.items():
+                    if v is None:
+                        val = k
+                    else:
+                        val = f'{k}={v}'
+                    service_environment_l.append(val)
+
+                # dump back out as list
+                service_data['environment'] = service_environment_l
+
             content = yaml_dump(data)
 
         fh = tempfile.TemporaryFile(mode='w+')
