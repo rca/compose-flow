@@ -304,7 +304,7 @@ class Profile(BaseSubcommand):
 
         # render the file
         try:
-            rendered = render(content)
+            rendered = render(content, env=self.workflow.environment.data)
         except EnvError as exc:
             if not self.workflow.subcommand.is_missing_profile_okay(exc):
                 raise
