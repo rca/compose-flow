@@ -67,7 +67,7 @@ class Publish(BaseSubcommand):
             if len(docker_images) > 1:
                 self.logger.info(f'pushing {docker_image}')
 
-            if self.args.dry_run:
+            if self.workflow.args.dry_run:
                 self.logger.info(f'docker push {docker_image}')
             else:
                 self.execute(f'docker push {docker_image}', _fg=True)
