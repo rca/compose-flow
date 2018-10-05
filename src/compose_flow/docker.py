@@ -48,11 +48,11 @@ def load_config(name: str, path: str) -> None:
     if name in get_configs():
         remove_config(name)
 
-    shell.exeucte(f'docker config create {name} {path}')
+    shell.execute(f'docker config create {name} {path}', os.environ)
 
 
 def remove_config(name: str) -> None:
     """
     Removes a config from the swarm
     """
-    shell.execute(f'docker config rm {name}')
+    shell.execute(f'docker config rm {name}', os.environ)
