@@ -4,7 +4,13 @@ import shlex
 
 from sh import ErrorReturnCode_1
 
-DOCKER_HOST_ENV_VAR = 'DOCKER_HOST'
+# these runtime environment variables should be injected into
+# the compose flow environment prior to executing a command
+OS_ENV_INCLUDES = (
+    'DOCKER_HOST',
+    'HOME',
+    'PATH',
+)
 
 
 def execute(command: str, env, **kwargs):
@@ -16,9 +22,10 @@ def execute(command: str, env, **kwargs):
     # make a copy of the environment and inject the DOCKER_HOST
     _env = env.copy()
 
-    if DOCKER_HOST_ENV_VAR not in env:
-        if DOCKER_HOST_ENV_VAR in os.environ:
-            _env.update({DOCKER_HOST_ENV_VAR: os.environ.get(DOCKER_HOST_ENV_VAR)})
+    for env_var in OS_ENV_INCLUDES:
+        env_val = os.environ.get(env_var)
+        if env_val:
+            _env.update({env_var: env_val})
 
     kwargs.update(dict(_env=_env))
 
