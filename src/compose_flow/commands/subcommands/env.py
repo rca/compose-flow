@@ -310,6 +310,10 @@ class Env(ConfigBaseSubcommand):
         """
         Returns a version string for the current version of code
         """
+        tag_version = self.workflow.args.tag_version
+        if tag_version:
+            return tag_version
+
         # default the tag version to the name of the environment
         tag_version = self.workflow.args.environment
         try:
@@ -320,7 +324,9 @@ class Env(ConfigBaseSubcommand):
             # check if the subcommand is okay with a dirty working copy
             if not subcommand.is_dirty_working_copy_okay(exc):
                 raise errors.TagVersionError(
-                    f'Warning: unable to run tag-version ({exc})\n'
+                    f'Warning: unable to run tag-version ({exc})\n',
+                    shell_exception=exc,
+                    tag_version=tag_version
                 )
 
         return tag_version

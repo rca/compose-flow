@@ -115,6 +115,10 @@ class Workflow(object):
             '--remote',
             help=f'the label of the remote system to connect to, default same name as the environment',
         )
+        parser.add_argument(
+            '--tag-version',
+            help='override calling tag-version and set the version to the given value',
+        )
 
         # misc args
         parser.add_argument(
