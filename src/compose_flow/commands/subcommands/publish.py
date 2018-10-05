@@ -62,7 +62,8 @@ class Publish(BaseSubcommand):
         return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
     def push(self):
-        for docker_image in self.get_built_docker_images():
+        docker_images = self.get_built_docker_images()
+        for docker_image in docker_images:
             if len(docker_images) > 1:
                 self.logger.info(f'pushing {docker_image}')
 
