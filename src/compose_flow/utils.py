@@ -1,3 +1,4 @@
+import logging
 import re
 import os
 import sys
@@ -9,7 +10,7 @@ from boltons.iterutils import remap, get_path, default_enter, default_visit
 
 from compose_flow import shell
 
-from .errors import EnvError, ProfileError
+from .errors import TagVersionError, EnvError, ProfileError
 
 # regular expression for finding variables in docker compose files
 VAR_RE = re.compile(r'\${(?P<varname>.*?)(?P<junk>[:?].*)?}')
@@ -21,16 +22,28 @@ def get_repo_name() -> str:
     return repo_name
 
 
-def get_tag_version() -> str:
+def get_tag_version(default: str = None) -> str:
     """
     Returns the version of code as returned by the `tag-version` cli command
+
+    Args:
+        default: the default version if it cannot be found, `unknown` by default
+        print_warning: when `tag-version` results in error, print a warning
     """
     # inject the version from tag-version command into the loaded environment
-    tag_version = 'unknown'
+    tag_version = default or 'unknown'
     try:
         proc = shell.execute('tag-version', os.environ)
     except Exception as exc:
-        print(f'Warning: unable to find tag-version ({exc})\n', file=sys.stderr)
+        try:
+            error_message = exc.stderr.decode('utf8')
+        except:
+            error_message = exc.stderr
+
+        if 'not clean' in error_message:
+            tag_version = f'{tag_version}-dirty'
+
+        raise TagVersionError(f'Warning: tag-version failed', shell_exception=exc, tag_version=tag_version)
     else:
         tag_version = proc.stdout.decode('utf8').strip()
 

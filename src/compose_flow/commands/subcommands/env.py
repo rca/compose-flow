@@ -313,7 +313,7 @@ class Env(ConfigBaseSubcommand):
         # default the tag version to the name of the environment
         tag_version = self.workflow.args.environment
         try:
-            tag_version = utils.get_tag_version()
+            tag_version = utils.get_tag_version(default=self.workflow.args.environment)
         except Exception as exc:
             subcommand = self.workflow.subcommand
 
