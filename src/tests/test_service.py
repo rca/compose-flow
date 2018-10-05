@@ -19,7 +19,9 @@ class ServiceTestCase(BaseTestCase):
         service = workflow.subcommand
 
         service.select_container = mock.MagicMock()
-        service.select_container.return_value = 'container_id service_name something test_hostname'
+        service.select_container.return_value = (
+            'container_id service_name something test_hostname'
+        )
 
         workflow.run()
 

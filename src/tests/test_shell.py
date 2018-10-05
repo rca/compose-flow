@@ -6,7 +6,7 @@ from tests import BaseTestCase
 
 
 class ShellTestCase(BaseTestCase):
-    @ mock.patch('compose_flow.shell.OS_ENV_INCLUDES', new_callable=dict)
+    @mock.patch('compose_flow.shell.OS_ENV_INCLUDES', new_callable=dict)
     def test_execute(self, *mocks):
         """
         Ensure the shell's execution is done with the passed in environment

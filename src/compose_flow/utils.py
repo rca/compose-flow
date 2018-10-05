@@ -43,7 +43,9 @@ def get_tag_version(default: str = None) -> str:
         if 'not clean' in error_message:
             tag_version = f'{tag_version}-dirty'
 
-        raise TagVersionError(f'Warning: tag-version failed', shell_exception=exc, tag_version=tag_version)
+        raise TagVersionError(
+            f'Warning: tag-version failed', shell_exception=exc, tag_version=tag_version
+        )
     else:
         tag_version = proc.stdout.decode('utf8').strip()
 

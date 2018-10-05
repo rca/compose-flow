@@ -135,10 +135,12 @@ class Env(ConfigBaseSubcommand):
                 data[k] = v
 
         if self.workflow.subcommand.update_version_env_vars:
-            data.update({
-                DOCKER_IMAGE_VAR: self.set_docker_tag(self.docker_image),
-                VERSION_VAR: self.version,
-            })
+            data.update(
+                {
+                    DOCKER_IMAGE_VAR: self.set_docker_tag(self.docker_image),
+                    VERSION_VAR: self.version,
+                }
+            )
 
         self._data = data
 
@@ -326,7 +328,7 @@ class Env(ConfigBaseSubcommand):
                 raise errors.TagVersionError(
                     f'Warning: unable to run tag-version ({exc})\n',
                     shell_exception=exc,
-                    tag_version=tag_version
+                    tag_version=tag_version,
                 )
 
         return tag_version

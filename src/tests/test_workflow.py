@@ -32,8 +32,7 @@ class WorkflowTestCase(BaseTestCase):
         env = workflow.environment
 
         self.assertEqual(
-            ['CF_ENV', 'CF_ENV_NAME', 'CF_PROJECT'],
-            sorted(env.data.keys()),
+            ['CF_ENV', 'CF_ENV_NAME', 'CF_PROJECT'], sorted(env.data.keys())
         )
 
     def test_load_env_when_env_specified(self, *mocks):
@@ -46,19 +45,16 @@ class WorkflowTestCase(BaseTestCase):
         env = workflow.environment
 
         self.assertEqual(
-            [
-                'BAR',
-                'CF_ENV',
-                'CF_ENV_NAME',
-                'CF_PROJECT',
-                'FOO',
-            ],
+            ['BAR', 'CF_ENV', 'CF_ENV_NAME', 'CF_PROJECT', 'FOO'],
             sorted(env.data.keys()),
         )
         self.assertEqual('1', env.data['FOO'])
         self.assertEqual('2', env.data['BAR'])
 
-    @mock.patch('compose_flow.commands.workflow.Workflow.subcommand', new_callable=mock.PropertyMock)
+    @mock.patch(
+        'compose_flow.commands.workflow.Workflow.subcommand',
+        new_callable=mock.PropertyMock,
+    )
     def test_setup_environment_flag(self, *mocks):
         """
         Ensures the environment cache is set to an empty dictionary when

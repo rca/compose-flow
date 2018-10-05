@@ -16,6 +16,7 @@ class Compose(PassthroughBaseSubcommand):
     """
     Subcommand for running compose commands
     """
+
     command_name = 'docker-compose'
     dirty_working_copy_okay = True
     update_version_env_vars = True
