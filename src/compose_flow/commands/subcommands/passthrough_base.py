@@ -29,7 +29,7 @@ class PassthroughBaseSubcommand(BaseSubcommand):
 
         return [command_path]
 
-    def handle(self, extra_args: list = None) -> [None, str]:
+    def handle(self, extra_args: list = None, log_output: bool = False) -> [None, str]:
         command = self.get_command()
 
         args = self.workflow.args
@@ -44,7 +44,9 @@ class PassthroughBaseSubcommand(BaseSubcommand):
         self.logger.info(command_s)
 
         if not args.dry_run:
-            self.execute(command_s, _fg=True)
+            res = self.execute(command_s, _fg=True)
+            if log_output:
+                self.logger.info(res.stdout.decode('utf-8').strip())
 
     @property
     def logger(self) -> logging.Logger:

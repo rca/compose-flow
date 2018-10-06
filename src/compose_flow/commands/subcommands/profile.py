@@ -280,8 +280,8 @@ class Profile(BaseSubcommand):
                     service_environment_d[k] = v
 
                 for k, v in (
-                    ('DOCKER_SERVICE', service_name),
-                    ('DOCKER_STACK', self.workflow.args.config_name),
+                        ('DOCKER_SERVICE', service_name),
+                        ('DOCKER_STACK', self.workflow.args.config_name),
                 ):
                     if k not in service_environment_d:
                         service_environment_d[k] = v

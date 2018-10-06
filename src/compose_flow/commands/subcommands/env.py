@@ -328,7 +328,7 @@ class Env(ConfigBaseSubcommand):
                 raise errors.TagVersionError(
                     f'Warning: unable to run tag-version ({exc})\n',
                     shell_exception=exc,
-                    tag_version=tag_version,
+                    tag_version=tag_version
                 )
 
         return tag_version

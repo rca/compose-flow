@@ -70,8 +70,22 @@ class TagVersionError(Exception):
     """
 
     def __init__(
-        self, message: str, shell_exception: Exception, tag_version: str = None
+            self, message: str, shell_exception: Exception, tag_version: str = None
     ):
         self.message = message
         self.shell_exception = shell_exception
         self.tag_version = tag_version
+
+
+class InvalidTargetClusterError(ErrorMessage):
+    """
+    Raised when a profile is provided with the -e flag
+    which would target an invalid Rancher cluster,
+    such as the local cluster where Rancher itself runs
+    """
+
+
+class MissingManifestError(ErrorMessage):
+    """
+    Raised when a YAML manifest path is specified but not found
+    """

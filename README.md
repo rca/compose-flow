@@ -284,6 +284,51 @@ services:
     deploy:
 ```
 
+## Deploying to Kubernetes with Rancher
+
+In order to streamline the transition to Kubernetes, we have integrated the Rancher CLI into `compose-flow`.
+
+To configure a project for deployment to Rancher, add a section to `compose-flow.yml` with the following format:
+
+```yaml
+rancher:
+  # Name of the Rancher Project to deploy into
+  # Cluster will be inferred from the env name passed to `-e`
+  project: Default
+
+  # Catalog templates to be deployed
+  apps:
+  - name: redis
+    namespace: redis
+    chart: helm-redis
+    answers: redis-answers.yaml
+    version: 4.0.1
+
+  # Raw Kubernetes YAML to be directly applied
+  # Must include name and namespace metadata
+  manifests:
+  - ./redis-ingress.yaml
+
+  # Per-environment extra apps and manifests
+  extras:
+    prod:
+      apps:
+        - name: redis-backup
+          namespace: redis
+          chart: custom-redis-backup-chart
+          answers: redis-backup-answers.yaml
+          version: 0.0.1
+      manifests:
+        - ./redis-lb.yaml
+
+```
+
+Once configured, run the following command to deploy a `compose-flow` project to a Rancher-managed cluster named `dev`:
+
+```bash
+compose-flow -e dev deploy rancher
+```
+
 # History
 Docker Compose is great.  It allows you to put together pretty sophisticated commands that, in turn, produce some really powerful results.  The problem is remembering the commands as they can become long an cumbersome.
 

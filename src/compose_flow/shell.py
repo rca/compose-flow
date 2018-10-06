@@ -6,7 +6,12 @@ from sh import ErrorReturnCode_1
 
 # these runtime environment variables should be injected into
 # the compose flow environment prior to executing a command
-OS_ENV_INCLUDES = ('DOCKER_HOST', 'HOME', 'PATH')
+OS_ENV_INCLUDES = (
+    'DOCKER_HOST',
+    'HOME',
+    'PATH',
+    'USER'
+)
 
 
 def execute(command: str, env, **kwargs):
