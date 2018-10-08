@@ -2,51 +2,54 @@ import logging
 
 from functools import lru_cache
 
-import sh
-
 from .base import BaseSubcommand
-# from .compose import Compose
 
 
 class Publish(BaseSubcommand):
     """
     Subcommand for building and pushing Docker images
     """
+
     rw_env = True
     remote_action = True
-
-    def __init__(self, *args, **kwargs):
-        if 'load_cf_env' not in kwargs:
-            kwargs['load_cf_env'] = self.rw_env
-
-        super().__init__(*args, **kwargs)
+    update_version_env_vars = True
 
     def build(self):
-        compose = self.get_compose(check_profile=False)
+        compose = self.compose
 
-        compose.run(extra_args=['build'])
+        compose.handle(extra_args=['build'])
 
     @property
+    @lru_cache()
     def compose(self):
         """
         Returns a Compose subcommand
         """
-        return self.get_compose()
+        from .compose import Compose
+
+        return Compose(self.workflow)
+
+    def do_validate_profile(self):
+        return False
 
     @classmethod
     def fill_subparser(cls, parser, subparser) -> None:
         pass
 
-    @lru_cache()
-    def get_compose(self, **kwargs):
-        from .compose import Compose
+    def get_built_docker_images(self) -> list:
+        """
+        Returns a list of docker images built in the compose file
+        """
+        docker_images = set()
 
-        return Compose(self.workflow, **kwargs)
+        profile = self.workflow.profile
+        for service_data in profile.data['services'].values():
+            if service_data.get('build'):
+                docker_images.add(service_data.get('image'))
+
+        return list(docker_images)
 
     def handle(self):
-        # only load up the basic environment for publish
-        self.update_runtime_environment(load_cf_env=False)
-
         self.build()
 
         self.push()
@@ -59,18 +62,12 @@ class Publish(BaseSubcommand):
         return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
     def push(self):
-        docker_images = set()
-
-        profile = self.workflow.profile
-        for service_data in profile.data['services'].values():
-            if service_data.get('build'):
-                docker_images.add(service_data.get('image'))
-
+        docker_images = self.get_built_docker_images()
         for docker_image in docker_images:
             if len(docker_images) > 1:
                 self.logger.info(f'pushing {docker_image}')
 
-            if self.args.dry_run:
+            if self.workflow.args.dry_run:
                 self.logger.info(f'docker push {docker_image}')
             else:
-                sh.docker('push', docker_image, _fg=True)
+                self.execute(f'docker push {docker_image}', _fg=True)

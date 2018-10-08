@@ -4,12 +4,18 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+pyyaml = "*"
+boltons = "*"
+sh = "*"
+tag-version = "*"
 
 [dev-packages]
 twine = "*"
 setuptools = "*"
 nose = "*"
 tag-version = "*"
+watchdog = "*"
+black = "*"
 
 [requires]
 python_version = "3.6"

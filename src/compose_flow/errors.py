@@ -3,6 +3,7 @@ class CommandError(Exception):
     Raised when a problem with the command run is encountered
     """
 
+
 class ErrorMessage(Exception):
     """
     Subclass to print out error message instead of entire stack trace
@@ -20,6 +21,7 @@ class EnvError(ErrorMessage):
     Error for when environment variables are not found
     """
 
+
 class NoSuchConfig(Exception):
     """
     Raised when a requested config is not in the docker swarm
@@ -30,6 +32,7 @@ class NoSuchProfile(Exception):
     """
     Raised when a requested profile is not listed in dc.yml
     """
+
 
 class NotConnected(Exception):
     """
@@ -64,4 +67,25 @@ class RuntimeEnvError(ErrorMessage):
 class TagVersionError(Exception):
     """
     Raised when there is a problem running tag-version
+    """
+
+    def __init__(
+            self, message: str, shell_exception: Exception, tag_version: str = None
+    ):
+        self.message = message
+        self.shell_exception = shell_exception
+        self.tag_version = tag_version
+
+
+class InvalidTargetClusterError(ErrorMessage):
+    """
+    Raised when a profile is provided with the -e flag
+    which would target an invalid Rancher cluster,
+    such as the local cluster where Rancher itself runs
+    """
+
+
+class MissingManifestError(ErrorMessage):
+    """
+    Raised when a YAML manifest path is specified but not found
     """

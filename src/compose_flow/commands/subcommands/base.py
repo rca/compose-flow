@@ -3,16 +3,24 @@ import os
 
 from abc import ABC, abstractclassmethod
 
-from compose_flow import errors
+from compose_flow import errors, shell
 from compose_flow.config import get_config
-from compose_flow.errors import CommandError, EnvError, NoSuchConfig, \
-    NoSuchProfile, NotConnected, ProfileError, TagVersionError
+from compose_flow.errors import (
+    CommandError,
+    EnvError,
+    NoSuchConfig,
+    NoSuchProfile,
+    NotConnected,
+    ProfileError,
+    TagVersionError,
+)
 
 
 class BaseSubcommand(ABC):
     """
     Parent class for any subcommand class
     """
+
     dirty_working_copy_okay = False
 
     # whether this subcommand should connect to the remote host
@@ -21,32 +29,37 @@ class BaseSubcommand(ABC):
     # whether the env should be in read/write mode
     rw_env = False
 
-    def __init__(self, workflow, load_cf_env=True):
-        self.workflow = workflow
+    # by default command setup the workflow environment
+    setup_environment = True
 
-        self.load_cf_env = load_cf_env
+    # by default commands setup render a profile compose file
+    setup_profile = True
+
+    # when creating a workflow environment, whether variables that reference
+    # the project version should be updated (i.e. DOCKER_IMAGE)
+    update_version_env_vars = False
+
+    def __init__(self, workflow):
+        self.workflow = workflow
 
     @property
     def logger(self):
         return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
-    @property
-    def args(self):
-        return self.workflow.args
+    def do_validate_profile(self):
+        return True
 
-    def _check_args(self):
+    def execute(self, command: str, **kwargs):
         """
-        Checks and transforms the command line arguments
+        Executes the given command
         """
-        args = self.workflow.args
+        # get the environment from kwargs or else use the workflow environment
+        # use the `or` syntax so that the environment data is not evaluated unless env is not passed in
+        env = kwargs.pop('_env', None) or self.workflow.environment.data
 
-        if None in (args.environment,):
-            if not self.workflow.subcommand.is_missing_env_arg_okay():
-                raise CommandError('Error: environment is required')
+        return shell.execute(command, env, **kwargs)
 
-        args.profile = args.profile or args.environment
-
-    def get_subcommand(self, name:str) -> object:
+    def get_subcommand(self, name: str) -> object:
         """
         Returns the requested subcommand class by name
         """
@@ -56,23 +69,7 @@ class BaseSubcommand(ABC):
 
         return subcommand_cls(self.workflow)
 
-    @property
-    def env(self):
-        """
-        Returns an Env instance
-        """
-        # avoid circular import
-        from .env import Env
-
-        return Env(self.workflow)
-
-    @property
-    def env_name(self):
-        args = self.workflow.args
-
-        return args.environment
-
-    @abstractclassmethod
+    @classmethod
     def fill_subparser(cls, parser, subparser):
         """
         Stub for adding arguments to this subcommand's subparser
@@ -110,9 +107,9 @@ class BaseSubcommand(ABC):
         config = get_config() or {}
         env = self.workflow.args.environment
 
-        dirty_working_copy_okay = self.workflow.args.dirty or config.get('options', {}).get(env, {}).get(
-            'dirty_working_copy_okay', self.dirty_working_copy_okay
-        )
+        dirty_working_copy_okay = self.workflow.args.dirty or config.get(
+            'options', {}
+        ).get(env, {}).get('dirty_working_copy_okay', self.dirty_working_copy_okay)
 
         return dirty_working_copy_okay
 
@@ -145,64 +142,6 @@ class BaseSubcommand(ABC):
         if error:
             return f'\nError: {error}'
 
-    @property
-    def project_name(self):
-        args = self.workflow.args
-
-        return f'{self.env_name}-{args.project_name}'
-
-    def run(self, *args, **kwargs):
-        subcommand = self.workflow.subcommand
-
-        try:
-            if subcommand.remote_action:
-                self.logger.debug('setup remote')
-                self._setup_remote()
-            else:
-                self.logger.debug('work locally')
-        except errors.NotConnected as exc:
-            if not self.is_not_connected_okay(exc):
-                raise
-
-        self._check_args()
-
-        try:
-            self._write_profile()
-        except (EnvError, NotConnected, ProfileError, TagVersionError) as exc:
-            if not self.is_write_profile_error_okay(exc):
-                raise
-        except NoSuchConfig as exc:
-            if not self.is_missing_config_okay(exc):
-                raise
-        except NoSuchProfile as exc:
-            if not self.is_missing_profile_okay(exc):
-                raise
-
-        return self.handle(*args, **kwargs)
-
-    def _setup_remote(self):
-        """
-        Sets DOCKER_HOST based on the environment
-        """
-        # avoid circular import
-        from .remote import Remote
-
-        remote = Remote(self.workflow)
-
-        try:
-            remote.make_connection(use_existing=True)
-        except (errors.AlreadyConnected, errors.RemoteUndefined):
-            pass
-        except errors.NotConnected as exc:
-            if not self.is_not_connected_okay(exc):
-                raise
-
-        docker_host = remote.docker_host
-        if docker_host:
-            os.environ.update({
-                'DOCKER_HOST': docker_host,
-            })
-
     @classmethod
     def setup_subparser(cls, parser, subparsers):
         name = cls.__name__.lower()
@@ -212,21 +151,3 @@ class BaseSubcommand(ABC):
         subparser.set_defaults(subcommand_cls=cls)
 
         cls.fill_subparser(parser, subparser)
-
-    def update_runtime_environment(self, **kwargs):
-        """
-        Updates os.environ with the current environment
-        """
-        try:
-            runtime_env = self.env.get_data()
-        except NoSuchConfig as exc:
-            if not self.workflow.subcommand.is_env_error_okay(exc):
-                raise
-        else:
-            os.environ.update(runtime_env)
-
-    def _write_profile(self):
-        """
-        Writes a compiled compose file using the info in the yml file
-        """
-        self.workflow.profile.write()

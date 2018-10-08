@@ -34,38 +34,64 @@ import functools
 import logging
 import os
 import random
-import sh
 import shlex
 import sys
 import time
 
 from .base import BaseSubcommand
-from compose_flow import errors
+from compose_flow import errors, shell
 
 USER = os.environ.get('USER', 'nobody')
 CF_REMOTE_USER = os.environ.get('CF_REMOTE_USER', USER)
 
 
 class Service(BaseSubcommand):
+    setup_environment = False
+
+    setup_profile = False
+
     @classmethod
     def fill_subparser(cls, parser, subparser):
         subparser.epilog = __doc__
         subparser.formatter_class = argparse.RawDescriptionHelpFormatter
 
-        subparser.add_argument('--user', '-u', help='the user to become int he container')
-        subparser.add_argument('--retries', type=int, default=30, help='number of times to retry')
-        subparser.add_argument('--ssh', action='store_true', help='ssh to the machine, not the container')
-        subparser.add_argument('--sudo', action='store_true', help='use sudo to run the docker command remotely')
-        subparser.add_argument('--list', action='store_true', help='list available containers')
-        subparser.add_argument('--container', type=int, default=0, help='which numbered container to select, default=0')
-        subparser.add_argument('--random', action='store_true', help='pick a random matching container')
-        subparser.add_argument('--service-name', help='full service name to use instead of generated')
+        subparser.add_argument(
+            '--user', '-u', help='the user to become int he container'
+        )
+        subparser.add_argument(
+            '--retries', type=int, default=30, help='number of times to retry'
+        )
+        subparser.add_argument(
+            '--ssh', action='store_true', help='ssh to the machine, not the container'
+        )
+        subparser.add_argument(
+            '--sudo',
+            action='store_true',
+            help='use sudo to run the docker command remotely',
+        )
+        subparser.add_argument(
+            '--list', action='store_true', help='list available containers'
+        )
+        subparser.add_argument(
+            '--container',
+            type=int,
+            default=0,
+            help='which numbered container to select, default=0',
+        )
+        subparser.add_argument(
+            '--random', action='store_true', help='pick a random matching container'
+        )
+        subparser.add_argument(
+            '--service-name', help='full service name to use instead of generated'
+        )
         subparser.add_argument('action', help='The action to run')
         subparser.add_argument('service', nargs='?', help='The desired service')
 
     def action_exec(self):
+        args = self.workflow.args
+
         result = None
-        for i in range(self.args.retries):
+        for i in range(args.retries):
             try:
                 result = self.run_service()
             except errors.NoContainer:
@@ -96,15 +122,12 @@ class Service(BaseSubcommand):
             print(self.list_services())
 
     @functools.lru_cache()
-    def list_containers(self, service_name: str=None):
+    def list_containers(self, service_name: str = None):
         service_name = service_name or self.service_name
 
-        command_split = shlex.split(
-            f'docker service ps --no-trunc --filter desired-state=running {service_name}'
-        )
+        command = f'docker service ps --no-trunc --filter desired-state=running {service_name}'
 
-        sh_command = getattr(sh, command_split[0])
-        proc = sh_command(*command_split[1:])
+        proc = self.execute(command)
 
         # note; because this is being cached, create a list
         # instead of a generator becuase a generator can only
@@ -131,11 +154,12 @@ class Service(BaseSubcommand):
         """
         Lists all the services for this stack
         """
-        command = sh.docker('stack', 'services', self.env.project_name)
+        proc = self.execute(f'docker stack services {self.workflow.args.config_name}')
 
-        return command.stdout.decode('utf8')
+        return proc.stdout.decode('utf8')
 
     def run_service(self):
+        args = self.workflow.args
         line = self.select_container()
 
         container_info = line.strip()
@@ -153,8 +177,8 @@ class Service(BaseSubcommand):
         host_info = f'{CF_REMOTE_USER}@{container_host}'
 
         docker_user = ''
-        if self.args.user:
-              docker_user = f'--user {self.args.user} '
+        if args.user:
+            docker_user = f'--user {args.user} '
 
         command = f'ssh -t {host_info}'
         docker_command = (
@@ -162,37 +186,38 @@ class Service(BaseSubcommand):
             f' {" ".join(self.workflow.args_remainder)}'
         )
 
-        if self.args.sudo:
+        if args.sudo:
             docker_command = f'sudo {docker_command}'
 
-        if not self.args.ssh:
+        if not args.ssh:
             command = f'{command} {docker_command}'
         else:
             sys.stderr.write(f'docker_command: {docker_command}\n')
 
         logging.debug(f'command={command}')
-        command = command.split()
 
-        os.execvp(command[0], command)
+        return shell.execute(command, os.environ, _fg=True)
 
     def select_container(self):
+        args = self.workflow.args
         containers = self.list_containers()
 
-        if self.args.random:
+        if args.random:
             return random.choice(containers)
         else:
-            return containers[self.args.container]
+            return containers[args.container]
 
     @property
     def service_name(self):
-        service_name = self.args.service_name
+        args = self.workflow.args
+        env = self.workflow.environment
+
+        service_name = args.service_name
         if service_name:
             return service_name
 
-        project_name = self.env.project_name
-
-        service_name = self.args.service
+        service_name = args.service
         if not service_name:
             return
 
-        return f'{project_name}_{self.args.service}'
+        return f'{args.config_name}_{args.service}'

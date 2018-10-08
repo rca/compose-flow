@@ -5,6 +5,8 @@ import copy
 import os
 import tempfile
 
+from functools import lru_cache
+
 from .base import BaseSubcommand
 
 from compose_flow.compose import get_overlay_filenames
@@ -13,9 +15,6 @@ from compose_flow.errors import EnvError, NoSuchConfig, NoSuchProfile, ProfileEr
 from compose_flow.utils import remerge, render, yaml_dump, yaml_load
 
 COPY_ENV_VAR = 'CF_COPY_ENV_FROM'
-
-# keep track of written profiles in order to prevent writing them twice
-WRITTEN_PROFILES = []
 
 
 def get_kv(item: str) -> tuple:
@@ -46,12 +45,15 @@ class Profile(BaseSubcommand):
     """
     Subcommand for managing profiles
     """
+
     @property
     def filename(self) -> str:
         """
         Returns the filename for this profile
         """
-        return f'compose-flow-{self.args.profile}.yml'
+        args = self.workflow.args
+
+        return f'compose-flow-{args.profile}.yml'
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
@@ -73,7 +75,7 @@ class Profile(BaseSubcommand):
         """
         Checks the profile against some rules
         """
-        env_data = self.env.data
+        env_data = self.workflow.environment.data
 
         errors = []
         for name, service_data in self.data['services'].items():
@@ -104,15 +106,24 @@ class Profile(BaseSubcommand):
                 _service['deploy'].pop('replicas')
 
                 if increment_config:
-                    for _increment_config_name, _increment_config_data in increment_config.items():
+                    for (
+                        _increment_config_name,
+                        _increment_config_data,
+                    ) in increment_config.items():
                         fn_name = f'cf_config_expand_increment_{_increment_config_name}'
-                        _service = getattr(self, fn_name)(_increment_config_data, idx, _service)
+                        _service = getattr(self, fn_name)(
+                            _increment_config_data, idx, _service
+                        )
 
                 data['services'][_service_name] = _service
 
-    def cf_config_expand_increment_env(self, increment_config: dict, item_index: int, service: dict) -> dict:
+    def cf_config_expand_increment_env(
+        self, increment_config: dict, item_index: int, service: dict
+    ) -> dict:
         if not isinstance(service['environment'], list):
-            raise NotImplementedError('environment dictionary is not supported, use list format')
+            raise NotImplementedError(
+                'environment dictionary is not supported, use list format'
+            )
 
         new_env = []
         for item in service['environment']:
@@ -135,7 +146,9 @@ class Profile(BaseSubcommand):
 
         return service
 
-    def cf_config_expand_increment_ports(self, increment_config: dict, item_index: int, service: dict) -> dict:
+    def cf_config_expand_increment_ports(
+        self, increment_config: dict, item_index: int, service: dict
+    ) -> dict:
         new_ports = []
 
         for item in service['ports']:
@@ -202,7 +215,9 @@ class Profile(BaseSubcommand):
 
                 _env = environments.get(val)
                 if not _env:
-                    raise EnvError(f'Unable to find val={val} to copy into service_name={service_name}')
+                    raise EnvError(
+                        f'Unable to find val={val} to copy into service_name={service_name}'
+                    )
 
                 new_env.update(_env)
 
@@ -214,8 +229,6 @@ class Profile(BaseSubcommand):
         """
         Processes the profile to generate the compose file
         """
-        self.update_runtime_environment()
-
         filenames = get_overlay_filenames(profile)
 
         # merge multiple files together so that deploying stacks works
@@ -249,13 +262,49 @@ class Profile(BaseSubcommand):
             # drop the compose_flow section if it exists
             data.pop('compose_flow', None)
 
+            # for each service inject DOCKER_STACK and DOCKER_SERVICE
+            for service_name, service_data in data.get('services', {}).items():
+                service_environment = service_data.setdefault('environment', [])
+
+                # convert the service_environment into a dict
+                service_environment_d = {}
+                for item in service_environment:
+                    item_split = item.split('=', 1)
+                    k = item_split[0]
+
+                    if len(item_split) > 1:
+                        v = item_split[1]
+                    else:
+                        v = None
+
+                    service_environment_d[k] = v
+
+                for k, v in (
+                        ('DOCKER_SERVICE', service_name),
+                        ('DOCKER_STACK', self.workflow.args.config_name),
+                ):
+                    if k not in service_environment_d:
+                        service_environment_d[k] = v
+
+                # reconstruct the k=v list honoring empty values
+                service_environment_l = []
+                for k, v in service_environment_d.items():
+                    if v is None:
+                        val = k
+                    else:
+                        val = f'{k}={v}'
+                    service_environment_l.append(val)
+
+                # dump back out as list
+                service_data['environment'] = service_environment_l
+
             content = yaml_dump(data)
 
         fh = tempfile.TemporaryFile(mode='w+')
 
         # render the file
         try:
-            rendered = render(content)
+            rendered = render(content, env=self.workflow.environment.data)
         except EnvError as exc:
             if not self.workflow.subcommand.is_missing_profile_okay(exc):
                 raise
@@ -286,7 +335,7 @@ class Profile(BaseSubcommand):
         if not config:
             return {}
 
-        profile_name = self.args.profile
+        profile_name = self.workflow.args.profile
 
         # when there is no profile name, return just docker-compose.yml
         if profile_name is None:
@@ -299,15 +348,10 @@ class Profile(BaseSubcommand):
 
         return profile
 
+    @lru_cache()
     def write(self) -> None:
         """
         Writes the loaded compose file to disk
         """
-        # do not write profiles more than once per execution
-        if self.filename in WRITTEN_PROFILES:
-            return
-
         with open(self.filename, 'w') as fh:
             fh.write(self.load())
-
-        WRITTEN_PROFILES.append(self.filename)

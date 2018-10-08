@@ -1,3 +1,4 @@
+import logging
 import re
 import os
 import sys
@@ -5,11 +6,11 @@ import yaml
 
 from collections import OrderedDict
 
-import sh
-
 from boltons.iterutils import remap, get_path, default_enter, default_visit
 
-from .errors import EnvError, ProfileError
+from compose_flow import shell
+
+from .errors import TagVersionError, EnvError, ProfileError
 
 # regular expression for finding variables in docker compose files
 VAR_RE = re.compile(r'\${(?P<varname>.*?)(?P<junk>[:?].*)?}')
@@ -21,18 +22,32 @@ def get_repo_name() -> str:
     return repo_name
 
 
-def get_tag_version() -> str:
+def get_tag_version(default: str = None) -> str:
     """
     Returns the version of code as returned by the `tag-version` cli command
+
+    Args:
+        default: the default version if it cannot be found, `unknown` by default
+        print_warning: when `tag-version` results in error, print a warning
     """
     # inject the version from tag-version command into the loaded environment
-    tag_version = 'unknown'
+    tag_version = default or 'unknown'
     try:
-        tag_version_command = getattr(sh, 'tag-version')
+        proc = shell.execute('tag-version', os.environ)
     except Exception as exc:
-        print(f'Warning: unable to find tag-version ({exc})\n', file=sys.stderr)
+        try:
+            error_message = exc.stderr.decode('utf8')
+        except:
+            error_message = exc.stderr
+
+        if 'not clean' in error_message:
+            tag_version = f'{tag_version}-dirty'
+
+        raise TagVersionError(
+            f'Warning: tag-version failed', shell_exception=exc, tag_version=tag_version
+        )
     else:
-        tag_version = tag_version_command().stdout.decode('utf8').strip()
+        tag_version = proc.stdout.decode('utf8').strip()
 
     return tag_version
 
@@ -75,9 +90,11 @@ def remerge(target_list, sourced=False):
 
     for t_name, target in target_list:
         if sourced:
+
             def remerge_visit(path, key, value):
                 source_map[path + (key,)] = t_name
                 return True
+
         else:
             remerge_visit = default_visit
 
@@ -88,7 +105,7 @@ def remerge(target_list, sourced=False):
     return ret, source_map
 
 
-def render(content: str, env: dict=None) -> str:
+def render(content: str, env: dict = None) -> str:
     """
     Renders the variables in the file
     """
@@ -97,14 +114,20 @@ def render(content: str, env: dict=None) -> str:
 
     env = env or os.environ
 
+    errors = []
+
     for x in VAR_RE.finditer(content):
-        rendered += content[previous_idx:x.start('varname')-2]  # -2 to get rid of variable's `${`
+        rendered += content[
+            previous_idx : x.start('varname') - 2
+        ]  # -2 to get rid of variable's `${`
 
         varname = x.group('varname')
         try:
             rendered += env[varname]
         except KeyError:
-            raise EnvError(f'Error: varname={varname} not in environment; cannot render')
+            rendered += '*** MISSING_ENVIRONMENT_VAR ***'
+
+            errors.append(f'{varname} not found in environment')
 
         end = x.end('junk')
         if end == -1:
@@ -113,6 +136,14 @@ def render(content: str, env: dict=None) -> str:
         previous_idx = end + 1  # +1 to get rid of variable's `}`
 
     rendered += content[previous_idx:]
+
+    logger = logging.getLogger(__name__)
+
+    if errors:
+        logger.error(rendered)
+        logger.error('\n'.join(errors))
+
+        raise EnvError('Rendering error')
 
     return rendered
 
@@ -130,14 +161,17 @@ def yaml_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
 
     >>> ordered_load(stream, yaml.SafeLoader)
     """
+
     class OrderedLoader(Loader):
         pass
+
     def construct_mapping(loader, node):
         loader.flatten_mapping(node)
         return object_pairs_hook(loader.construct_pairs(node))
+
     OrderedLoader.add_constructor(
-        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-        construct_mapping)
+        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping
+    )
     return yaml.load(stream, OrderedLoader)
 
 
@@ -147,12 +181,15 @@ def yaml_dump(data, stream=None, Dumper=yaml.Dumper, **kwds):
 
     >>> ordered_dump(data, Dumper=yaml.SafeDumper)
     """
+
     class OrderedDumper(Dumper):
         pass
+
     def _dict_representer(dumper, data):
         return dumper.represent_mapping(
-            yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-            data.items())
+            yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, data.items()
+        )
+
     OrderedDumper.add_representer(OrderedDict, _dict_representer)
 
     # set the default_flow_style to False if not set

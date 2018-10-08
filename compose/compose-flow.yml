@@ -1,0 +1,27 @@
+profiles:
+  local:
+    - docker-compose.yml
+    - mount
+
+  test:
+    - docker-compose.yml
+    - results
+
+  dev:
+    - docker-compose.yml
+
+tasks:
+  publish:
+    command: compose-flow compose run --rm app /bin/bash ./scripts/publish
+
+  test:
+    command: compose-flow compose run --rm app /bin/bash -c 'nosetests -v ./src'
+
+  lint:
+    command: compose-flow compose run --rm app /bin/bash -c 'pylama ./src'
+
+  jenkinslint:
+    command: compose-flow compose run --rm app /bin/bash -c 'pylama -r results/pylama.log || /bin/true'
+
+  jenkinstest:
+    command: compose-flow compose run --rm app /bin/bash -c 'nosetests -v ./src --with-xunit --xunit-file=results/report.xml || /bin/true'

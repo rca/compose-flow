@@ -41,10 +41,15 @@ def get_subcommand_class(filename: str) -> [object, None]:
         attr = getattr(module, attr_name)
 
         try:
-            if attr not in (BaseSubcommand, ConfigBaseSubcommand, PassthroughBaseSubcommand) and issubclass(attr, BaseSubcommand):
+            if attr not in (
+                BaseSubcommand,
+                ConfigBaseSubcommand,
+                PassthroughBaseSubcommand,
+            ) and issubclass(attr, BaseSubcommand):
                 return attr
         except TypeError:
             continue
+
 
 # https://stackoverflow.com/a/26379693/703144
 def set_default_subparser(self, name, args=None):
@@ -56,7 +61,7 @@ def set_default_subparser(self, name, args=None):
     it works with 2.6 assuming argparse is installed
     """
     subparser_found = False
-    existing_default = False # check if default parser previously defined
+    existing_default = False  # check if default parser previously defined
     for arg in sys.argv[1:]:
         if arg in ['-h', '--help']:  # global help if no subparser
             break
@@ -67,7 +72,7 @@ def set_default_subparser(self, name, args=None):
             for sp_name in x._name_parser_map.keys():
                 if sp_name in sys.argv[1:]:
                     subparser_found = True
-                if sp_name == name: # check existance of default parser
+                if sp_name == name:  # check existance of default parser
                     existing_default = True
         if not subparser_found:
             # If the default subparser is not among the existing ones,
@@ -80,7 +85,7 @@ def set_default_subparser(self, name, args=None):
                     if not isinstance(x, argparse._SubParsersAction):
                         continue
                     x.add_parser(name)
-                    break # this works OK, but should I check further?
+                    break  # this works OK, but should I check further?
 
             # insert default in first position, this implies no
             # global options without a sub_parsers specified

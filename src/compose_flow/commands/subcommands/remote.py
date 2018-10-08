@@ -5,11 +5,9 @@ import os
 import re
 import sys
 
-import sh
-
 from .base import BaseSubcommand
 
-from compose_flow import errors
+from compose_flow import errors, shell
 from compose_flow.errors import EnvError, ErrorMessage
 
 UNIX_PREFIX = 'unix://'
@@ -20,6 +18,7 @@ class Remote(BaseSubcommand):
     """
     Subcommand for connecting to a remote docker swarm
     """
+
     def __init__(self, *args, **kwargs):
         self._host = kwargs.pop('host', None)
 
@@ -36,7 +35,7 @@ class Remote(BaseSubcommand):
                 print(f'closing pids {pids_s}', file=sys.stderr)
 
             for pid in pids:
-                sh.kill(pid)
+                self.execute(f'kill {pid}')
 
         self.remove_socket()
 
@@ -45,7 +44,12 @@ class Remote(BaseSubcommand):
             print(f'unset DOCKER_HOST')
 
     def connect(self):
-        self.make_connection()
+        remote_host = self.get_remote_host()
+
+        try:
+            self.make_connection()
+        except errors.AlreadyConnected:
+            pass
 
         if remote_host != self.socket_path:
             self.print_eval_hint()
@@ -71,8 +75,9 @@ class Remote(BaseSubcommand):
         pgrep_search = f'ssh -Nf -L {socket}'
 
         try:
-            proc = sh.pgrep('-f', pgrep_search)
-        except sh.ErrorReturnCode_1:
+            # very low-level command that does not need workflow environment
+            proc = self.execute(f'pgrep -f "{pgrep_search}"', _env=os.environ)
+        except shell.ErrorReturnCode_1:
             pass
         else:
             for item in proc.stdout.decode('utf8').strip().splitlines():
@@ -94,21 +99,15 @@ class Remote(BaseSubcommand):
         if self._host is not None:
             return self._host
 
+        args = self.workflow.args
+        data = self.workflow.app_config
+        environment = args.environment
+
         try:
-            self._host = self.args.host
-        except AttributeError:
-            # when called by another command, the arg may not exist
+            self._host = data['remotes'][environment]['ssh']
+        except KeyError:
+            # it's perfectly fine to not have a remote config for an environment
             pass
-
-        if not self._host:
-            data = self.workflow.app_config
-            environment = self.args.environment
-
-            try:
-                self._host = data['remotes'][self.args.environment]['ssh']
-            except KeyError:
-                # it's perfectly fine to not have a remote config for an environment
-                pass
 
         return self._host
 
@@ -166,12 +165,15 @@ class Remote(BaseSubcommand):
 
         self.close(do_print=False)
 
-        sh.ssh('-Nf', '-L', f'{socket_path}:/var/run/docker.sock', host)
+        # very low-level command that does not need workflow environment
+        self.execute(
+            f'ssh -Nf -L {socket_path}:/var/run/docker.sock {host}', _env=os.environ
+        )
 
     def print_eval_hint(self):
         print(
             'copy and paste the commands below or run this command wrapped in an eval statement:\n',
-            file=sys.stderr
+            file=sys.stderr,
         )
 
     def remove_socket(self):
@@ -206,7 +208,9 @@ class Remote(BaseSubcommand):
             message = f'environment set to {docker_host}, but no ssh connection found'
         elif pids:
             pids_s = ", ".join([f'{x}' for x in pids])
-            message = f'ssh connection found at pids {pids_s}, but environment not setup'
+            message = (
+                f'ssh connection found at pids {pids_s}, but environment not setup'
+            )
         else:
             message = 'Not connected'
 

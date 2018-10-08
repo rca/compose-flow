@@ -10,12 +10,11 @@ import tempfile
 
 from functools import lru_cache
 
-import sh
-
 from .config_base import ConfigBaseSubcommand
 
 from compose_flow import docker, errors, utils
 
+DOCKER_IMAGE_VAR = 'DOCKER_IMAGE'
 VERSION_VAR = 'VERSION'
 
 
@@ -23,28 +22,41 @@ class Env(ConfigBaseSubcommand):
     """
     Subcommand for managing environment
     """
+
+    setup_profile = False
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, *kwargs)
 
         self._config = None
         self._docker_image = None
 
-    @property
-    def config_name(self):
-        return self.workflow.args.config_name or self.project_name
+        self._data = None
+
+        # when data is modified, set this to True
+        self._data_modified = False
+
+        # keys that will be persisted to the docker config
+        self._persistable_keys = []
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
         subparser.add_argument('action')
         subparser.add_argument('path', nargs='*')
-        subparser.add_argument('-f', '--force', action='store_true', help='edit even if no config found')
-        subparser.add_argument('--variables', action='store_true', help='show runtime variables instead of values')
+        subparser.add_argument(
+            '-f', '--force', action='store_true', help='edit even if no config found'
+        )
+        subparser.add_argument(
+            '--variables',
+            action='store_true',
+            help='show runtime variables instead of values',
+        )
 
     def cat(self) -> str:
         """
         Prints the loaded config to stdout
         """
-        config_name = self.config_name
+        config_name = self.workflow.config_name
 
         if config_name not in docker.get_configs():
             return f'docker config named {config_name} not in swarm'
@@ -52,68 +64,34 @@ class Env(ConfigBaseSubcommand):
         print(self.render())
 
     @property
-    def data(self) -> dict:
-        return self.get_data()
+    def cf_env(self):
+        """
+        Returns defaults for the environment
+        """
+        args = self.workflow.args
 
-    @lru_cache()
-    def get_data(self, load_cf_env: bool=None) -> dict:
+        return {
+            'CF_ENV': args.environment or '',
+            'CF_PROJECT': args.project_name,
+            # deprecate this env var
+            'CF_ENV_NAME': args.project_name,
+        }
+
+    @property
+    def data(self) -> dict:
         """
         Returns the loaded config as a dictionary
-
-        Args:
-            load_cf_env: whether to include the current action's env.  if False, only
-                basic variables are set
         """
-        data = {}
+        if self._data is not None:
+            return self._data
 
-        load_cf_env = load_cf_env or self.workflow.subcommand.load_cf_env
-        if not load_cf_env:
-            return data
+        data = self.load()
 
-        env = self.load()
-        for line in env.splitlines():
-            # skip empty lines
-            if line.strip() == '':
-                continue
-
-            # skip commented lines
-            if line.startswith('#'):
-                continue
-
-            try:
-                key, value = line.split('=', 1)
-            except ValueError as exc:
-                print(f'unable to split line={line}')
-                raise
-
-            data[key] = value
-
-        # now that the data from the cf environment is parsed default the
-        # docker image to anything that was defined in there.
-        self._docker_image = data.get('DOCKER_IMAGE')
-
-        # replace variables when running a r/w command
-        subcommand = self.workflow.subcommand
+        args = self.workflow.args
 
         action = None
-        if 'action' in subcommand.args:
-            action = subcommand.args.action
-
-        initialize = False
-        if action == 'edit' and 'force' in subcommand.args and subcommand.args.force:
-            initialize = True
-
-        # set the variables when the environment is r/w or the
-        if subcommand.rw_env or initialize:
-            data.update({
-                'CF_ENV': self.env_name,
-                'CF_PROJECT': self.project_name,
-                'DOCKER_IMAGE': f'{self.docker_image.split(":", 1)[0]}:{self.version}',
-                VERSION_VAR: self.version,
-
-                # deprecate this env var
-                'CF_ENV_NAME': self.project_name,
-            })
+        if 'action' in args:
+            action = args.action
 
         # render placeholders
         for k, v in data.items():
@@ -128,7 +106,9 @@ class Env(ConfigBaseSubcommand):
 
             new_val = os.environ.get(location_ref)
             if new_val is None:
-                raise errors.RuntimeEnvError(f'runtime substitution for {k}={v} not found')
+                raise errors.RuntimeEnvError(
+                    f'runtime substitution for {k}={v} not found'
+                )
 
             data[k] = new_val
 
@@ -149,7 +129,22 @@ class Env(ConfigBaseSubcommand):
 
                     data[k] = rendered
 
-        return data
+        # set defaults when no value is set
+        for k, v in self.cf_env.items():
+            if k not in data:
+                data[k] = v
+
+        if self.workflow.subcommand.update_version_env_vars:
+            data.update(
+                {
+                    DOCKER_IMAGE_VAR: self.set_docker_tag(self.docker_image),
+                    VERSION_VAR: self.version,
+                }
+            )
+
+        self._data = data
+
+        return self._data
 
     @property
     def docker_image(self) -> str:
@@ -174,11 +169,31 @@ class Env(ConfigBaseSubcommand):
         Sets the docker image tag based on the current version
         """
         if ':' not in docker_image:
-            raise EnvironmentError('compose-flow enforces image versioning; DOCKER_IMAGE must contain a colon')
+            raise EnvironmentError(
+                'compose-flow enforces image versioning; DOCKER_IMAGE must contain a colon'
+            )
 
         return f'{docker_image.split(":", 1)[0]}:{self.version}'
 
         return docker_image
+
+    def update(self, new_data: dict, persistable: bool = True):
+        """
+        Updates the environment data with the new given data
+
+        When persistable is True, the values being set are flagged for persisting into the docker config
+        and the _data_modified flag is set
+        """
+        data = self._data or {}
+
+        data.update(new_data)
+
+        if persistable:
+            self._persistable_keys.extend(list(new_data.keys()))
+
+            self._data_modified = True
+
+        self._data = data
 
     def is_dirty_working_copy_okay(self, exc: Exception) -> bool:
         is_dirty_working_copy_okay = super().is_dirty_working_copy_okay(exc)
@@ -192,9 +207,10 @@ class Env(ConfigBaseSubcommand):
         return self.is_env_modification_action()
 
     def is_missing_config_okay(self, exc):
+        args = self.workflow.args
         subcommand = self.workflow.subcommand
         # the `force` attribute may not exist
-        force = 'force' in subcommand.args and subcommand.args.force
+        force = 'force' in args and args.force
 
         try:
             action = self.workflow.args.action
@@ -209,36 +225,59 @@ class Env(ConfigBaseSubcommand):
     def is_write_profile_error_okay(self, exc):
         return self.is_env_modification_action()
 
-    def load(self) -> str:
+    def load(self) -> dict:
         """
         Loads an environment from the docker swarm config
         """
-        if self._config is not None:
-            return self._config
+        data = {}
+
+        # when no environment is specified on the command line, do not load any docker config
+        environment = self.workflow.args.environment
+        if not environment:
+            return data
 
         try:
-            self._config = docker.get_config(self.config_name)
+            content = docker.get_config(self.workflow.config_name)
         except errors.NoSuchConfig as exc:
             if not self.is_missing_config_okay(exc):
                 raise
 
-            self._config = ''
+            content = ''
 
-        data = self.data
+        for idx, line in enumerate(content.splitlines()):
+            # skip empty lines
+            if line.strip() == '':
+                continue
 
-        subcommand = self.workflow.subcommand
-        if subcommand.rw_env or VERSION_VAR not in data:
-            data[VERSION_VAR] = self.version
+            # skip commented lines
+            if line.strip().startswith('#'):
+                continue
 
-        self._config = self.render(data)
+            try:
+                key, value = line.split('=', 1)
+            except ValueError as exc:
+                self.logger.error(
+                    f'ERROR: unable to parse line number {idx}, edit your env: {line}'
+                )
 
-        return self._config
+                raise
+
+            data[key] = value
+
+        # all values from the docker config are persistable
+        self.update(data)
+
+        # now that the data from the cf environment is parsed default the
+        # docker image to anything that was defined in there.
+        self._docker_image = data.get('DOCKER_IMAGE')
+
+        return data
 
     @property
     def logger(self):
         return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
-    def render(self, data:dict=None) -> str:
+    def render(self, data: dict = None) -> str:
         """
         Returns a rendered file in .env file format
         """
@@ -259,22 +298,38 @@ class Env(ConfigBaseSubcommand):
         """
         docker.remove_config(self.project_name)
 
+    def update_workflow_env(self):
+        """
+        Overwrites the cf environment in the data dictionary
+
+        Even if values are already set, overwrite them with current values
+        """
+        self.data.update(self.cf_env)
+
     @property
     @lru_cache()
     def version(self):
         """
         Returns a version string for the current version of code
         """
+        tag_version = self.workflow.args.tag_version
+        if tag_version:
+            return tag_version
+
         # default the tag version to the name of the environment
         tag_version = self.workflow.args.environment
         try:
-            tag_version = utils.get_tag_version()
+            tag_version = utils.get_tag_version(default=self.workflow.args.environment)
         except Exception as exc:
             subcommand = self.workflow.subcommand
 
             # check if the subcommand is okay with a dirty working copy
             if not subcommand.is_dirty_working_copy_okay(exc):
-                raise errors.TagVersionError(f'Warning: unable to run tag-version ({exc})\n')
+                raise errors.TagVersionError(
+                    f'Warning: unable to run tag-version ({exc})\n',
+                    shell_exception=exc,
+                    tag_version=tag_version
+                )
 
         return tag_version
 

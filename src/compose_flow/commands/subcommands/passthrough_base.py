@@ -4,8 +4,6 @@ import os
 
 from distutils.spawn import find_executable
 
-import sh
-
 from .base import BaseSubcommand
 
 from compose_flow import errors
@@ -25,22 +23,30 @@ class PassthroughBaseSubcommand(BaseSubcommand):
         # check to make sure the command is installed
         command_path = find_executable(self.command_name)
         if command_path is None:
-            raise errors.ErrorMessage(f'{self.command_name} not found in PATH; is it installed?')
+            raise errors.ErrorMessage(
+                f'{self.command_name} not found in PATH; is it installed?'
+            )
 
         return [command_path]
 
-    def handle(self, extra_args:list=None) -> [None, str]:
+    def handle(self, extra_args: list = None, log_output: bool = False) -> [None, str]:
         command = self.get_command()
 
-        extra_args = extra_args or self.args.extra_args
+        args = self.workflow.args
+
+        extra_args = extra_args or args.extra_args
         command.extend(extra_args)
 
-        self.logger.info(' '.join(command))
+        # if there is a space in one of the command arguments, use repr() to
+        # quote it properly when it contains a space
+        command_s = ' '.join([x if ' ' not in x else repr(x) for x in command])
 
-        if not self.args.dry_run:
-            # os.execve(command[0], command, os.environ)
-            proc = getattr(sh, command[0])
-            proc(*command[1:], _env=os.environ, _fg=True)
+        self.logger.info(command_s)
+
+        if not args.dry_run:
+            res = self.execute(command_s, _fg=True)
+            if log_output:
+                self.logger.info(res.stdout.decode('utf-8').strip())
 
     @property
     def logger(self) -> logging.Logger:

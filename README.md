@@ -1,6 +1,10 @@
 # Compose Flow
 
-This utility is built on top of [Docker Compose](https://docs.docker.com/compose/) and [Swarm Mode](https://docs.docker.com/engine/swarm/).  It establishes conventions for publishing Images, deploying [Stacks](https://docs.docker.com/get-started/part5/#prerequisites) across multiple installations (like separate dev and prod Swarms), and working with service containers that are easily shared between team members -- and bots -- who need to manage running services.
+This utility is built on top of [Docker Compose](https://docs.docker.com/compose/) and [Swarm Mode](https://docs.docker.com/engine/swarm/).  It establishes conventions for common workflow tasks that are easily shared between team members -- and butlers -- who need to manage running services.  These tasks include:
+
+- managing [Stacks](https://docs.docker.com/get-started/part5/#prerequisites) across multiple Swarms (like separate dev and prod Swarms)
+- easily connecting to and working with service containers
+- building and publishing images
 
 
 ## Installation
@@ -25,6 +29,7 @@ profiles:
   local:
     - docker-compose.yml
     - docker-compose.local.yml
+
 
 tasks:
   psql:
@@ -277,6 +282,51 @@ services:
     ports:
       - 8001:8001
     deploy:
+```
+
+## Deploying to Kubernetes with Rancher
+
+In order to streamline the transition to Kubernetes, we have integrated the Rancher CLI into `compose-flow`.
+
+To configure a project for deployment to Rancher, add a section to `compose-flow.yml` with the following format:
+
+```yaml
+rancher:
+  # Name of the Rancher Project to deploy into
+  # Cluster will be inferred from the env name passed to `-e`
+  project: Default
+
+  # Catalog templates to be deployed
+  apps:
+  - name: redis
+    namespace: redis
+    chart: helm-redis
+    answers: redis-answers.yaml
+    version: 4.0.1
+
+  # Raw Kubernetes YAML to be directly applied
+  # Must include name and namespace metadata
+  manifests:
+  - ./redis-ingress.yaml
+
+  # Per-environment extra apps and manifests
+  extras:
+    prod:
+      apps:
+        - name: redis-backup
+          namespace: redis
+          chart: custom-redis-backup-chart
+          answers: redis-backup-answers.yaml
+          version: 0.0.1
+      manifests:
+        - ./redis-lb.yaml
+
+```
+
+Once configured, run the following command to deploy a `compose-flow` project to a Rancher-managed cluster named `dev`:
+
+```bash
+compose-flow -e dev deploy rancher
 ```
 
 # History

@@ -1,5 +1,5 @@
 """
-Compose subcommand
+Kompose subcommand
 """
 import argparse
 import logging
@@ -7,16 +7,16 @@ import os
 
 from .passthrough_base import PassthroughBaseSubcommand
 
-from compose_flow import docker, errors
+from compose_flow import errors
 
 DEFAULT_COMPOSE_FILENAME = 'docker-compose.yml'
 
 
-class Compose(PassthroughBaseSubcommand):
+class Kompose(PassthroughBaseSubcommand):
     """
-    Subcommand for running compose commands
+    Subcommand for migrating to Kubernetes with kompose commands
     """
-    command_name = 'docker-compose'
+    command_name = 'kompose'
     dirty_working_copy_okay = True
     update_version_env_vars = True
 
@@ -29,10 +29,9 @@ class Compose(PassthroughBaseSubcommand):
     def get_command(self):
         command = super().get_command()
 
-        command.extend(['--project-name', self.workflow.args.config_name])
-
         profile = self.workflow.profile
         command.extend(['-f', profile.filename])
+        command.extend(['-o', 'compose-flow-kompose.yml'])
 
         return command
 
