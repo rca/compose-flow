@@ -3,6 +3,7 @@ Profile subcommand
 """
 import copy
 import logging
+import json
 import tempfile
 
 from functools import lru_cache
@@ -13,7 +14,7 @@ from .base import BaseSubcommand
 from compose_flow.compose import merge_profile
 from compose_flow.config import get_config
 from compose_flow.errors import EnvError, NoSuchProfile, ProfileError
-from compose_flow.utils import render, yaml_dump, yaml_load
+from compose_flow.utils import render, render_jinja, yaml_dump, yaml_load
 
 COPY_ENV_VAR = 'CF_COPY_ENV_FROM'
 
@@ -246,6 +247,9 @@ class Profile(BaseSubcommand):
                             _increment_config_data, idx, _service
                         )
 
+                # render any templating that is in the config
+                _service = self.cf_config_render_template(idx, _service, data)
+
                 data['services'][_service_name] = _service
 
     def cf_config_expand_increment_env(
@@ -298,6 +302,21 @@ class Profile(BaseSubcommand):
         service['ports'] = new_ports
 
         return service
+
+    def cf_config_render_template(self, item_index: int, service: dict, data: dict) -> dict:
+        vars = data['compose_flow'].get('vars', {})
+
+        # HACK: convert to json to be able to render the string in one shot
+        content = json.dumps(service)
+
+        context = vars.copy()
+        context.update({
+            'idx': item_index,
+        })
+
+        rendered = render_jinja(content, context)
+
+        return json.loads(rendered)
 
     def _check_cf_config(self, data):
         """

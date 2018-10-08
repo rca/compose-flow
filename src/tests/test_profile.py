@@ -212,6 +212,91 @@ class ProfileTestCase(TestCase):
             ],
         )
 
+    def test_expand_render_jinja(self, *mocks):
+        """
+        Renders jinja
+        """
+        data = {
+            'services': {
+                'foo': {
+                    'build': '..',
+                    'image': '${DOCKER_IMAGE}',
+                    'environment': [
+                        'FOO=1',
+                        'SPARK_WORKER_PORT=8888',
+                        'SPARK_WORKER_WEBUI_PORT=8080',
+                        'SOMETHING={% for node in nodes %}zookeeper{{ loop.index }}:2181{% if not loop.last %},{% endif %}{% endfor %}',
+                    ],
+                    'ports': ['8000:8000'],
+                    'deploy': {
+                        'placement': {
+                            'constraints': [
+                                'node.hostname == {{ nodes[idx] }}',
+                            ],
+                        },
+                    },
+                },
+            },
+            'compose_flow': {
+                'config': {
+                    'expand': {
+                        'foo': {
+                            'method': 'count',
+                            'items': 'nodes',
+                        }
+                    }
+                },
+                'expand': {
+                    'foo': {
+                        'increment': {
+                            'env': ['SPARK_WORKER_PORT', 'SPARK_WORKER_WEBUI_PORT'],
+                            'ports': {'source_port': True, 'destination_port': True},
+                        }
+                    }
+                },
+                'vars': {
+                    'nodes': [
+                        'dev-docker-4',
+                        'dev-docker-8',
+                        'dev-docker-12',
+                        'dev-docker-16',
+                    ],
+                }
+            },
+        }
+
+        profile = Profile(self.workflow)
+        new_data = profile._check_cf_config(data)
+
+        self.assertEqual(len(new_data['services']), 4)
+
+        self.assertEqual(sorted(new_data['services'].keys()), ['foo1', 'foo2', 'foo3', 'foo4'])
+
+        self.assertEqual(
+            [x['ports'] for x in new_data['services'].values()],
+            [['8000:8000'], ['8001:8001'], ['8002:8002'], ['8003:8003']],
+        )
+
+        self.assertEqual(
+            [x['deploy']['placement']['constraints'] for x in new_data['services'].values()],
+            [
+                ['node.hostname == dev-docker-4'],
+                ['node.hostname == dev-docker-8'],
+                ['node.hostname == dev-docker-12'],
+                ['node.hostname == dev-docker-16'],
+            ],
+        )
+
+        self.assertEqual(
+            [x['environment'] for x in new_data['services'].values()],
+            [
+                ['FOO=1', 'SPARK_WORKER_PORT=8888', 'SPARK_WORKER_WEBUI_PORT=8080', 'SOMETHING=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181,zookeeper4:2181'],
+                ['FOO=1', 'SPARK_WORKER_PORT=8889', 'SPARK_WORKER_WEBUI_PORT=8081', 'SOMETHING=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181,zookeeper4:2181'],
+                ['FOO=1', 'SPARK_WORKER_PORT=8890', 'SPARK_WORKER_WEBUI_PORT=8082', 'SOMETHING=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181,zookeeper4:2181'],
+                ['FOO=1', 'SPARK_WORKER_PORT=8891', 'SPARK_WORKER_WEBUI_PORT=8083', 'SOMETHING=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181,zookeeper4:2181'],
+            ],
+        )
+
     @mock.patch('compose_flow.commands.subcommands.profile.open')
     def test_profile_writes_once(self, *mocks):
         open_mock = mocks[0]
