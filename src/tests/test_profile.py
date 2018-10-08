@@ -89,6 +89,9 @@ class ProfileTestCase(TestCase):
         self.assertEqual(0, len(errors))
 
     def test_expand_services(self, *mocks):
+        """
+        Ensures the foo service expands to three independent services
+        """
         data = {
             'services': {
                 'foo': {
@@ -141,6 +144,73 @@ class ProfileTestCase(TestCase):
         when there is no compose directory, do not attempt to render a profile
         """
         profile = Profile(self.workflow)
+
+    def test_expand_by_variables(self, *mocks):
+        """
+        Expands the services based on the method defined
+        """
+        data = {
+            'services': {
+                'foo': {
+                    'build': '..',
+                    'image': '${DOCKER_IMAGE}',
+                    'environment': [
+                        'FOO=1',
+                        'SPARK_WORKER_PORT=8888',
+                        'SPARK_WORKER_WEBUI_PORT=8080',
+                    ],
+                    'ports': ['8000:8000'],
+                }
+            },
+            'compose_flow': {
+                'config': {
+                    'expand': {
+                        'foo': {
+                            'method': 'count',
+                            'items': 'nodes',
+                        }
+                    }
+                },
+                'expand': {
+                    'foo': {
+                        'increment': {
+                            'env': ['SPARK_WORKER_PORT', 'SPARK_WORKER_WEBUI_PORT'],
+                            'ports': {'source_port': True, 'destination_port': True},
+                        }
+                    }
+                },
+                'vars': {
+                    'nodes': [
+                        'dev-docker-4',
+                        'dev-docker-8',
+                        'dev-docker-12',
+                        'dev-docker-16',
+                    ],
+                }
+            },
+        }
+
+        profile = Profile(self.workflow)
+        new_data = profile._check_cf_config(data)
+
+        self.assertEqual(len(new_data['services']), 4)
+
+        self.assertEqual(sorted(new_data['services'].keys()), ['foo1', 'foo2', 'foo3', 'foo4'])
+
+        self.assertEqual(
+            [x['ports'] for x in new_data['services'].values()],
+            [['8000:8000'], ['8001:8001'], ['8002:8002'], ['8003:8003']],
+        )
+
+        self.assertEqual(
+            [x['environment'] for x in new_data['services'].values()],
+            [
+                ['FOO=1', 'SPARK_WORKER_PORT=8888', 'SPARK_WORKER_WEBUI_PORT=8080'],
+                ['FOO=1', 'SPARK_WORKER_PORT=8889', 'SPARK_WORKER_WEBUI_PORT=8081'],
+                ['FOO=1', 'SPARK_WORKER_PORT=8890', 'SPARK_WORKER_WEBUI_PORT=8082'],
+                ['FOO=1', 'SPARK_WORKER_PORT=8891', 'SPARK_WORKER_WEBUI_PORT=8083'],
+            ],
+        )
 
     @mock.patch('compose_flow.commands.subcommands.profile.open')
     def test_profile_writes_once(self, *mocks):

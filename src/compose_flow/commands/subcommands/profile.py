@@ -193,11 +193,40 @@ class Profile(BaseSubcommand):
 
         return errors
 
+    def get_replicas(self, data: dict, service_name: str, service_config: dict) -> int:
+        """
+        Returns the number of replicas that should be created based on the compose_flow config
+
+        Args:
+            data: the compose_flow.yml data object
+            service_name: the name of the service being expanded
+            service_config: the docker-compose service configuration object
+
+        Returns:
+            integer of the number of replicas
+        """
+        cf_config = data['compose_flow'].get('config', {})
+
+        expand_method = cf_config.get('expand', {}).get(service_name, {}).get('method', 'replicas')
+        if expand_method == 'replicas':
+            replicas = service_config['deploy']['replicas']
+        elif expand_method == 'count':
+            expand_items = cf_config.get('expand', {}).get(service_name, {}).get('items')
+
+            cf_vars = data['compose_flow']['vars']
+            items = cf_vars[expand_items]
+
+            replicas = len(items)
+        else:
+            raise ProfileError(f'unknown expand method: {expand_method}')
+
+        return replicas
+
     def cf_config_expand(self, data):
         expand_config = data['compose_flow']['expand']
         for service_name, config in expand_config.items():
             base_service = data['services'].pop(service_name)
-            replicas = base_service['deploy']['replicas']
+            replicas = self.get_replicas(data, service_name, base_service)
 
             increment_config = expand_config[service_name].get('increment')
 
@@ -205,7 +234,7 @@ class Profile(BaseSubcommand):
                 _service_name = f'{service_name}{idx+1}'
                 _service = copy.deepcopy(base_service)
 
-                _service['deploy'].pop('replicas')
+                _service.get('deploy', {}).pop('replicas', None)
 
                 if increment_config:
                     for (
@@ -276,6 +305,10 @@ class Profile(BaseSubcommand):
         """
         cf_config_sections = list(data.get('compose_flow', {}).keys())
         for item in cf_config_sections:
+            # The following are special sections that should be skipped
+            if item in ('config', 'vars'):
+                continue
+
             fn_name = f'cf_config_{item}'
 
             getattr(self, fn_name)(data)
