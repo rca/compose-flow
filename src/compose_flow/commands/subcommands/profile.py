@@ -485,14 +485,13 @@ class Profile(BaseSubcommand):
     def logger(self):
         return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
-    @property
-    def profile_files(self) -> dict:
+    def profile_files(self) -> list:
         """
         Returns the profile data found in the dc.yml file
         """
         config = get_config()
         if not config:
-            return {}
+            return []
 
         profile_name = self.workflow.args.profile
 
