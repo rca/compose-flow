@@ -10,6 +10,7 @@ sh = "*"
 tag-version = "*"
 tabulate = "*"
 docker-compose = "*"
+"jinja2" = "*"
 
 [dev-packages]
 twine = "*"
