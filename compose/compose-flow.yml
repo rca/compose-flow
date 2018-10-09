@@ -10,9 +10,13 @@ profiles:
   dev:
     - docker-compose.yml
 
+  prod:
+    - docker-compose.yml
+    - docker-compose.publish.yml
+
 tasks:
   publish:
-    command: compose-flow compose run --rm app /bin/bash ./scripts/publish
+    command: compose-flow compose run --rm app /bin/bash ./scripts/publish.sh
 
   test:
     command: compose-flow compose run --rm app /bin/bash -c 'nosetests -v ./src'
