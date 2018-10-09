@@ -16,6 +16,9 @@ nose = "*"
 tag-version = "*"
 watchdog = "*"
 black = "*"
+pylama = "*"
+pylint = "<2.0"
+pylama-pylint = "*"
 
 [requires]
 python_version = "3.6"
