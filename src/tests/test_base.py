@@ -3,7 +3,7 @@ from tests import BaseTestCase, mock
 
 
 class TestSubcommand(BaseSubcommand):
-    def fill_subparser(cls, parser):
+    def fill_subparser(self, cls, parser):
         pass
 
 

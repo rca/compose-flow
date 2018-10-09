@@ -100,7 +100,7 @@ class ConfigBaseSubcommand(BaseSubcommand):
         docker.load_config(args.config_name, path)
 
     def render_buf(self, buf, data: dict = None, runtime_config: bool = True):
-        data = data or self.data
+        data = data or self.data  # pylint: disable=E1101
 
         # reset runtime variables
         if not runtime_config:

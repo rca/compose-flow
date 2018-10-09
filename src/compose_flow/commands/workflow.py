@@ -77,7 +77,7 @@ class Workflow(object):
 
     @property
     def config_name(self):
-        return self.args.config_name or self.project_name
+        return self.args.config_name or self.project_name  # pylint: disable=E1101
 
     @property
     @lru_cache()
@@ -242,7 +242,7 @@ class Workflow(object):
         except (errors.AlreadyConnected, errors.RemoteUndefined):
             pass
         except errors.NotConnected as exc:
-            if not self.is_not_connected_okay(exc):
+            if not self.is_not_connected_okay(exc):  # pylint: disable=E1101
                 raise
 
         docker_host = remote.docker_host
@@ -265,7 +265,7 @@ class Workflow(object):
         """
         assert value == None
 
-        self.__class__.subcommand.fget.cache_clear()
+        self.__class__.subcommand.fget.cache_clear()  # pylint: disable=E1101
 
     def _write_environment(self):
         """
