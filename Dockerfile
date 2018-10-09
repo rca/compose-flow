@@ -13,6 +13,12 @@ COPY Pipfile Pipfile.lock ${SRC_DIR}/
 RUN pipenv install --system --dev && \
   rm -rf /root/.cache/pip
 
+COPY files/ /
+
+RUN chmod +x /usr/local/bin/*
+
 COPY ./ ${SRC_DIR}/
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 CMD ["/bin/bash"]
