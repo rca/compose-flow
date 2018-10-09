@@ -242,7 +242,7 @@ class KubeMixIn(object):
     @lru_cache()
     def render_nested_manifests(self, dir_path: str) -> str:
         directory = pathlib.Path(dir_path)
-        manifests = directory.glob('**/*.y?ml')
+        manifests = directory.glob('**/*.y*ml')
         rendered_path = self.get_manifest_filename(dir_path)
 
         for manifest in manifests:
