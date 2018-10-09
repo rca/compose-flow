@@ -10,6 +10,7 @@ from tests import BaseTestCase
 
 @mock.patch('compose_flow.commands.subcommands.env.os')
 class DeployTestCase(BaseTestCase):
+    @mock.patch('compose_flow.commands.subcommands.profile.Profile.write')
     @mock.patch('compose_flow.commands.subcommands.env.Env.rw_env', new=True)
     @mock.patch('compose_flow.commands.subcommands.env.utils')
     @mock.patch('compose_flow.commands.subcommands.env.docker')
