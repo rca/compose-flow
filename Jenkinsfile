@@ -2,7 +2,8 @@
 
 def customPublishTask = {
     cf env.DEPLOY_ENV, 'compose build --pull'
-    sh "compose-flow -e ${env.DEPLOY_ENV} --project-name ${env.REPO_NAME} task publish"
+    cf env.DEPLOY_ENV, 'publish'
+    cf env.DEPLOY_ENV, 'task publish'
 }
 
 def publishWhen = { env.TAG_NAME }
