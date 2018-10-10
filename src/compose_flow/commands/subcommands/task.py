@@ -12,7 +12,7 @@ from compose_flow.errors import CommandError
 
 
 ALLOWED_COMMANDS = ['compose-flow', 'rancher']
-PROFILE_SUBCOMMANDS = ['compose-flow']
+PROFILE_SUBCOMMANDS = ['compose-flow', 'compose']
 
 class Task(BaseSubcommand):
     @classmethod
