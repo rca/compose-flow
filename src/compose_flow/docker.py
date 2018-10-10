@@ -2,9 +2,25 @@ import base64
 import json
 import os
 
+from contextlib import contextmanager
+
 from compose_flow import shell
 
 from .errors import DockerError, NoSuchConfig, NotConnected
+
+
+@contextmanager
+def json_formatter(command: str) -> str:
+    """
+    Yields the docker command with the JSON formatter
+
+    Args:
+        command: docker command
+
+    Returns:
+        Augmented docker command
+    """
+    yield f'{command} --format "{{{{ json . }}}}"'
 
 
 def get_configs() -> list:
