@@ -4,7 +4,7 @@ from .base import BaseSubcommand
 from .kube_mixin import KubeMixIn
 
 ACTIONS = ['rancher', 'docker', 'rke', 'helm']
-PROFILE_ACTIONS = ['docker']
+PROFILE_ACTIONS = ['docker', 'rancher']
 
 
 class Deploy(BaseSubcommand, KubeMixIn):
