@@ -1,8 +1,7 @@
 @Library('OpenSlateProd')_  // https://github.com/openslate/jenkins-shared-library
 
 def customPublishTask = {
-    cf env.DEPLOY_ENV, 'compose build --pull'
-    cf env.DEPLOY_ENV, 'publish'
+    cfPublish()
     cf env.DEPLOY_ENV, 'task publish'
 }
 
