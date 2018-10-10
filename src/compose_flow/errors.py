@@ -4,6 +4,12 @@ class CommandError(Exception):
     """
 
 
+class DockerError(CommandError):
+    """
+    Raised when a problem running a docker command is encountered
+    """
+
+
 class ErrorMessage(Exception):
     """
     Subclass to print out error message instead of entire stack trace
