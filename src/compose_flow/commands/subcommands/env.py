@@ -296,7 +296,7 @@ class Env(ConfigBaseSubcommand):
         """
         Removes an environment from the swarm
         """
-        docker.remove_config(self.project_name)
+        docker.remove_config(self.project_name)  # pylint: disable=E1101
 
     def update_workflow_env(self):
         """

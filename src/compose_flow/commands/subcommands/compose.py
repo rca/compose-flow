@@ -45,4 +45,4 @@ class Compose(PassthroughBaseSubcommand):
         """
         Returns the version in the environment, unless it was overridden in this Compose instance
         """
-        return self._version or self.env.version
+        return self._version or self.env.version  # pylint: disable=E1101

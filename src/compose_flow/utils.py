@@ -36,9 +36,9 @@ def get_tag_version(default: str = None) -> str:
         proc = shell.execute('tag-version', os.environ)
     except Exception as exc:
         try:
-            error_message = exc.stderr.decode('utf8')
+            error_message = exc.stderr.decode('utf8')  # pylint: disable=E1101
         except:
-            error_message = exc.stderr
+            error_message = exc.stderr  # pylint: disable=E1101
 
         if 'not clean' in error_message:
             tag_version = f'{tag_version}-dirty'

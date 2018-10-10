@@ -2,7 +2,7 @@ import os
 import sh
 import shlex
 
-from sh import ErrorReturnCode_1
+from sh import ErrorReturnCode_1  # noqa: F401 pylint: disable=E1101
 
 # these runtime environment variables should be injected into
 # the compose flow environment prior to executing a command
