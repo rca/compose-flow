@@ -3,6 +3,7 @@ import json
 import os
 
 from contextlib import contextmanager
+from typing import Iterable
 
 from compose_flow import shell
 
@@ -70,20 +71,25 @@ def remove_config(name: str) -> None:
     shell.execute(f'docker config rm {name}', os.environ)
 
 
-def get_docker_json(command: str, env: dict) -> dict:
+def get_docker_json(command: str, env: dict, jsonl: bool = False) -> [dict, Iterable]:
     """
     Returns docker output as a JSON object
 
     Args:
         command: the docker command to run
         env: the environment to run the command with
+        jsonl: whether to interpret the output as a JSON doc per line
 
     Returns:
         dict
     """
     content = get_docker_output(command, env)
 
-    return json.loads(content)
+    if jsonl:
+        for line in content.splitlines():
+            yield json.loads(line)
+    else:
+        yield json.loads(content)
 
 
 def get_docker_output(command: str, env: dict) -> str:
