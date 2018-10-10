@@ -53,6 +53,14 @@ def get_config(name: str) -> str:
     return base64.b64decode(config_data).decode('utf8')
 
 
+def get_nodes() -> Iterable:
+    """
+    Returns a list of swarm nodes
+    """
+    with json_formatter('docker node ls') as json_command:
+        return get_docker_json(json_command, os.environ, jsonl=True)
+
+
 def load_config(name: str, path: str) -> None:
     """
     Loads config into swarm
