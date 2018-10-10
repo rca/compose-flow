@@ -61,6 +61,30 @@ def get_nodes() -> Iterable:
         return get_docker_json(json_command, os.environ, jsonl=True)
 
 
+def get_service_config(name: str) -> dict:
+    """
+    Returns `docker service inspect` as a data object
+
+    Args:
+        name: the name of the service
+
+    Returns:
+        dict
+    """
+    with json_formatter(f'docker service inspect {name}') as command:
+        data = list(get_docker_json(command, os.environ))
+
+        return data
+
+
+def get_services() -> Iterable:
+    """
+    Returns an iterable of service objects
+    """
+    with json_formatter('docker service ls') as json_command:
+        return get_docker_json(json_command, os.environ, jsonl=True)
+
+
 def load_config(name: str, path: str) -> None:
     """
     Loads config into swarm
