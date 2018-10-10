@@ -220,13 +220,9 @@ class KubeMixIn(object):
 
         # TODO: Add support for multiple YAML documents in a single file
         with open(input_path, 'r') as fh:
-            try:
-                content = yaml_load(fh)
-            except yaml.composer.ComposerError:
-                self.logger.exception("Each manifest file must contain a single YAML document!")
-                raise
+            content = fh.read()
 
-        rendered = render(yaml_dump(content), env=self.workflow.environment.data)
+        rendered = render(content, env=self.workflow.environment.data)
 
         with open(output_path, 'w') as fh:
             fh.write(rendered)
