@@ -4,3 +4,4 @@ src/compose_flow.egg-info
 __pycache__
 .local
 .cache
+results
