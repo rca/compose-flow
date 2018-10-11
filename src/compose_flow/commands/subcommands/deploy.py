@@ -2,9 +2,10 @@ import logging
 
 from .base import BaseSubcommand
 from .kube_mixin import KubeMixIn
+from .profile import Profile
 
 ACTIONS = ['rancher', 'docker', 'rke', 'helm']
-PROFILE_ACTIONS = ['docker']
+PROFILE_ACTIONS = ['docker', 'rancher']
 
 
 class Deploy(BaseSubcommand, KubeMixIn):
@@ -13,6 +14,9 @@ class Deploy(BaseSubcommand, KubeMixIn):
     """
     rw_env = True
     update_version_env_vars = True
+
+    # apply all checks to deployment
+    profile_checks = Profile.get_all_checks()
 
     @classmethod
     def fill_subparser(cls, parser, subparser):

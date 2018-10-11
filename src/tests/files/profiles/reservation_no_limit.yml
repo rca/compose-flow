@@ -1,0 +1,7 @@
+services:
+  app:
+    image: foo.test
+    deploy:
+      resources:
+        reservations:
+          memory: 100M

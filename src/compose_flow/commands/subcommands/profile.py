@@ -2,17 +2,18 @@
 Profile subcommand
 """
 import copy
-import os
+import logging
 import tempfile
 
 from functools import lru_cache
+from typing import Callable, List
 
 from .base import BaseSubcommand
 
-from compose_flow.compose import get_overlay_filenames
+from compose_flow.compose import merge_profile
 from compose_flow.config import get_config
-from compose_flow.errors import EnvError, NoSuchConfig, NoSuchProfile, ProfileError
-from compose_flow.utils import remerge, render, yaml_dump, yaml_load
+from compose_flow.errors import EnvError, NoSuchProfile, ProfileError
+from compose_flow.utils import render, yaml_dump, yaml_load
 
 COPY_ENV_VAR = 'CF_COPY_ENV_FROM'
 
@@ -45,6 +46,11 @@ class Profile(BaseSubcommand):
     """
     Subcommand for managing profiles
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._compiled_profile = None
+        self._data = None
 
     @property
     def filename(self) -> str:
@@ -61,9 +67,14 @@ class Profile(BaseSubcommand):
 
     @property
     def data(self):
+        if self._data:
+            return self._data
+
         compose_content = self.load()
 
-        return yaml_load(compose_content)
+        self._data = yaml_load(compose_content)
+
+        return self._data
 
     def cat(self):
         """
@@ -71,25 +82,110 @@ class Profile(BaseSubcommand):
         """
         print(self.load())
 
+    def _check_services(self, check_fn: Callable, data: dict) -> list:
+        """
+        Runs all services through the given check function
+
+        Args:
+            check_fn: the check function to run
+            data: the service data dict
+
+        Returns:
+            list of errors
+        """
+        env_data = self.workflow.environment.data
+        errors = []
+
+        for name, service_data in data['services'].items():
+            errors.extend(check_fn(name, service_data, env_data))
+
+        return errors
+
     def check(self):
         """
         Checks the profile against some rules
         """
-        env_data = self.workflow.environment.data
+        checks = self.workflow.subcommand.profile_checks
 
         errors = []
-        for name, service_data in self.data['services'].items():
-            for item in service_data.get('environment', []):
-                # when a variable has an equal sign, it is setting
-                # the value, so don't check the environment for this variable
-                if '=' in item:
-                    continue
+        for check in checks:
+            check_fn = getattr(self, check)
 
-                if item not in env_data:
-                    errors.append(f'{item} not found in environment')
+            errors.extend(self._check_services(check_fn, self.data))
 
         if errors:
             raise ProfileError('\n'.join(errors))
+
+    @staticmethod
+    def check_env(name: str, service_data: dict, env_data: dict) -> list:
+        """
+        Checks that environment is properly defined
+
+        Returns:
+            list of errors
+        """
+        errors = []
+        for item in service_data.get('environment', []):
+            # when a variable has an equal sign, it is setting
+            # the value, so don't check the environment for this variable
+            if '=' in item:
+                continue
+
+            if item not in env_data:
+                errors.append(f'{item} not found in environment for service={name}')
+
+        return errors
+
+    # noinspection PyUnusedLocal
+    @staticmethod
+    def check_constraints(name: str, service_data: dict, env_data: dict) -> list:
+        """
+        Checks that constraints are defined
+
+        Returns:
+            list of errors
+        """
+        errors = []
+        service_message = f'not found in service={name}; please add node constraints to deploy.placement.constraints'
+
+        # check to see that a node constraint has been defined
+        constraints = service_data.get('deploy', {}).get('placement', {}).get('constraints', [])
+        if not constraints:
+            errors.append(f'constraints {service_message}')
+        else:
+            for constraint in constraints:
+                if constraint.startswith('node.'):
+                    break
+            else:
+                errors.append(f'node constraints {service_message}')
+
+        return errors
+
+    def check_resources(self, name: str, service_data: dict, env_data: dict) -> list:
+        """
+        Checks that resources are defined
+
+        Returns:
+            list of errors
+        """
+        errors = []
+        service_message = f'not found in service={name}; please add reservations and limits to deploy.resources'
+
+        # check to see that a node constraint has been defined
+        resources = service_data.setdefault('deploy', {}).setdefault('resources', {})
+        if not resources:
+            errors.append(f'resource constraints {service_message}')
+
+            # short-circuit early, nothing else to check
+            return errors
+
+        for item in ('limits', 'reservations'):
+            if 'memory' in resources.get(item, {}):
+                break
+        else:
+            errors.append(f'memory constraints {service_message}')
+
+        return errors
 
     def cf_config_expand(self, data):
         expand_config = data['compose_flow']['expand']
@@ -180,74 +276,20 @@ class Profile(BaseSubcommand):
 
         return data
 
-    def _copy_environment(self, data):
+    def _compile(self, profile: dict) -> str:
         """
-        Processes CF_COPY_ENV_FROM environment entries
+        Compiles the profile into a single docker compose file
+
+        Args:
+            profile: The profile name to compile
+
+        Returns:
+            compiled compose file as a string
         """
-        environments = {}
+        if self._compiled_profile:
+            return self._compiled_profile
 
-        # first get the env from each service
-        for service_name, service_data in data['services'].items():
-            environment = service_data.get('environment')
-            if environment:
-                _env = {}
-
-                for item in environment:
-                    k, v = get_kv(item)
-
-                    _env[k] = v
-
-                environments[service_name] = _env
-
-        # go through each service environment and apply any copies found
-        for service_name, service_data in data['services'].items():
-            environment = service_data.get('environment')
-            if not environment:
-                continue
-
-            new_env = {}
-            for item in environment:
-                key, val = get_kv(item)
-                new_env[key] = val
-
-                if not item.startswith(COPY_ENV_VAR):
-                    continue
-
-                _env = environments.get(val)
-                if not _env:
-                    raise EnvError(
-                        f'Unable to find val={val} to copy into service_name={service_name}'
-                    )
-
-                new_env.update(_env)
-
-            service_data['environment'] = listify_kv(new_env)
-
-        return data
-
-    def get_profile_compose_file(self, profile):
-        """
-        Processes the profile to generate the compose file
-        """
-        filenames = get_overlay_filenames(profile)
-
-        # merge multiple files together so that deploying stacks works
-        # https://github.com/moby/moby/issues/30127
-        if len(filenames) > 1:
-            yaml_contents = []
-
-            for item in filenames:
-                with open(item, 'r') as fh:
-                    yaml_contents.append(yaml_load(fh))
-
-            merged = remerge(yaml_contents)
-            content = yaml_dump(merged)
-        else:
-            try:
-                with open(filenames[0], 'r') as fh:
-                    content = fh.read()
-            except FileNotFoundError:
-                content = ''
+        content = merge_profile(profile)
 
         # perform transformations on the compiled profile
         if content:
@@ -298,8 +340,82 @@ class Profile(BaseSubcommand):
                 # dump back out as list
                 service_data['environment'] = service_environment_l
 
+                # enforce resources
+                self.set_resources(service_name, service_data)
+
             content = yaml_dump(data)
 
+        self._compiled_profile = content
+
+        return content
+
+    def _copy_environment(self, data):
+        """
+        Processes CF_COPY_ENV_FROM environment entries
+        """
+        environments = {}
+
+        # first get the env from each service
+        for service_name, service_data in data['services'].items():
+            environment = service_data.get('environment')
+            if environment:
+                _env = {}
+
+                for item in environment:
+                    k, v = get_kv(item)
+
+                    _env[k] = v
+
+                environments[service_name] = _env
+
+        # go through each service environment and apply any copies found
+        for service_name, service_data in data['services'].items():
+            environment = service_data.get('environment')
+            if not environment:
+                continue
+
+            new_env = {}
+            for item in environment:
+                key, val = get_kv(item)
+                new_env[key] = val
+
+                if not item.startswith(COPY_ENV_VAR):
+                    continue
+
+                _env = environments.get(val)
+                if not _env:
+                    raise EnvError(
+                        f'Unable to find val={val} to copy into service_name={service_name}'
+                    )
+
+                new_env.update(_env)
+
+            service_data['environment'] = listify_kv(new_env)
+
+        return data
+
+    @classmethod
+    @lru_cache()
+    def get_all_checks(cls) -> List[str]:
+        """
+        Returns a list of all the method names that are checks in this class
+
+        Returns:
+            list of strings
+        """
+        checks = []
+
+        for fn_name in dir(cls):
+            if fn_name.startswith('check_'):
+                checks.append(fn_name)
+
+        return checks
+
+    def get_profile_compose_file(self, profile: dict):
+        """
+        Processes the profile to generate the compose file
+        """
+        content = self._compile(profile)
         fh = tempfile.TemporaryFile(mode='w+')
 
         # render the file
@@ -327,6 +443,10 @@ class Profile(BaseSubcommand):
         return fh.read()
 
     @property
+    def logger(self):
+        return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
+
+    @property
     def profile_files(self) -> dict:
         """
         Returns the profile data found in the dc.yml file
@@ -348,10 +468,31 @@ class Profile(BaseSubcommand):
 
         return profile
 
+    def set_resources(self, name: str, service_data: dict) -> None:
+        """
+        Fills in missing resources
+        """
+        resources = service_data.setdefault('deploy', {}).setdefault('resources', {})
+
+        # init limits and reservations
+        for item, opposite_item in (
+                ('limits', 'reservations'),
+                ('reservations', 'limits'),
+        ):
+            resources.setdefault(item, {})
+            resources.setdefault(opposite_item, {})
+
+            # if a memory reservation is set, but there is no memory limit, match
+            if 'memory' in resources[item]:
+                if 'memory' not in resources[opposite_item]:
+                    self.logger.warning(f'matching {opposite_item} with {item} for service {name}')
+
+                    resources[opposite_item]['memory'] = resources[item]['memory']
+
     @lru_cache()
     def write(self) -> None:
         """
         Writes the loaded compose file to disk
         """
         with open(self.filename, 'w') as fh:
-            fh.write(self.load())
+            fh.write(yaml_dump(self.data))
