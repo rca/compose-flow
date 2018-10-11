@@ -1,0 +1,10 @@
+services:
+  app:
+    image: foo.test
+    deploy:
+      resources:
+        # funky, but it was explicitly set, so allow it
+        reservations:
+          memory: 10M
+        limits:
+          memory: 100M

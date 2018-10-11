@@ -1,0 +1,7 @@
+services:
+  app:
+    image: foo.test
+    deploy:
+      resources:
+        limits:
+          memory: 100M

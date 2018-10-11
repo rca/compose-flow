@@ -1,11 +1,7 @@
 import logging
 import os
-import tempfile
 
-import yaml
-
-from .config import DC_CONFIG_ROOT
-from .utils import remerge, render
+from .utils import remerge, yaml_dump, yaml_load
 
 
 def get_overlay_filenames(overlay):
@@ -58,3 +54,33 @@ def get_overlay_filenames(overlay):
         overlay_filenames.append('docker-compose.yml')
 
     return overlay_filenames
+
+
+def merge_profile(profile: dict) -> str:
+    """
+    Returns the merged compose file contents
+
+    Args:
+        profile: the profile data to merge
+    """
+    filenames = get_overlay_filenames(profile)
+
+    # merge multiple files together so that deploying stacks works
+    # https://github.com/moby/moby/issues/30127
+    if len(filenames) > 1:
+        yaml_contents = []
+
+        for item in filenames:
+            with open(item, 'r') as fh:
+                yaml_contents.append(yaml_load(fh))
+
+        merged = remerge(yaml_contents)
+        content = yaml_dump(merged)
+    else:
+        try:
+            with open(filenames[0], 'r') as fh:
+                content = fh.read()
+        except FileNotFoundError:
+            content = ''
+
+    return content
