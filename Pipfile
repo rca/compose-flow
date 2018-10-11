@@ -8,6 +8,7 @@ pyyaml = "*"
 boltons = "*"
 sh = "*"
 tag-version = "*"
+tabulate = "*"
 
 [dev-packages]
 twine = "*"

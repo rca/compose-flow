@@ -169,7 +169,7 @@ class Workflow(object):
             self._setup_profile()
 
             # execute the subcommand
-            self.subcommand.handle()
+            message = self.subcommand.handle()
 
             self._write_environment()
         except CommandError as exc:
@@ -178,6 +178,8 @@ class Workflow(object):
             return f'\n{exc}'
         except ErrorMessage as exc:
             return f'\n{exc}'
+        else:
+            return message
 
     def _set_arg_defaults(self):
         """
