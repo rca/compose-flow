@@ -10,7 +10,8 @@ OS_ENV_INCLUDES = (
     'DOCKER_HOST',
     'HOME',
     'PATH',
-    'USER'
+    'USER',
+    'KUBECONFIG'
 )
 
 

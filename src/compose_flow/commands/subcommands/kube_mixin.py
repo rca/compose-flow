@@ -220,13 +220,9 @@ class KubeMixIn(object):
 
         # TODO: Add support for multiple YAML documents in a single file
         with open(input_path, 'r') as fh:
-            try:
-                content = yaml_load(fh)
-            except yaml.composer.ComposerError:
-                self.logger.exception("Each manifest file must contain a single YAML document!")
-                raise
+            content = fh.read()
 
-        rendered = render(yaml_dump(content), env=self.workflow.environment.data)
+        rendered = render(content, env=self.workflow.environment.data)
 
         with open(output_path, 'w') as fh:
             fh.write(rendered)
@@ -242,7 +238,7 @@ class KubeMixIn(object):
     @lru_cache()
     def render_nested_manifests(self, dir_path: str) -> str:
         directory = pathlib.Path(dir_path)
-        manifests = directory.glob('**/*.y?ml')
+        manifests = directory.glob('**/*.y*ml')
         rendered_path = self.get_manifest_filename(dir_path)
 
         for manifest in manifests:
