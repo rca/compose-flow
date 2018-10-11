@@ -10,7 +10,9 @@ OS_ENV_INCLUDES = (
     'DOCKER_HOST',
     'HOME',
     'PATH',
-    'USER'
+    'USER',
+    'DISPLAY',
+    'DBUS_SESSION_BUS_ADDRESS'
 )
 
 
