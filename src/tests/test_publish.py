@@ -9,6 +9,7 @@ from tests import BaseTestCase
 
 
 @mock.patch('compose_flow.commands.subcommands.env.os')
+@mock.patch('compose_flow.commands.workflow.PROJECT_NAME', new='testdirname')
 class PublishTestCase(BaseTestCase):
     @mock.patch('compose_flow.commands.subcommands.env.utils')
     @mock.patch('compose_flow.commands.subcommands.env.docker')
@@ -63,6 +64,11 @@ class PublishTestCase(BaseTestCase):
         """
         Ensures that version in env is updated when the publish command is run
         """
+        os_mock = mocks[-1]
+        os_mock.environ = {
+            'CF_DOCKER_IMAGE_PREFIX': 'test.registry',
+        }
+
         version = '1.2.3'
         new_version = '0.9.999'
         docker_image = 'foo:bar'
@@ -88,4 +94,4 @@ class PublishTestCase(BaseTestCase):
         env = flow.environment
 
         self.assertEqual(utils_mock.get_tag_version.return_value, env.data['VERSION'])
-        self.assertEqual(f'foo:{new_version}', env.data['DOCKER_IMAGE'])
+        self.assertEqual(f'test.registry/testdirname:{new_version}', env.data['DOCKER_IMAGE'])
