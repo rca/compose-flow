@@ -1,6 +1,7 @@
 from unittest import TestCase, mock
 
 from compose_flow.commands.subcommands.profile import Profile
+from compose_flow.utils import yaml_load
 
 from tests.utils import get_content
 
@@ -154,11 +155,12 @@ class ProfileTestCase(TestCase):
         profile = Profile(self.workflow)
 
         param = {}
-        profile._compile(param)  # the param is ignored because it's using the mock
+        content = profile._compile(param)  # the param is ignored because it's using the mock
 
         merge_profile_mock.assert_called_with(param)
 
-        resources = profile.data['services']['app']['deploy']['resources']
+        data = yaml_load(content)
+        resources = data['services']['app']['deploy']['resources']
 
         self.assertEqual(resources['reservations']['memory'], resources['limits']['memory'])
 
@@ -173,11 +175,12 @@ class ProfileTestCase(TestCase):
         profile = Profile(self.workflow)
 
         param = {}
-        profile._compile(param)  # the param is ignored because it's using the mock
+        content = profile._compile(param)  # the param is ignored because it's using the mock
 
         merge_profile_mock.assert_called_with(param)
 
-        resources = profile.data['services']['app']['deploy']['resources']
+        data = yaml_load(content)
+        resources = data['services']['app']['deploy']['resources']
 
         self.assertEqual('10M', resources['reservations']['memory'])
         self.assertEqual('100M', resources['limits']['memory'])
@@ -193,10 +196,11 @@ class ProfileTestCase(TestCase):
         profile = Profile(self.workflow)
 
         param = {}
-        profile._compile(param)  # the param is ignored because it's using the mock
+        content = profile._compile(param)  # the param is ignored because it's using the mock
 
         merge_profile_mock.assert_called_with(param)
 
-        resources = profile.data['services']['app']['deploy']['resources']
+        data = yaml_load(content)
+        resources = data['services']['app']['deploy']['resources']
 
         self.assertEqual(resources['limits']['memory'], resources['reservations']['memory'])
