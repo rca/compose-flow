@@ -32,18 +32,5 @@ setup(
         'sh',
         'tag-version',
         'tabulate'
-    ],
-    extras_require={
-        'dev': [
-            'twine',
-            'setuptools',
-            'nose',
-            'tag-version',
-            'watchdog',
-            'black',
-            'pylama',
-            'pylint',
-            'pylama-pylint'
-        ]
-    }
+    ]
 )
