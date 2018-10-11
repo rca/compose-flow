@@ -49,6 +49,7 @@ class Profile(BaseSubcommand):
         super().__init__(*args, **kwargs)
 
         self._compiled_profile = None
+        self._data = None
 
     @property
     def filename(self) -> str:
@@ -65,9 +66,14 @@ class Profile(BaseSubcommand):
 
     @property
     def data(self):
+        if self._data:
+            return self._data
+
         compose_content = self.load()
 
-        return yaml_load(compose_content)
+        self._data = yaml_load(compose_content)
+
+        return self._data
 
     def cat(self):
         """
