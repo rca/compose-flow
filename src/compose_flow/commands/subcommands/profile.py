@@ -161,8 +161,7 @@ class Profile(BaseSubcommand):
 
         return errors
 
-    @staticmethod
-    def check_resources(name: str, service_data: dict, env_data: dict) -> list:
+    def check_resources(self, name: str, service_data: dict, env_data: dict) -> list:
         """
         Checks that resources are defined
 
@@ -191,6 +190,8 @@ class Profile(BaseSubcommand):
             # if a memory reservation is set, but there is no memory limit, match
             if 'memory' in resources[item]:
                 if 'memory' not in resources[opposite_item]:
+                    self.logger.warning(f'matching {opposite_item} with {item} for service {name}')
+
                     resources[opposite_item]['memory'] = resources[item]['memory']
 
         return errors
