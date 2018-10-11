@@ -87,12 +87,6 @@ class Env(ConfigBaseSubcommand):
 
         data = self.load()
 
-        args = self.workflow.args
-
-        action = None
-        if 'action' in args:
-            action = args.action
-
         # render placeholders
         for k, v in data.items():
             if not v.startswith('runtime://'):
