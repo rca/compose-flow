@@ -14,9 +14,7 @@ class ProfileTestCase(TestCase):
         """
         Ensures the profile check fails when no constraints are found
         """
-        workflow = mock.Mock()
-
-        profile = Profile(workflow)
+        profile = Profile(self.workflow)
 
         profile.load = mock.Mock()
         profile.load.return_value = get_content('profiles/no_constraints.yml')
@@ -28,9 +26,7 @@ class ProfileTestCase(TestCase):
         """
         Ensures the profile check fails when `node.` constraints are not found
         """
-        workflow = mock.Mock()
-
-        profile = Profile(workflow)
+        profile = Profile(self.workflow)
 
         profile.load = mock.Mock()
         profile.load.return_value = get_content('profiles/no_node_constraints.yml')
@@ -42,9 +38,7 @@ class ProfileTestCase(TestCase):
         """
         Ensures the profile check passes when no constraints are found
         """
-        workflow = mock.Mock()
-
-        profile = Profile(workflow)
+        profile = Profile(self.workflow)
 
         profile.load = mock.Mock()
         profile.load.return_value = get_content('profiles/with_node_constraints.yml')
