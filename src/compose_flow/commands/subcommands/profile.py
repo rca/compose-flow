@@ -5,7 +5,7 @@ import copy
 import tempfile
 
 from functools import lru_cache
-from typing import List
+from typing import Callable, List
 
 from .base import BaseSubcommand
 
@@ -75,18 +75,36 @@ class Profile(BaseSubcommand):
         """
         print(self.load())
 
+    def _check_services(self, check_fn: Callable, data: dict) -> list:
+        """
+        Runs all services through the given check function
+
+        Args:
+            check_fn: the check function to run
+            data: the service data dict
+
+        Returns:
+            list of errors
+        """
+        env_data = self.workflow.environment.data
+        errors = []
+
+        for name, service_data in data['services'].items():
+            errors.extend(check_fn(name, service_data, env_data))
+
+        return errors
+
     def check(self):
         """
         Checks the profile against some rules
         """
-        env_data = self.workflow.environment.data
         checks = self.workflow.subcommand.profile_checks
 
         errors = []
-        for name, service_data in self.data['services'].items():
-            for check in checks:
-                check_fn = getattr(self, check)
-                errors.extend(check_fn(name, service_data, env_data))
+        for check in checks:
+            check_fn = getattr(self, check)
+
+            errors.extend(self._check_services(check_fn, self.data))
 
         if errors:
             raise ProfileError('\n'.join(errors))
