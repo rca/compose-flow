@@ -1,7 +1,6 @@
 from unittest import TestCase, mock
 
 from compose_flow.commands.subcommands.profile import Profile
-from compose_flow.errors import ProfileError
 
 from tests.utils import get_content
 
@@ -9,7 +8,6 @@ from tests.utils import get_content
 class ProfileTestCase(TestCase):
     def setUp(self):
         self.workflow = mock.Mock()
-        self.workflow.subcommand.profile_checks = Profile.get_all_checks()
 
     def test_check_no_constraints(self, *mocks):
         """
@@ -20,8 +18,9 @@ class ProfileTestCase(TestCase):
         profile.load = mock.Mock()
         profile.load.return_value = get_content('profiles/no_constraints.yml')
 
-        with self.assertRaisesRegex(ProfileError, r'constraints not found'):
-            profile.check()
+        errors = profile._check_services(profile.check_constraints, profile.data)
+
+        self.assertRegex(' '.join(errors), r'constraints not found')
 
     def test_check_no_node_constraints(self, *mocks):
         """
@@ -32,8 +31,9 @@ class ProfileTestCase(TestCase):
         profile.load = mock.Mock()
         profile.load.return_value = get_content('profiles/no_node_constraints.yml')
 
-        with self.assertRaisesRegex(ProfileError, r'node constraints not found'):
-            profile.check()
+        errors = profile._check_services(profile.check_constraints, profile.data)
+
+        self.assertRegex(' '.join(errors), r'node constraints not found')
 
     def test_check_with_node_constraints(self, *mocks):
         """
@@ -44,10 +44,9 @@ class ProfileTestCase(TestCase):
         profile.load = mock.Mock()
         profile.load.return_value = get_content('profiles/with_node_constraints.yml')
 
-        result = profile.check()
+        errors = profile._check_services(profile.check_constraints, profile.data)
 
-        # have some sort of assertion in the test
-        self.assertEqual(None, result)
+        self.assertEqual(0, len(errors))
 
     def test_expand_services(self, *mocks):
         data = {
