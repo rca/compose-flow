@@ -1,8 +1,7 @@
 import shlex
 
-from unittest import TestCase, mock
+from unittest import mock
 
-from compose_flow import utils
 from compose_flow.commands import Workflow
 
 from tests import BaseTestCase
