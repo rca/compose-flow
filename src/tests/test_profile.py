@@ -7,12 +7,6 @@ class ProfileTestCase(TestCase):
     def setUp(self):
         self.workflow = mock.Mock()
 
-    def test_profile_no_compose_dir(self, *mocks):
-        """
-        when there is no compose directory, do not attempt to render a profile
-        """
-        profile = Profile(self.workflow)
-
     def test_expand_services(self, *mocks):
         data = {
             'services': {
@@ -60,6 +54,12 @@ class ProfileTestCase(TestCase):
                 ['FOO=1', 'SPARK_WORKER_PORT=8890', 'SPARK_WORKER_WEBUI_PORT=8082'],
             ],
         )
+
+    def test_profile_no_compose_dir(self, *mocks):
+        """
+        when there is no compose directory, do not attempt to render a profile
+        """
+        profile = Profile(self.workflow)
 
     @mock.patch('compose_flow.commands.subcommands.profile.open')
     def test_profile_writes_once(self, *mocks):
