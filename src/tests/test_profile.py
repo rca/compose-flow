@@ -1,11 +1,58 @@
 from unittest import TestCase, mock
 
 from compose_flow.commands.subcommands.profile import Profile
+from compose_flow.errors import ProfileError
+
+from tests.utils import get_content
 
 
 class ProfileTestCase(TestCase):
     def setUp(self):
         self.workflow = mock.Mock()
+
+    def test_check_no_constraints(self, *mocks):
+        """
+        Ensures the profile check fails when no constraints are found
+        """
+        workflow = mock.Mock()
+
+        profile = Profile(workflow)
+
+        profile.load = mock.Mock()
+        profile.load.return_value = get_content('profiles/no_constraints.yml')
+
+        with self.assertRaisesRegex(ProfileError, r'constraints not found'):
+            profile.check()
+
+    def test_check_no_node_constraints(self, *mocks):
+        """
+        Ensures the profile check fails when `node.` constraints are not found
+        """
+        workflow = mock.Mock()
+
+        profile = Profile(workflow)
+
+        profile.load = mock.Mock()
+        profile.load.return_value = get_content('profiles/no_node_constraints.yml')
+
+        with self.assertRaisesRegex(ProfileError, r'node constraints not found'):
+            profile.check()
+
+    def test_check_with_node_constraints(self, *mocks):
+        """
+        Ensures the profile check passes when no constraints are found
+        """
+        workflow = mock.Mock()
+
+        profile = Profile(workflow)
+
+        profile.load = mock.Mock()
+        profile.load.return_value = get_content('profiles/with_node_constraints.yml')
+
+        result = profile.check()
+
+        # have some sort of assertion in the test
+        self.assertEqual(None, result)
 
     def test_expand_services(self, *mocks):
         data = {

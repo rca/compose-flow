@@ -92,6 +92,19 @@ class Profile(BaseSubcommand):
                 if item not in env_data:
                     errors.append(f'{item} not found in environment')
 
+            service_message = f'not found in service={name}; please add node constraints to deploy.placement.constraints'
+
+            # check to see that a node constraint has been defined
+            constraints = service_data.get('deploy', {}).get('placement', {}).get('constraints', [])
+            if not constraints:
+                errors.append(f'constraints {service_message}')
+            else:
+                for constraint in constraints:
+                    if constraint.startswith('node.'):
+                        break
+                else:
+                    errors.append(f'node constraints {service_message}')
+
         if errors:
             raise ProfileError('\n'.join(errors))
 

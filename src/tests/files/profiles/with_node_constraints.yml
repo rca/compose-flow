@@ -1,0 +1,7 @@
+services:
+  app:
+    image: foo.test
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker

@@ -1,0 +1,7 @@
+services:
+  app:
+    image: foo.test
+    deploy:
+      placement:
+        constraints:
+          - engine.labels.com.openslate.ec2_class == c5
