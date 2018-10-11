@@ -110,4 +110,4 @@ class EnvTestCase(BaseTestCase):
         env.update_workflow_env()
 
         self.assertEqual(utils_mock.get_tag_version.return_value, env.data['VERSION'])
-        self.assertEqual(f'foo:{new_version}', env.data['DOCKER_IMAGE'])
+        self.assertEqual(f'test.registry.prefix.com/tests:{new_version}', env.data['DOCKER_IMAGE'])
