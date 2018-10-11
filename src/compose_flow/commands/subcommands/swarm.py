@@ -60,12 +60,17 @@ class Swarm(BaseSubcommand):
 
             service_config = docker.get_service_config(service_name)
 
-            task_template = service_config[0]['Spec']['TaskTemplate']
+            spec = service_config[0]['Spec']
+            task_template = spec['TaskTemplate']
 
-            # check placement constraints
-            placement_constraints = task_template['Placement'].get('Constraints', [])
+            # check placement constraints.  if the mode is global, the service should run on every available machine
+            mode = spec['Mode']
+            if 'Global' in mode:
+                service_status['has_node_constraint'] = 'Global'
+            else:
+                placement_constraints = task_template['Placement'].get('Constraints', [])
 
-            service_status['has_node_constraint'] = any([x.startswith('node.role') for x in placement_constraints])
+                service_status['has_node_constraint'] = any([x.startswith('node.role') for x in placement_constraints])
 
             # check resources
             resources = task_template['Resources']
