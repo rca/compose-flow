@@ -61,61 +61,6 @@ class ProfileTestCase(TestCase):
 
         self.assertRegex(' '.join(errors), r'resource constraints not found')
 
-    def test_check_resources_memory_reservation_no_limit(self, *mocks):
-        """
-        Ensures memory limit is matched to reservation when no limit is given
-        """
-        profile = Profile(self.workflow)
-
-        profile.load = mock.Mock()
-        profile.load.return_value = get_content('profiles/reservation_no_limit.yml')
-
-        errors = profile._check_services(profile.check_resources, profile.data)
-
-        # there are no errors, cf simply imposes a memory limit based on the reservation
-        self.assertEqual(0, len(errors), errors)
-
-        resources = profile.data['services']['app']['deploy']['resources']
-
-        self.assertEqual(resources['limits']['memory'], resources['reservations']['memory'])
-
-    def test_check_resources_memory_limit_no_reservation(self, *mocks):
-        """
-        Ensures memory reservation is matched to limit when no reservation is given
-        """
-        profile = Profile(self.workflow)
-
-        profile.load = mock.Mock()
-        profile.load.return_value = get_content('profiles/limit_no_reservation.yml')
-
-        errors = profile._check_services(profile.check_resources, profile.data)
-
-        # there are no errors, cf simply imposes a memory limit based on the reservation
-        self.assertEqual(0, len(errors), errors)
-
-        resources = profile.data['services']['app']['deploy']['resources']
-
-        self.assertEqual(resources['reservations']['memory'], resources['limits']['memory'])
-
-    def test_check_resources_memory_limit_and_reservation(self, *mocks):
-        """
-        Ensures memory reservation and limit are left alone when they are both defined
-        """
-        profile = Profile(self.workflow)
-
-        profile.load = mock.Mock()
-        profile.load.return_value = get_content('profiles/limit_and_reservation.yml')
-
-        errors = profile._check_services(profile.check_resources, profile.data)
-
-        # there are no errors, cf simply imposes a memory limit based on the reservation
-        self.assertEqual(0, len(errors), errors)
-
-        resources = profile.data['services']['app']['deploy']['resources']
-
-        self.assertEqual('10M', resources['reservations']['memory'])
-        self.assertEqual('100M', resources['limits']['memory'])
-
     def test_check_with_node_constraints(self, *mocks):
         """
         Ensures the profile check passes when no constraints are found
@@ -197,3 +142,61 @@ class ProfileTestCase(TestCase):
         profile.write()
 
         self.assertEqual(1, open_mock.call_count)
+
+    @mock.patch('compose_flow.commands.subcommands.profile.merge_profile')
+    def test_set_resources_memory_limit_no_reservation(self, *mocks):
+        """
+        Ensures memory reservation is matched to limit when no reservation is given
+        """
+        merge_profile_mock = mocks[0]
+        merge_profile_mock.return_value = get_content('profiles/limit_no_reservation.yml')
+
+        profile = Profile(self.workflow)
+
+        param = {}
+        profile._compile(param)  # the param is ignored because it's using the mock
+
+        merge_profile_mock.assert_called_with(param)
+
+        resources = profile.data['services']['app']['deploy']['resources']
+
+        self.assertEqual(resources['reservations']['memory'], resources['limits']['memory'])
+
+    @mock.patch('compose_flow.commands.subcommands.profile.merge_profile')
+    def test_set_resources_memory_limit_and_reservation(self, *mocks):
+        """
+        Ensures memory reservation and limit are left alone when they are both defined
+        """
+        merge_profile_mock = mocks[0]
+        merge_profile_mock.return_value = get_content('profiles/limit_and_reservation.yml')
+
+        profile = Profile(self.workflow)
+
+        param = {}
+        profile._compile(param)  # the param is ignored because it's using the mock
+
+        merge_profile_mock.assert_called_with(param)
+
+        resources = profile.data['services']['app']['deploy']['resources']
+
+        self.assertEqual('10M', resources['reservations']['memory'])
+        self.assertEqual('100M', resources['limits']['memory'])
+
+    @mock.patch('compose_flow.commands.subcommands.profile.merge_profile')
+    def test_set_resources_memory_reservation_no_limit(self, *mocks):
+        """
+        Ensures memory limit is matched to reservation when no limit is given
+        """
+        merge_profile_mock = mocks[0]
+        merge_profile_mock.return_value = get_content('profiles/reservation_no_limit.yml')
+
+        profile = Profile(self.workflow)
+
+        param = {}
+        profile._compile(param)  # the param is ignored because it's using the mock
+
+        merge_profile_mock.assert_called_with(param)
+
+        resources = profile.data['services']['app']['deploy']['resources']
+
+        self.assertEqual(resources['limits']['memory'], resources['reservations']['memory'])

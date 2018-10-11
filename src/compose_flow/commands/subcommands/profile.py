@@ -12,8 +12,8 @@ from .base import BaseSubcommand
 
 from compose_flow.compose import merge_profile
 from compose_flow.config import get_config
-from compose_flow.errors import EnvError, NoSuchConfig, NoSuchProfile, ProfileError
-from compose_flow.utils import remerge, render, yaml_dump, yaml_load
+from compose_flow.errors import EnvError, NoSuchProfile, ProfileError
+from compose_flow.utils import render, yaml_dump, yaml_load
 
 COPY_ENV_VAR = 'CF_COPY_ENV_FROM'
 
@@ -179,20 +179,11 @@ class Profile(BaseSubcommand):
             # short-circuit early, nothing else to check
             return errors
 
-        # init limits and reservations
-        for item, opposite_item in (
-                ('limits', 'reservations'),
-                ('reservations', 'limits'),
-        ):
-            resources.setdefault(item, {})
-            resources.setdefault(opposite_item, {})
-
-            # if a memory reservation is set, but there is no memory limit, match
-            if 'memory' in resources[item]:
-                if 'memory' not in resources[opposite_item]:
-                    self.logger.warning(f'matching {opposite_item} with {item} for service {name}')
-
-                    resources[opposite_item]['memory'] = resources[item]['memory']
+        for item in ('limits', 'reservations'):
+            if 'memory' in resources.get(item, {}):
+                break
+        else:
+            errors.append(f'memory constraints {service_message}')
 
         return errors
 
@@ -349,6 +340,9 @@ class Profile(BaseSubcommand):
                 # dump back out as list
                 service_data['environment'] = service_environment_l
 
+                # enforce resources
+                self.set_resources(service_name, service_data)
+
             content = yaml_dump(data)
 
         self._compiled_profile = content
@@ -473,6 +467,27 @@ class Profile(BaseSubcommand):
             raise NoSuchProfile(f'profile={profile_name}')
 
         return profile
+
+    def set_resources(self, name: str, service_data: dict) -> None:
+        """
+        Fills in missing resources
+        """
+        resources = service_data.setdefault('deploy', {}).setdefault('resources', {})
+
+        # init limits and reservations
+        for item, opposite_item in (
+                ('limits', 'reservations'),
+                ('reservations', 'limits'),
+        ):
+            resources.setdefault(item, {})
+            resources.setdefault(opposite_item, {})
+
+            # if a memory reservation is set, but there is no memory limit, match
+            if 'memory' in resources[item]:
+                if 'memory' not in resources[opposite_item]:
+                    self.logger.warning(f'matching {opposite_item} with {item} for service {name}')
+
+                    resources[opposite_item]['memory'] = resources[item]['memory']
 
     @lru_cache()
     def write(self) -> None:
