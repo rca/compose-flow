@@ -10,6 +10,19 @@ class ProfileTestCase(TestCase):
     def setUp(self):
         self.workflow = mock.Mock()
 
+    def test_check_global_mode(self, *mocks):
+        """
+        Ensures the profile check does not fail when there is no constraint on a global service
+        """
+        profile = Profile(self.workflow)
+
+        profile.load = mock.Mock()
+        profile.load.return_value = get_content('profiles/global_no_constraints.yml')
+
+        errors = profile._check_services(profile.check_constraints, profile.data)
+
+        self.assertEqual(0, len(errors), errors)
+
     def test_check_no_constraints(self, *mocks):
         """
         Ensures the profile check fails when no constraints are found

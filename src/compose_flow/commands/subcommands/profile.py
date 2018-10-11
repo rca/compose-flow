@@ -148,8 +148,14 @@ class Profile(BaseSubcommand):
         errors = []
         service_message = f'not found in service={name}; please add node constraints to deploy.placement.constraints'
 
+        deploy = service_data.get('deploy', {})
+
+        # if the service is global, no constraints needed
+        if 'global' in deploy.get('mode', {}):
+            return errors
+
         # check to see that a node constraint has been defined
-        constraints = service_data.get('deploy', {}).get('placement', {}).get('constraints', [])
+        constraints = deploy.get('placement', {}).get('constraints', [])
         if not constraints:
             errors.append(f'constraints {service_message}')
         else:
