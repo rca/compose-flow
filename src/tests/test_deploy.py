@@ -40,3 +40,38 @@ class DeployTestCase(BaseTestCase):
 
         # make sure the profile is checked
         workflow.profile.check.assert_called()
+
+    @mock.patch('compose_flow.commands.subcommands.profile.Profile.data', new_callable=mock.PropertyMock)
+    def test_checks_called(self, *mocks):
+        """
+        Ensure constraint checks are called on deploy
+        """
+        profile_data_mock = mocks[0]
+        profile_data_mock.return_value = {
+            'services': {
+                'app': {
+                    'image': 'foo:test',
+                },
+            },
+        }
+        command = shlex.split('-e dev deploy')
+        workflow = Workflow(argv=command)
+
+        workflow.environment.write = mock.Mock()
+
+        # mock out all check methods
+        all_checks = Profile.get_all_checks()
+        self.assertEqual(2, len(all_checks), all_checks)
+
+        for name in all_checks:
+            _check_mock = mock.Mock()
+            _check_mock.return_value = []
+
+            setattr(workflow.profile, name, _check_mock)
+
+        workflow.run()
+
+        for name in all_checks:
+            _check_mock = getattr(workflow.profile, name)
+
+            self.assertGreater(_check_mock.call_count, 0, f'{name} not called')
