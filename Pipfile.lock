@@ -50,6 +50,12 @@
             ],
             "version": "==1.12.14"
         },
+        "tabulate": {
+            "hashes": [
+                "sha256:e4ca13f26d0a6be2a2915428dc21e732f1e44dad7f76d7030b2ef1ec251cf7f2"
+            ],
+            "version": "==0.8.2"
+        },
         "tag-version": {
             "hashes": [
                 "sha256:c28c36be9e53f9213bcb582158948674a3eb53add46e71729951782544ea7d58"
@@ -91,6 +97,12 @@
                 "sha256:b52bf5833ed01c7b5c5fb73a7f71b3d98d48e9b9b8764236237bdc7ecae850fc"
             ],
             "version": "==1.12.14"
+        },
+        "tabulate": {
+            "hashes": [
+                "sha256:e4ca13f26d0a6be2a2915428dc21e732f1e44dad7f76d7030b2ef1ec251cf7f2"
+            ],
+            "version": "==0.8.2"
         },
         "tag-version": {
             "hashes": [

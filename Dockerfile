@@ -8,16 +8,12 @@ RUN mkdir ${SRC_DIR}/results
 
 RUN pip3 install pipenv
 
-COPY Pipfile Pipfile.lock ${SRC_DIR}/
+COPY ./ ${SRC_DIR}/
 
 RUN pipenv install --system --dev && \
-  rm -rf /root/.cache/pip
-
-COPY files/ /
+    rm -rf /root/.cache/pip
 
 RUN chmod +x /usr/local/bin/*
-
-COPY ./ ${SRC_DIR}/
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
