@@ -11,6 +11,8 @@ OS_ENV_INCLUDES = (
     'HOME',
     'PATH',
     'USER',
+    'DISPLAY',
+    'DBUS_SESSION_BUS_ADDRESS'
     'KUBECONFIG'
 )
 
