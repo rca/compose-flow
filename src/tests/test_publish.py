@@ -9,6 +9,7 @@ from tests import BaseTestCase
 
 
 @mock.patch('compose_flow.commands.subcommands.env.os')
+@mock.patch('compose_flow.commands.workflow.PROJECT_NAME', new='testdirname')
 class PublishTestCase(BaseTestCase):
     @mock.patch('compose_flow.commands.subcommands.env.utils')
     @mock.patch('compose_flow.commands.subcommands.env.docker')
@@ -93,4 +94,4 @@ class PublishTestCase(BaseTestCase):
         env = flow.environment
 
         self.assertEqual(utils_mock.get_tag_version.return_value, env.data['VERSION'])
-        self.assertEqual(f'test.registry/tests:{new_version}', env.data['DOCKER_IMAGE'])
+        self.assertEqual(f'test.registry/testdirname:{new_version}', env.data['DOCKER_IMAGE'])

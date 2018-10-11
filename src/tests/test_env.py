@@ -8,6 +8,7 @@ from compose_flow.commands import Workflow
 from tests import BaseTestCase
 
 
+@mock.patch('compose_flow.commands.workflow.PROJECT_NAME', new='testdirname')
 class EnvTestCase(BaseTestCase):
     def test_config_name_arg(self, *mocks):
         """
@@ -39,7 +40,6 @@ class EnvTestCase(BaseTestCase):
 
         env.load.assert_not_called()
 
-    @mock.patch('compose_flow.commands.workflow.PROJECT_NAME', new='testdirname')
     def test_default_config_name(self, *mocks):
         """
         Ensure the default config is given
@@ -110,4 +110,4 @@ class EnvTestCase(BaseTestCase):
         env.update_workflow_env()
 
         self.assertEqual(utils_mock.get_tag_version.return_value, env.data['VERSION'])
-        self.assertEqual(f'test.registry.prefix.com/tests:{new_version}', env.data['DOCKER_IMAGE'])
+        self.assertEqual(f'test.registry.prefix.com/testdirname:{new_version}', env.data['DOCKER_IMAGE'])
