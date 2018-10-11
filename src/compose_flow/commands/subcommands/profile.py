@@ -45,6 +45,10 @@ class Profile(BaseSubcommand):
     """
     Subcommand for managing profiles
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._compiled_profile = None
 
     @property
     def filename(self) -> str:
@@ -180,55 +184,19 @@ class Profile(BaseSubcommand):
 
         return data
 
-    def _copy_environment(self, data):
+    def _compile(self, profile: dict) -> str:
         """
-        Processes CF_COPY_ENV_FROM environment entries
+        Compiles the profile into a single docker compose file
+
+        Args:
+            profile: The profile name to compile
+
+        Returns:
+            compiled compose file as a string
         """
-        environments = {}
+        if self._compiled_profile:
+            return self._compiled_profile
 
-        # first get the env from each service
-        for service_name, service_data in data['services'].items():
-            environment = service_data.get('environment')
-            if environment:
-                _env = {}
-
-                for item in environment:
-                    k, v = get_kv(item)
-
-                    _env[k] = v
-
-                environments[service_name] = _env
-
-        # go through each service environment and apply any copies found
-        for service_name, service_data in data['services'].items():
-            environment = service_data.get('environment')
-            if not environment:
-                continue
-
-            new_env = {}
-            for item in environment:
-                key, val = get_kv(item)
-                new_env[key] = val
-
-                if not item.startswith(COPY_ENV_VAR):
-                    continue
-
-                _env = environments.get(val)
-                if not _env:
-                    raise EnvError(
-                        f'Unable to find val={val} to copy into service_name={service_name}'
-                    )
-
-                new_env.update(_env)
-
-            service_data['environment'] = listify_kv(new_env)
-
-        return data
-
-    def get_profile_compose_file(self, profile):
-        """
-        Processes the profile to generate the compose file
-        """
         filenames = get_overlay_filenames(profile)
 
         # merge multiple files together so that deploying stacks works
@@ -300,6 +268,60 @@ class Profile(BaseSubcommand):
 
             content = yaml_dump(data)
 
+        self._compiled_profile = content
+
+        return content
+
+    def _copy_environment(self, data):
+        """
+        Processes CF_COPY_ENV_FROM environment entries
+        """
+        environments = {}
+
+        # first get the env from each service
+        for service_name, service_data in data['services'].items():
+            environment = service_data.get('environment')
+            if environment:
+                _env = {}
+
+                for item in environment:
+                    k, v = get_kv(item)
+
+                    _env[k] = v
+
+                environments[service_name] = _env
+
+        # go through each service environment and apply any copies found
+        for service_name, service_data in data['services'].items():
+            environment = service_data.get('environment')
+            if not environment:
+                continue
+
+            new_env = {}
+            for item in environment:
+                key, val = get_kv(item)
+                new_env[key] = val
+
+                if not item.startswith(COPY_ENV_VAR):
+                    continue
+
+                _env = environments.get(val)
+                if not _env:
+                    raise EnvError(
+                        f'Unable to find val={val} to copy into service_name={service_name}'
+                    )
+
+                new_env.update(_env)
+
+            service_data['environment'] = listify_kv(new_env)
+
+        return data
+
+    def get_profile_compose_file(self, profile: dict):
+        """
+        Processes the profile to generate the compose file
+        """
+        content = self._compile(profile)
         fh = tempfile.TemporaryFile(mode='w+')
 
         # render the file
