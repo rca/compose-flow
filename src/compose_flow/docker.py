@@ -38,7 +38,7 @@ def get_config(name: str) -> str:
     Returns the content of the config in the swarm
     """
     try:
-        data = get_docker_json(f'docker config inspect {name}', os.environ)
+        data = list(get_docker_json(f'docker config inspect {name}', os.environ))[0]
     except DockerError as exc:
         exc_s = str(exc)
 
