@@ -87,12 +87,6 @@ class Env(ConfigBaseSubcommand):
 
         data = self.load()
 
-        args = self.workflow.args
-
-        action = None
-        if 'action' in args:
-            action = args.action
-
         # render placeholders
         for k, v in data.items():
             if not v.startswith('runtime://'):
@@ -135,6 +129,9 @@ class Env(ConfigBaseSubcommand):
                 data[k] = v
 
         if self.workflow.subcommand.update_version_env_vars:
+            # regenerate the full docker image name
+            self._docker_image = None
+
             data.update(
                 {
                     DOCKER_IMAGE_VAR: self.set_docker_tag(self.docker_image),

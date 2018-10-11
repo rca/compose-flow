@@ -1,7 +1,6 @@
 import logging
 import re
 import os
-import sys
 import yaml
 
 from collections import OrderedDict
