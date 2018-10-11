@@ -2,6 +2,7 @@
 Profile subcommand
 """
 import copy
+import logging
 import tempfile
 
 from functools import lru_cache
@@ -157,6 +158,40 @@ class Profile(BaseSubcommand):
                     break
             else:
                 errors.append(f'node constraints {service_message}')
+
+        return errors
+
+    @staticmethod
+    def check_resources(name: str, service_data: dict, env_data: dict) -> list:
+        """
+        Checks that resources are defined
+
+        Returns:
+            list of errors
+        """
+        errors = []
+        service_message = f'not found in service={name}; please add reservations and limits to deploy.resources'
+
+        # check to see that a node constraint has been defined
+        resources = service_data.setdefault('deploy', {}).setdefault('resources', {})
+        if not resources:
+            errors.append(f'resource constraints {service_message}')
+
+            # short-circuit early, nothing else to check
+            return errors
+
+        # init limits and reservations
+        for item, opposite_item in (
+                ('limits', 'reservations'),
+                ('reservations', 'limits'),
+        ):
+            resources.setdefault(item, {})
+            resources.setdefault(opposite_item, {})
+
+            # if a memory reservation is set, but there is no memory limit, match
+            if 'memory' in resources[item]:
+                if 'memory' not in resources[opposite_item]:
+                    resources[opposite_item]['memory'] = resources[item]['memory']
 
         return errors
 
@@ -431,6 +466,10 @@ class Profile(BaseSubcommand):
         return fh.read()
 
     @property
+    def logger(self):
+        return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
+
+    @property
     def profile_files(self) -> dict:
         """
         Returns the profile data found in the dc.yml file
@@ -458,4 +497,4 @@ class Profile(BaseSubcommand):
         Writes the loaded compose file to disk
         """
         with open(self.filename, 'w') as fh:
-            fh.write(self.load())
+            fh.write(yaml_dump(self.data))

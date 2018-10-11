@@ -61,7 +61,7 @@ class DeployTestCase(BaseTestCase):
 
         # mock out all check methods
         all_checks = Profile.get_all_checks()
-        self.assertEqual(2, len(all_checks), all_checks)
+        self.assertEqual(3, len(all_checks), all_checks)
 
         for name in all_checks:
             _check_mock = mock.Mock()
