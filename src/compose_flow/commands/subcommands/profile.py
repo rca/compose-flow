@@ -10,7 +10,7 @@ from typing import Callable, List
 
 from .base import BaseSubcommand
 
-from compose_flow.compose import get_overlay_filenames
+from compose_flow.compose import merge_profile
 from compose_flow.config import get_config
 from compose_flow.errors import EnvError, NoSuchConfig, NoSuchProfile, ProfileError
 from compose_flow.utils import remerge, render, yaml_dump, yaml_load
@@ -298,25 +298,7 @@ class Profile(BaseSubcommand):
         if self._compiled_profile:
             return self._compiled_profile
 
-        filenames = get_overlay_filenames(profile)
-
-        # merge multiple files together so that deploying stacks works
-        # https://github.com/moby/moby/issues/30127
-        if len(filenames) > 1:
-            yaml_contents = []
-
-            for item in filenames:
-                with open(item, 'r') as fh:
-                    yaml_contents.append(yaml_load(fh))
-
-            merged = remerge(yaml_contents)
-            content = yaml_dump(merged)
-        else:
-            try:
-                with open(filenames[0], 'r') as fh:
-                    content = fh.read()
-            except FileNotFoundError:
-                content = ''
+        content = merge_profile(profile)
 
         # perform transformations on the compiled profile
         if content:
