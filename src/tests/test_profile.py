@@ -9,6 +9,7 @@ from tests.utils import get_content
 class ProfileTestCase(TestCase):
     def setUp(self):
         self.workflow = mock.Mock()
+        self.workflow.subcommand.profile_checks = Profile.get_all_checks()
 
     def test_check_no_constraints(self, *mocks):
         """

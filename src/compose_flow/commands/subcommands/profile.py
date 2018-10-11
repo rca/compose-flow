@@ -2,10 +2,10 @@
 Profile subcommand
 """
 import copy
-import os
 import tempfile
 
 from functools import lru_cache
+from typing import List
 
 from .base import BaseSubcommand
 
@@ -80,33 +80,61 @@ class Profile(BaseSubcommand):
         Checks the profile against some rules
         """
         env_data = self.workflow.environment.data
+        checks = self.workflow.subcommand.profile_checks
 
         errors = []
         for name, service_data in self.data['services'].items():
-            for item in service_data.get('environment', []):
-                # when a variable has an equal sign, it is setting
-                # the value, so don't check the environment for this variable
-                if '=' in item:
-                    continue
-
-                if item not in env_data:
-                    errors.append(f'{item} not found in environment')
-
-            service_message = f'not found in service={name}; please add node constraints to deploy.placement.constraints'
-
-            # check to see that a node constraint has been defined
-            constraints = service_data.get('deploy', {}).get('placement', {}).get('constraints', [])
-            if not constraints:
-                errors.append(f'constraints {service_message}')
-            else:
-                for constraint in constraints:
-                    if constraint.startswith('node.'):
-                        break
-                else:
-                    errors.append(f'node constraints {service_message}')
+            for check in checks:
+                check_fn = getattr(self, check)
+                errors.extend(check_fn(name, service_data, env_data))
 
         if errors:
             raise ProfileError('\n'.join(errors))
+
+    @staticmethod
+    def check_env(name: str, service_data: dict, env_data: dict) -> list:
+        """
+        Checks that environment is properly defined
+
+        Returns:
+            list of errors
+        """
+        errors = []
+        for item in service_data.get('environment', []):
+            # when a variable has an equal sign, it is setting
+            # the value, so don't check the environment for this variable
+            if '=' in item:
+                continue
+
+            if item not in env_data:
+                errors.append(f'{item} not found in environment for service={name}')
+
+        return errors
+
+    # noinspection PyUnusedLocal
+    @staticmethod
+    def check_constraints(name: str, service_data: dict, env_data: dict) -> list:
+        """
+        Checks that constraints are defined
+
+        Returns:
+            list of errors
+        """
+        errors = []
+        service_message = f'not found in service={name}; please add node constraints to deploy.placement.constraints'
+
+        # check to see that a node constraint has been defined
+        constraints = service_data.get('deploy', {}).get('placement', {}).get('constraints', [])
+        if not constraints:
+            errors.append(f'constraints {service_message}')
+        else:
+            for constraint in constraints:
+                if constraint.startswith('node.'):
+                    break
+            else:
+                errors.append(f'node constraints {service_message}')
+
+        return errors
 
     def cf_config_expand(self, data):
         expand_config = data['compose_flow']['expand']
@@ -329,6 +357,23 @@ class Profile(BaseSubcommand):
             service_data['environment'] = listify_kv(new_env)
 
         return data
+
+    @classmethod
+    @lru_cache()
+    def get_all_checks(cls) -> List[str]:
+        """
+        Returns a list of all the method names that are checks in this class
+
+        Returns:
+            list of strings
+        """
+        checks = []
+
+        for fn_name in dir(cls):
+            if fn_name.startswith('check_'):
+                checks.append(fn_name)
+
+        return checks
 
     def get_profile_compose_file(self, profile: dict):
         """

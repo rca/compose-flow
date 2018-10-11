@@ -23,6 +23,9 @@ class BaseSubcommand(ABC):
 
     dirty_working_copy_okay = False
 
+    # profile checks only check environment by default
+    profile_checks = ['check_env']
+
     # whether this subcommand should connect to the remote host
     remote_action = True
 
