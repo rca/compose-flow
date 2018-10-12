@@ -40,7 +40,7 @@ def get_config(name: str) -> str:
     try:
         data = list(get_docker_json(f'docker config inspect {name}', os.environ))[0]
     except DockerError as exc:
-        exc_s = str(exc)
+        exc_s = str(exc).lower()
 
         # if the config does not exist in docker, raise NoSuchConfig
         if 'no such config' in exc_s:
