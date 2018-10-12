@@ -31,5 +31,6 @@ setup(
         'boltons',
         'sh',
         'tag-version',
+        'tabulate'
     ]
 )

@@ -4,11 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pyyaml = "*"
-boltons = "*"
-sh = "*"
-tag-version = "*"
-tabulate = "*"
+"compose-flow" = {path = ".", editable = true}
 
 [dev-packages]
 twine = "*"
@@ -16,9 +12,8 @@ setuptools = "*"
 nose = "*"
 tag-version = "*"
 watchdog = "*"
-black = "*"
 pylama = "*"
-pylint = "<2.0"
+pylint = "*"
 pylama-pylint = "*"
 
 [requires]
