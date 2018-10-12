@@ -41,6 +41,7 @@ class Swarm(BaseSubcommand):
         subparser.epilog = __doc__
         subparser.formatter_class = argparse.RawDescriptionHelpFormatter
 
+        subparser.add_argument('--running', action='store_true', help='only show services with scale > 0')
         subparser.add_argument('action', help='The action to run')
 
     def action_inspect(self):
@@ -72,13 +73,17 @@ class Swarm(BaseSubcommand):
 
                 service_status['has_node_constraint'] = any([x.startswith('node.role') for x in placement_constraints])
 
+            replicas = int(mode.get('Replicated', {}).get('Replicas', 0))
+            service_info['service']['replicas'] = replicas
+
             # check resources
             resources = task_template['Resources']
 
             service_status['has_limits'] = 'Limits' in resources
             service_status['has_reservations'] = 'Reservations' in resources
 
-            service_status_l.append(service_info)
+            if not self.workflow.args.running or replicas > 0:
+                service_status_l.append(service_info)
 
         flat_l = [flatten(x) for x in service_status_l]
 
