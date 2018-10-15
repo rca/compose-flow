@@ -2,7 +2,7 @@ FROM python:3.6-stretch
 MAINTAINER osslabs <code@openslatedata.com>
 
 # Install Docker client
-ENV DOCKERVERSION=17.03.2-ce
+ENV DOCKERVERSION=17.09.1-ce
 RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz \
     && tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 \
     -C /usr/local/bin docker/docker \
@@ -28,5 +28,3 @@ RUN pipenv install --system --dev && \
     rm -rf /root/.cache/pip
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-
-CMD ["/bin/bash"]
