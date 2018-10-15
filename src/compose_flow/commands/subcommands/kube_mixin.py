@@ -17,7 +17,7 @@ PROJECT_LS_FORMAT = '{{.Project.Name}}: {{.Project.ID}}'
 
 EXCLUDE_PROFILES = ['local']
 
-NONFATAL_ERROR_MESSAGES = ['strconv.ParseFloat: parsing "25360052Ki": invalid syntax']
+NONFATAL_ERROR_MESSAGES = ['strconv.ParseFloat: parsing "']
 
 
 class KubeMixIn(object):
