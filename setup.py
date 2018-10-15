@@ -31,6 +31,7 @@ setup(
         'boltons',
         'sh',
         'tag-version',
-        'tabulate'
+        'tabulate',
+        'docker-compose'
     ]
 )
