@@ -77,11 +77,13 @@ class Deploy(BaseSubcommand, KubeMixIn):
             self.logger.error("Unknown deployment platform: %s", action)
 
         command = action_method()
+        command_is_list = isinstance(command, list)
 
-        self.logger.info(command)
+        logged_command = '\n'.join(command) if command_is_list else command
+        self.logger.info(logged_command)
 
         if not args.dry_run:
-            if isinstance(command, list):
+            if command_is_list:
                 # If multiple commands are returned, run them one by one
                 for c in command:
                     self.execute(c)
