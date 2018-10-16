@@ -250,7 +250,7 @@ class KubeMixIn(object):
 
         return errors
 
-    def render_single_yaml(self, input_path: str, output_path: str, checker: Callable[[str], list[str]]) -> None:
+    def render_single_yaml(self, input_path: str, output_path: str, checker: Callable[[str], list[str]] = None) -> None:
         '''
         Read in single YAML file from specified path, render environment variables,
         then write out to a known location in the working dir.
@@ -263,10 +263,11 @@ class KubeMixIn(object):
 
         rendered = render(content, env=self.workflow.environment.data)
 
-        errors = checker(rendered)
+        if checker:
+            errors = checker(rendered)
 
-        if errors:
-            raise ManifestCheckError('\n'.join(errors))
+            if errors:
+                raise ManifestCheckError('\n'.join(errors))
 
         with open(output_path, 'w') as fh:
             fh.write(rendered)
