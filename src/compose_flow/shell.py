@@ -13,7 +13,7 @@ OS_ENV_INCLUDES = (
     'USER',
     'DISPLAY',
     'DBUS_SESSION_BUS_ADDRESS',
-    'KUBECONFIG'
+    'KUBECONFIG',
 )
 
 
