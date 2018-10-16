@@ -4,7 +4,12 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-"compose-flow" = {path = ".", editable = true}
+PyYAML = "*"
+boltons = "*"
+sh = "*"
+tag-version = "*"
+tabulate = "*"
+docker-compose = "*"
 
 [dev-packages]
 twine = "*"
