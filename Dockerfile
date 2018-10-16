@@ -33,6 +33,7 @@ RUN curl -fsSLO https://storage.googleapis.com/kubernetes-helm/helm-${HELM_VERSI
  && chmod +x /usr/local/bin/helm \
  && rm helm-${HELM_VERSION}-linux-amd64.tar.gz
 
+# Install compose-flow
 ENV SRC_DIR /usr/local/src
 WORKDIR ${SRC_DIR}
 
@@ -43,9 +44,13 @@ RUN chmod +x /usr/local/bin/*
 
 RUN pip3 install pipenv
 
-COPY ./ ${SRC_DIR}/
+COPY Pipfile Pipfile.lock ${SRC_DIR}/
 
 RUN pipenv install --system --dev && \
     rm -rf /root/.cache/pip
+
+COPY ./ ${SRC_DIR}/
+
+RUN python setup.py install
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
