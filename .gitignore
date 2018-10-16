@@ -5,3 +5,5 @@ __pycache__
 .local
 .cache
 results
+build/
+dist/
