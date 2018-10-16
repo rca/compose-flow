@@ -5,7 +5,7 @@ from functools import lru_cache
 import os
 import pathlib
 import sh
-from typing import Callable
+from typing import Callable, List
 import yaml
 
 
@@ -232,7 +232,7 @@ class KubeMixIn(object):
                     return ('Ingress resources MUST specify a scheme to avoid '
                             'unintentionally exposing a service to the public Internet!')
 
-    def manifest_checker(self, rendered: str) -> list[str]:
+    def manifest_checker(self, rendered: str) -> List[str]:
         """Check manifests for certain conditions."""
         errors = []
 
@@ -244,13 +244,13 @@ class KubeMixIn(object):
 
         return errors
 
-    def answers_checker(self, rendered: str) -> list[str]:
+    def answers_checker(self, rendered: str) -> List[str]:
         """Check Helm Chart answers for certain conditions."""
         errors = []
 
         return errors
 
-    def render_single_yaml(self, input_path: str, output_path: str, checker: Callable[[str], list[str]] = None) -> None:
+    def render_single_yaml(self, input_path: str, output_path: str, checker: Callable[[str], List[str]] = None) -> None:
         '''
         Read in single YAML file from specified path, render environment variables,
         then write out to a known location in the working dir.
