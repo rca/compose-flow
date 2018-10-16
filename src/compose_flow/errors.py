@@ -95,3 +95,9 @@ class MissingManifestError(ErrorMessage):
     """
     Raised when a YAML manifest path is specified but not found
     """
+
+
+class ManifestCheckError(ErrorMessage):
+    """
+    Raised when a rendered YAML manifest fails to pass a check
+    """
