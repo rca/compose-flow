@@ -4,6 +4,9 @@ from abc import ABC
 import logging
 from typing import List
 
+import yaml
+
+from pdb import set_trace as bp
 
 class BaseChecker(ABC):
     check_prefix = None
@@ -19,9 +22,12 @@ class BaseChecker(ABC):
         if self.check_prefix is None:
             raise AttributeError("The class attribute `check_prefix` must be non-null!")
 
+        # Load all YAML documents from string `rendered`
+        loaded = self._load_rendered_yaml(rendered)
+
         checks = self._get_all_checks()
         for check in checks:
-            result = check(rendered)
+            result = check(loaded)
             if result:
                 errors.append(result)
 
@@ -39,30 +45,48 @@ class BaseChecker(ABC):
 
         return check_list
 
+    def _load_rendered_yaml(self, rendered: str) -> dict:
+        """Load the rendered YAML which is passed in to the `check` method."""
+        return yaml.load_all(rendered)
+
 
 class ManifestChecker(BaseChecker):
     """Check Kubernetes YAML resource manifests."""
     check_prefix = '_check_manifest_'
 
-    def _check_manifest_ingress_annotations(self, rendered: str) -> str:
+    def _check_manifest_ingress_annotations(self, documents: list) -> str:
         """Check ingresses for appropriate annotations"""
-        kind = 'Ingress'
-        nginx_annotation = 'kubernetes.io/ingress.class: nginx'
-        internal_annotation = 'scheme: internal'
-        external_annotation = 'scheme: internet-facing'
+        ingress_kind = 'Ingress'
+        internal_value = 'internal'
+        external_value = 'internet-facing'
 
-        if f'kind: {kind}' in rendered:
-            if nginx_annotation not in rendered:
-                has_internal = internal_annotation in rendered
-                has_external = external_annotation in rendered
+        missing_metadata_msg = ('Ingress resources MUST specify a metadata section including'
+                                'name, namespace, and appropriate annotations!')
+        ingress_error_msg = ('Ingress resources MUST specify a scheme annotation to avoid '
+                             'unintentionally exposing a service to the public Internet!')
 
-                if has_external:
-                    self.logger.warn('An ingress resource in this deployment is internet-facing!\n'
-                                     'Please ensure you are deploying to a production cluster '
-                                     'and you intend to make your services publicly accessible!')
-                if not has_internal and not has_external:
-                    return ('Ingress resources MUST specify a scheme to avoid '
-                            'unintentionally exposing a service to the public Internet!')
+        public_ingress_warning = ('An ingress resource in this deployment is internet-facing!\n\n'
+                                  'Please ensure you are deploying to a production cluster '
+                                  'and you intend to make your services PUBLICLY accessible!')
+
+        for doc in documents:
+            if doc.get('kind') == ingress_kind:
+                metadata = doc.get('metadata')
+                if metadata is None:
+                    return missing_metadata_msg
+                annotations = metadata.get('annotations')
+                if annotations is None:
+                    return ingress_error_msg
+
+                class_anno = annotations.get('kubernetes.io/ingress.class')
+                if class_anno != 'nginx':
+                    print(annotations)
+                    has_internal = any('scheme' in k and internal_value in v for k, v in annotations.items())
+                    has_external = any('scheme' in k and external_value in v for k, v in annotations.items())
+                    if has_external:
+                        self.logger.warn(public_ingress_warning)
+                    if not has_internal and not has_external:
+                        return ingress_error_msg
 
 
 class AnswersChecker(BaseChecker):

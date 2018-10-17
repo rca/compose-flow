@@ -87,3 +87,14 @@ class TestBaseChecker(TestCase):
         errors = checker.check(content)
 
         assert not errors
+
+    def test_multidoc_invalid_ingress(self):
+        """
+        Ensure ManifestChecker returns an error for a multi-document manifest including a single invalid Ingress
+        """
+        content = get_content('manifests/invalid-ingress-multidoc.yaml')
+
+        checker = ManifestChecker()
+        errors = checker.check(content)
+
+        assert len(errors) > 0
