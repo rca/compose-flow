@@ -1,11 +1,16 @@
 """Define checks to be run against Kubernetes YAML"""
 
 from abc import ABC
+import logging
 from typing import List
 
 
 class BaseChecker(ABC):
     check_prefix = None
+
+    @property
+    def logger(self):
+        return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
 
     def check(self, rendered: str) -> List[str]:
         """Main method that runs all check methods defined on this class."""
