@@ -3,7 +3,7 @@ import os
 from nose.tools import raises
 from unittest import TestCase
 
-from compose_flow.kube.checks import BaseChecker, ManifestChecker
+from compose_flow.kube.checks import BaseChecker, ManifestChecker, AnswersChecker
 
 from tests.utils import get_content
 
@@ -115,6 +115,41 @@ class TestManifestChecker(TestCase):
         Ensure ManifestChecker returns an error for a Deployment with no limits
         """
         content = get_content('manifests/no-limits-deployment.yaml')
+
+        errors = self.checker.check(content)
+
+        assert len(errors) > 0
+
+
+class TestAnswersChecker(TestCase):
+    def setUp(self):
+        self.checker = AnswersChecker()
+
+    def test_multidoc_resources(self):
+        """
+        Ensure AnswerChecker returns an error for a multi-document answers file
+        """
+        content = get_content('answers/multidoc-answers.yaml')
+
+        errors = self.checker.check(content)
+
+        assert len(errors) > 0
+
+    def test_no_limits_answers(self):
+        """
+        Ensure AnswerChecker returns an error for flat answers with resources but no limits
+        """
+        content = get_content('answers/no-limits-answers.yaml')
+
+        errors = self.checker.check(content)
+
+        assert len(errors) > 0
+
+    def test_no_requests_answers(self):
+        """
+        Ensure AnswerChecker returns an error for flat answers with resources but no requests
+        """
+        content = get_content('answers/no-requests-answers.yaml')
 
         errors = self.checker.check(content)
 

@@ -135,3 +135,38 @@ class ManifestChecker(BaseChecker):
 
 class AnswersChecker(BaseChecker):
     check_prefix = '_check_answers_'
+
+    def _check_answers_flat_resources(self, documents: list) -> str:
+        """
+        Check for resource constraints in Helm answers.
+
+        Assumes the answers are in the flat key:value format required by Rancher.
+        """
+        if len(documents) > 1:
+            return 'We only support flat Helm answers! Please provide a single document of key:value pairs.'
+
+        answers = documents[0]
+        has_resources = False
+        has_limits = False
+        has_requests = False
+        for answer in answers.keys():
+            if 'resources' in answer:
+                has_resources = True
+
+            if '.requests' in answer:
+                if '.requests.memory' in answer and '.requests.cpu' in answer:
+                    has_requests = True
+
+            if '.limits' in answer:
+                if '.limit.memory' in answer and '.limit.cpu' in answer:
+                    has_limits = True
+
+        if not has_resources:
+            self.logger.warning('Helm answers do not contain resource constraints! '
+                                'Please verify that the specified chart has default '
+                                'resources defined for all containers!')
+        else:
+            if not has_requests:
+                return 'Answers specify resources but not requests! Please specify both CPU and memory resource requests.'
+            if not has_limits:
+                return 'Answers specify resources but not limits! Please specify both CPU and memory resource limits.'
