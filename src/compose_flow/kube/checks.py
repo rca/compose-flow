@@ -6,7 +6,15 @@ from typing import List
 
 import yaml
 
-from pdb import set_trace as bp
+POD_TEMPLATE_RESOURCES = [
+    'DaemonSet',
+    'Deployment',
+    'ReplicaSet',
+    'Job',
+    'CronJob',
+    'StatefulSet',
+]
+
 
 class BaseChecker(ABC):
     check_prefix = None
@@ -47,7 +55,7 @@ class BaseChecker(ABC):
 
     def _load_rendered_yaml(self, rendered: str) -> dict:
         """Load the rendered YAML which is passed in to the `check` method."""
-        return yaml.load_all(rendered)
+        return [d for d in yaml.load_all(rendered)]
 
 
 class ManifestChecker(BaseChecker):
@@ -87,6 +95,42 @@ class ManifestChecker(BaseChecker):
                         self.logger.warn(public_ingress_warning)
                     if not has_internal and not has_external:
                         return ingress_error_msg
+
+    def _check_manifest_resources(self, documents: list) -> str:
+        """Check resource types that deploy Pods for resource constraints."""
+        for doc in documents:
+            kind = doc.get('kind')
+            if kind in POD_TEMPLATE_RESOURCES:
+                pod_template = doc.get('spec').get('template')
+                if pod_template is None:
+                    return f'{kind} resources MUST specify a pod template!'
+
+                pod_spec = pod_template.get('spec')
+                if pod_spec is None:
+                    return f'{kind} resources MUST specify a pod spec!'
+
+                containers = pod_spec.get('containers')
+                if not containers:
+                    return f'{kind} resources MUST specify at least one container!'
+
+                init_containers = pod_spec.get('initContainers')
+                if init_containers:
+                    containers.append(init_containers)
+
+                missing_resources_msg = (f'All containers and initContainers in a {kind}'
+                                         'must define resource constraints!')
+                for cont in containers:
+                    resources = cont.get('resources')
+                    if not resources:
+                        return missing_resources_msg
+
+                    limits = resources.get('limits')
+                    if not limits or not limits.get('cpu') or not limits.get('memory'):
+                        return missing_resources_msg
+
+                    requests = resources.get('requests')
+                    if not requests or not requests.get('cpu') or not requests.get('memory'):
+                        return missing_resources_msg
 
 
 class AnswersChecker(BaseChecker):

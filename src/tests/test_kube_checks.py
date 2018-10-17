@@ -47,12 +47,15 @@ class TestBaseChecker(TestCase):
         assert len(errors) > 0
         assert 'Fail!' in errors
 
+class TestManifestChecker(TestCase):
+    def setUp(self):
+        self.checker = ManifestChecker()
+
     def test_invalid_zalando_ingress(self):
         """Ensure ManifestChecker returns an error for invalid Zalando ingress manifest"""
         content = get_content('manifests/invalid-zalando-ingress.yaml')
 
-        checker = ManifestChecker()
-        errors = checker.check(content)
+        errors = self.checker.check(content)
 
         assert len(errors) > 0
 
@@ -60,8 +63,7 @@ class TestBaseChecker(TestCase):
         """Ensure ManifestChecker does not return an error for internal Zalando ingress manifest"""
         content = get_content('manifests/internal-zalando-ingress.yaml')
 
-        checker = ManifestChecker()
-        errors = checker.check(content)
+        errors = self.checker.check(content)
 
         assert not errors
 
@@ -72,8 +74,7 @@ class TestBaseChecker(TestCase):
         """
         content = get_content('manifests/external-zalando-ingress.yaml')
 
-        checker = ManifestChecker()
-        errors = checker.check(content)
+        errors = self.checker.check(content)
 
         assert not errors
 
@@ -83,8 +84,7 @@ class TestBaseChecker(TestCase):
         """
         content = get_content('manifests/nginx-ingress.yaml')
 
-        checker = ManifestChecker()
-        errors = checker.check(content)
+        errors = self.checker.check(content)
 
         assert not errors
 
@@ -94,7 +94,16 @@ class TestBaseChecker(TestCase):
         """
         content = get_content('manifests/invalid-ingress-multidoc.yaml')
 
-        checker = ManifestChecker()
-        errors = checker.check(content)
+        errors = self.checker.check(content)
+
+        assert len(errors) > 0
+
+    def test_no_resources_job(self):
+        """
+        Ensure ManifestChecker returns an error for a Job with no resources
+        """
+        content = get_content('manifests/no-resources-job.yaml')
+
+        errors = self.checker.check(content)
 
         assert len(errors) > 0
