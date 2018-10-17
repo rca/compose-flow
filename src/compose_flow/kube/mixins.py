@@ -11,6 +11,7 @@ import yaml
 
 from compose_flow.errors import InvalidTargetClusterError, MissingManifestError, ManifestCheckError
 from compose_flow.config import get_config
+from compose_flow.kube.checks import BaseChecker, ManifestChecker, AnswersChecker
 from compose_flow.utils import render, yaml_load, yaml_dump
 
 CLUSTER_LS_FORMAT = '{{.Cluster.Name}}: {{.Cluster.ID}}'
@@ -21,7 +22,7 @@ EXCLUDE_PROFILES = ['local']
 NONFATAL_ERROR_MESSAGES = ['strconv.ParseFloat: parsing "']
 
 
-class KubeMixIn(object):
+class KubeSubcommandMixIn(object):
     """
     Mix-in for Kubernetes and Rancher CLI interactions
     """
@@ -212,45 +213,7 @@ class KubeMixIn(object):
     def get_answers_filename(self, app_name: str) -> str:
         return f'compose-flow-{self.cluster_name}-{app_name}-answers.yml'
 
-    def _check_manifest_ingress_annotations(self, rendered: str) -> str:
-        """Check ingresses for appropriate annotations"""
-        kind = 'Ingress'
-        nginx_annotation = 'kubernetes.io/ingress.class: nginx'
-        internal_annotation = 'scheme: internal'
-        external_annotation = 'scheme: internet-facing'
-
-        if f'kind: {kind}' in rendered:
-            if nginx_annotation not in rendered:
-                has_internal = internal_annotation in rendered
-                has_external = external_annotation in rendered
-
-                if has_external:
-                    self.logger.warn('An ingress resource in this deployment is internet-facing!\n'
-                                     'Please ensure you are deploying to a production cluster '
-                                     'and you intend to make your services publicly accessible!')
-                if not has_internal and not has_external:
-                    return ('Ingress resources MUST specify a scheme to avoid '
-                            'unintentionally exposing a service to the public Internet!')
-
-    def manifest_checker(self, rendered: str) -> List[str]:
-        """Check manifests for certain conditions."""
-        errors = []
-
-        checks = [self._check_manifest_ingress_annotations]
-        for check in checks:
-            result = check(rendered)
-            if result:
-                errors.append(result)
-
-        return errors
-
-    def answers_checker(self, rendered: str) -> List[str]:
-        """Check Helm Chart answers for certain conditions."""
-        errors = []
-
-        return errors
-
-    def render_single_yaml(self, input_path: str, output_path: str, checker: Callable[[str], List[str]] = None) -> None:
+    def render_single_yaml(self, input_path: str, output_path: str, checker: BaseChecker = None) -> None:
         '''
         Read in single YAML file from specified path, render environment variables,
         then write out to a known location in the working dir.
@@ -264,7 +227,7 @@ class KubeMixIn(object):
         rendered = render(content, env=self.workflow.environment.data)
 
         if checker:
-            errors = checker(rendered)
+            errors = checker.check(rendered)
 
             if errors:
                 raise ManifestCheckError('\n'.join(errors))
@@ -276,7 +239,7 @@ class KubeMixIn(object):
     def render_manifest(self, manifest_path: str) -> str:
         '''Render the specified manifest YAML and return the path to the rendered file.'''
         rendered_path = self.get_manifest_filename(manifest_path)
-        self.render_single_yaml(manifest_path, rendered_path, self.manifest_checker)
+        self.render_single_yaml(manifest_path, rendered_path, ManifestChecker())
 
         return rendered_path
 
@@ -295,13 +258,13 @@ class KubeMixIn(object):
             parent_dest = os.path.dirname(render_dest)
 
             os.makedirs(parent_dest, mode=0o750, exist_ok=True)
-            self.render_single_yaml(manifest, render_dest, self.manifest_checker)
+            self.render_single_yaml(manifest, render_dest, ManifestChecker())
         return rendered_path
 
     @lru_cache()
     def render_answers(self, answers_path: str, app_name: str) -> str:
         '''Render the specified manifest YAML and return the path to the rendered file.'''
         rendered_path = self.get_answers_filename(app_name)
-        self.render_single_yaml(answers_path, rendered_path, self.answers_checker)
+        self.render_single_yaml(answers_path, rendered_path, AnswersChecker())
 
         return rendered_path
