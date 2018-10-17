@@ -7,6 +7,7 @@ from compose_flow.kube.checks import BaseChecker, ManifestChecker
 
 from tests.utils import get_content
 
+
 class TestCheckerNoPrefix(BaseChecker):
     pass
 
@@ -46,6 +47,7 @@ class TestBaseChecker(TestCase):
 
         assert len(errors) > 0
         assert 'Fail!' in errors
+
 
 class TestManifestChecker(TestCase):
     def setUp(self):
@@ -103,6 +105,16 @@ class TestManifestChecker(TestCase):
         Ensure ManifestChecker returns an error for a Job with no resources
         """
         content = get_content('manifests/no-resources-job.yaml')
+
+        errors = self.checker.check(content)
+
+        assert len(errors) > 0
+
+    def test_no_limits_deployment(self):
+        """
+        Ensure ManifestChecker returns an error for a Deployment with no limits
+        """
+        content = get_content('manifests/no-limits-deployment.yaml')
 
         errors = self.checker.check(content)
 
