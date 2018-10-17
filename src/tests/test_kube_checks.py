@@ -1,9 +1,11 @@
+import os
 
 from nose.tools import raises
 from unittest import TestCase
 
-from compose_flow.kube.checks import BaseChecker
+from compose_flow.kube.checks import BaseChecker, ManifestChecker
 
+from tests.utils import get_content
 
 class TestCheckerNoPrefix(BaseChecker):
     pass
@@ -38,8 +40,50 @@ class TestBaseChecker(TestCase):
         assert len(errors) == 0
 
     def test_always_error_check(self):
+        """Ensure checker with check that returns an error actually returns a list of errors"""
         checker = TestCheckerAlwaysError()
         errors = checker.check('')
 
         assert len(errors) > 0
         assert 'Fail!' in errors
+
+    def test_invalid_zalando_ingress(self):
+        """Ensure ManifestChecker returns an error for invalid Zalando ingress manifest"""
+        content = get_content('manifests/invalid-zalando-ingress.yaml')
+
+        checker = ManifestChecker()
+        errors = checker.check(content)
+
+        assert len(errors) > 0
+
+    def test_internal_zalando_ingress(self):
+        """Ensure ManifestChecker does not return an error for internal Zalando ingress manifest"""
+        content = get_content('manifests/internal-zalando-ingress.yaml')
+
+        checker = ManifestChecker()
+        errors = checker.check(content)
+
+        assert not errors
+
+    def test_external_zalando_ingress(self):
+        """
+        Ensure ManifestChecker does not return an error for an explicitly
+        internet-facing Zalando ingress manifest
+        """
+        content = get_content('manifests/external-zalando-ingress.yaml')
+
+        checker = ManifestChecker()
+        errors = checker.check(content)
+
+        assert not errors
+
+    def test_nginx_ingress(self):
+        """
+        Ensure ManifestChecker does not return an error for an NGINX ingress
+        """
+        content = get_content('manifests/nginx-ingress.yaml')
+
+        checker = ManifestChecker()
+        errors = checker.check(content)
+
+        assert not errors

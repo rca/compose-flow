@@ -1,0 +1,4 @@
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
