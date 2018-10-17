@@ -27,7 +27,7 @@ class BaseChecker(ABC):
         this_class = self.__class__
 
         check_list = [
-            func for func in dir(self.__class__)
+            getattr(self, func) for func in dir(self.__class__)
             if callable(getattr(this_class, func))
             and func.startswith(self.check_prefix)
         ]
