@@ -26,6 +26,7 @@ class PublishTestCase(BaseTestCase):
 
         command = shlex.split('-e dev publish')
         flow = Workflow(argv=command)
+        flow._write_profile = mock.Mock()
 
         flow.subcommand.build = mock.Mock()
         flow.subcommand.push = mock.Mock()
@@ -84,6 +85,7 @@ class PublishTestCase(BaseTestCase):
 
         command = shlex.split('-e dev publish')
         flow = Workflow(argv=command)
+        flow._write_profile = mock.Mock()
 
         publish = flow.subcommand
         publish.get_built_docker_images = mock.Mock()
