@@ -1,6 +1,18 @@
 FROM python:3.6-stretch
 MAINTAINER osslabs <code@openslatedata.com>
 
+ARG user=swarmclient
+ARG group=swarmclient
+ARG uid=1000
+ARG gid=1000
+
+ENV HOME /home/${user}
+
+RUN groupadd -g ${gid} ${group} \
+ && useradd -c "Jenkins Slave user" -d "$HOME" -u ${uid} -g ${gid} -m -s /bin/bash ${user} \
+ && chown -R ${user}:${group} $HOME \
+ && chmod -R 770 $HOME
+
 # Install Docker client
 ENV DOCKERVERSION="17.09.1-ce"
 ENV DOCKER_SHA="42ccda2f86743abc90d3601a9bf970937a93c448"
@@ -12,7 +24,7 @@ RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${
 
 ARG DOCKER_GID=999
 RUN groupadd -for -g ${DOCKER_GID} docker \
- && usermod -a -G docker root
+ && usermod -a -G docker,staff ${user}
 
 # Install kubectl
 ENV KUBE_LATEST_VERSION="v1.11.2"
@@ -59,5 +71,9 @@ RUN pipenv install --system --dev && \
 COPY ./ ${SRC_DIR}/
 
 RUN python setup.py install
+
+VOLUME $HOME
+
+USER ${user}
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

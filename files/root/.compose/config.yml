@@ -1,0 +1,6 @@
+remotes:
+  dev:
+    ssh: dev-docker-3
+
+  prod:
+    ssh: prod-docker-5
