@@ -9,6 +9,7 @@ class Build(BaseSubcommand):
     Subcommand for building Docker images
     """
 
+    dirty_working_copy_okay = True
     rw_env = True
     remote_action = True
     update_version_env_vars = True
