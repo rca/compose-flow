@@ -1,0 +1,6 @@
+resources.requests.cpu: 0.1
+resources.requests.memory: 100Mi
+resources.limits.cpu: 0.2
+resources.limits.memory: 300Mi
+
+rbac.create: true
