@@ -19,7 +19,7 @@ tasks:
     command: compose-flow compose run --rm app /bin/bash ./scripts/publish.sh
 
   test:
-    command: compose-flow compose run --rm app /bin/bash -c 'nosetests -v ./src'
+    command: compose-flow compose run --rm app nosetests -v ./src
 
   lint:
     command: compose-flow compose run --rm app /bin/bash -c 'pylama ./src'

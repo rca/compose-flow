@@ -1,14 +1,15 @@
 import logging
 
+from compose_flow.kube.mixins import KubeSubcommandMixIn
+
 from .base import BaseSubcommand
-from .kube_mixin import KubeMixIn
 from .profile import Profile
 
 ACTIONS = ['rancher', 'docker', 'rke', 'helm']
 PROFILE_ACTIONS = ['docker']
 
 
-class Deploy(BaseSubcommand, KubeMixIn):
+class Deploy(BaseSubcommand, KubeSubcommandMixIn):
     """
     Subcommand for deploying an image to the docker swarm
     """

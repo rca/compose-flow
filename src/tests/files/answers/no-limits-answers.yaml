@@ -1,0 +1,2 @@
+initContainer.resources.requests.cpu: 500m
+initContainer.resources.requests.memory: 500Mi

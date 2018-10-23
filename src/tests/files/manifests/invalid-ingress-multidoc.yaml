@@ -1,0 +1,13 @@
+---
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+---
+kind: Ingress
+metadata:
+  annotations:
+    zalando.org/aws-load-balancer-scheme: internet-facing
+---
+kind: Ingress
+metadata:

@@ -1,0 +1,4 @@
+kind: Ingress
+metadata:
+  annotations:
+    zalando.org/aws-load-balancer-scheme: internet-facing
