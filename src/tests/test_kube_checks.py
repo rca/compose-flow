@@ -1,4 +1,3 @@
-import os
 
 from nose.tools import raises
 from unittest import TestCase
@@ -154,3 +153,13 @@ class TestAnswersChecker(TestCase):
         errors = self.checker.check(content)
 
         assert len(errors) > 0
+
+    def test_good_resources_answers(self):
+        """
+        Ensure AnswerChecker returns an error for flat answers with resources but no requests
+        """
+        content = get_content('answers/good-resources-answers.yaml')
+
+        errors = self.checker.check(content)
+
+        assert not errors

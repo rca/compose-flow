@@ -149,24 +149,34 @@ class AnswersChecker(BaseChecker):
         has_resources = False
         has_limits = False
         has_requests = False
+        has_memory_request = False
+        has_cpu_request = False
+        has_memory_limit = False
+        has_cpu_limit = False
         for answer in answers.keys():
             if 'resources' in answer:
                 has_resources = True
 
             if '.requests' in answer:
-                if '.requests.memory' in answer and '.requests.cpu' in answer:
-                    has_requests = True
+                has_requests = True
+                if '.requests.memory' in answer:
+                    has_memory_request = True
+                elif '.requests.cpu' in answer:
+                    has_cpu_request = True
 
             if '.limits' in answer:
-                if '.limit.memory' in answer and '.limit.cpu' in answer:
-                    has_limits = True
+                has_limits = True
+                if '.limits.memory' in answer:
+                    has_memory_limit = True
+                if '.limits.cpu' in answer:
+                    has_cpu_limit = True
 
         if not has_resources:
             self.logger.warning('Helm answers do not contain resource constraints! '
                                 'Please verify that the specified chart has default '
                                 'resources defined for all containers!')
         else:
-            if not has_requests:
-                return 'Answers specify resources but not requests! Please specify both CPU and memory resource requests.'
-            if not has_limits:
-                return 'Answers specify resources but not limits! Please specify both CPU and memory resource limits.'
+            if not has_requests or not has_memory_request or not has_cpu_request:
+                return 'Answers specify resources but not requests! Please specify both CPU and memory requests.'
+            if not has_limits or not has_memory_limit or not has_cpu_limit:
+                return 'Answers specify resources but not limits! Please specify both CPU and memory limits.'
