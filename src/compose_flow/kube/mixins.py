@@ -151,11 +151,12 @@ class KubeSubcommandMixIn(object):
         raw_path = manifest['path']
         deploy_label = manifest.get('label')
         namespace = manifest.get('namespace')
+        action = manifest.get('action', 'apply')
 
         namespace_str = f'--namespace {namespace} ' if namespace else ''
         deploy_label_str = '-l deploy={deploy_label} --prune ' if deploy_label else ''
 
-        command = f'rancher kubectl {namespace_str}apply {deploy_label_str}--validate -f '
+        command = f'rancher kubectl {namespace_str}{action} {deploy_label_str}--validate -f '
 
         if os.path.isdir(raw_path):
 
