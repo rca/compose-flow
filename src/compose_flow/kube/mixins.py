@@ -5,14 +5,13 @@ from functools import lru_cache
 import os
 import pathlib
 import sh
-from typing import Callable, List
 import yaml
 
 
 from compose_flow.errors import InvalidTargetClusterError, MissingManifestError, ManifestCheckError
 from compose_flow.config import get_config
 from compose_flow.kube.checks import BaseChecker, ManifestChecker, AnswersChecker
-from compose_flow.utils import render, yaml_load, yaml_dump
+from compose_flow.utils import render
 
 CLUSTER_LS_FORMAT = '{{.Cluster.Name}}: {{.Cluster.ID}}'
 PROJECT_LS_FORMAT = '{{.Project.Name}}: {{.Project.ID}}'
@@ -22,10 +21,12 @@ EXCLUDE_PROFILES = ['local']
 NONFATAL_ERROR_MESSAGES = ['strconv.ParseFloat: parsing "']
 
 
-class KubeSubcommandMixIn(object):
+class BaseKubeMixIn(object):
     """
-    Mix-in for Kubernetes and Rancher CLI interactions
+    Mix-in for native Kubernetes CLI interactions
     """
+
+    kubectl_command = 'kubectl'
 
     @property
     @lru_cache()
@@ -35,91 +36,6 @@ class KubeSubcommandMixIn(object):
     @property
     def rancher_config(self):
         return self.config['rancher']
-
-    @property
-    @lru_cache()
-    def cluster_listing(self):
-        cluster_ls_command = f"rancher cluster ls --format '{CLUSTER_LS_FORMAT}'"
-        output = str(self.execute(cluster_ls_command)).strip()
-        for err in NONFATAL_ERROR_MESSAGES:
-            if err in output:
-                output = output.replace(err, '')
-        return yaml.load(output)
-
-    @property
-    def cluster_name(self):
-        '''
-        Get the cluster name for the specified target environment.
-
-        If profile_name is in the compose-flow.yml Rancher cluster mapping,
-        use its value - otherwise use workflow.args.profile
-        '''
-        profile_name = self.workflow.args.profile
-        cluster_mapping = self.rancher_config.get('clusters', {})
-
-        if profile_name in EXCLUDE_PROFILES:
-            raise InvalidTargetClusterError(
-                "Invalid profile '{0}' for default cluster logic - please "
-                "specify an explicit cluster mapping in compose-flow.yml and "
-                "use a profile other than '{0}'".format(profile_name))
-
-        return cluster_mapping.get(profile_name, profile_name)
-
-    @property
-    def cluster_id(self):
-        return self.cluster_listing[self.cluster_name]
-
-    def switch_context(self):
-        '''
-        Switch Rancher CLI context to target specified cluster based on environment
-        and specified project name from compose-flow.yml
-        '''
-        # Get the project name specified in compose-flow.yml
-        target_project_name = self.rancher_config['project']
-
-        base_context_switch_command = "rancher context switch "
-        name_context_switch_command = base_context_switch_command + target_project_name
-        try:
-            self.logger.info(name_context_switch_command)
-            self.execute(name_context_switch_command)
-        except (sh.ErrorReturnCode_1, sh.ErrorReturnCode_255) as exc:  # pylint: disable=E1101
-            stderr = str(exc.stderr)
-            if 'Multiple resources of type project found for name' in stderr:
-                self.logger.info(
-                    "Multiple clusters have a project called %s - "
-                    "switching context by Project ID", target_project_name
-                )
-                # Choose the one that matches target cluster ID
-                opts = stderr[stderr.find('[')+1:stderr.find(']')].split(' ')
-                target_project_id = [o for o in opts if self.cluster_id in o][0]
-
-                id_context_switch_command = base_context_switch_command + target_project_id
-                self.logger.info(id_context_switch_command)
-                self.execute(id_context_switch_command)
-            else:
-                raise
-
-    def list_helm_apps(self) -> str:
-        return str(self.execute("helm ls -q --all"))
-
-    def list_rancher_apps(self) -> str:
-        return str(self.execute("rancher apps ls --format '{{.App.Name}}'"))
-
-    def get_rancher_app_install_command(
-            self, app_name: str, rendered_path: str,
-            namespace: str, chart: str, version: str):
-        return f'rancher apps install --answers {rendered_path} --namespace {namespace} --version {version} {chart} {app_name}'
-
-    def get_helm_app_install_command(
-            self, app_name: str, rendered_path: str,
-            namespace: str, chart: str, version: str):
-        return f'helm install --name {app_name} -f {rendered_path} --namespace {namespace} --version {version} {chart}'
-
-    def get_rancher_app_upgrade_command(self, app_name: str, rendered_path: str, chart: str, version: str):
-        return f'rancher apps upgrade --answers {rendered_path} {app_name} {version}'
-
-    def get_helm_app_upgrade_command(self, app_name: str, rendered_path: str, chart: str, version: str):
-        return f'helm upgrade {app_name} {chart} -f {rendered_path} --version {version}'
 
     def get_app_deploy_command(self, app: dict, target: str = 'rancher') -> str:
         '''
@@ -143,6 +59,28 @@ class KubeSubcommandMixIn(object):
         else:
             return install_command_method(app_name, rendered_path, namespace, chart, version)
 
+    def list_helm_apps(self) -> str:
+        return str(self.execute("helm ls -q --all"))
+
+    def get_helm_app_install_command(
+            self, app_name: str, rendered_path: str,
+            namespace: str, chart: str, version: str):
+        return f'helm install --name {app_name} -f {rendered_path} --namespace {namespace} --version {version} {chart}'
+
+    def get_helm_app_upgrade_command(self, app_name: str, rendered_path: str, chart: str, version: str):
+        return f'helm upgrade {app_name} {chart} -f {rendered_path} --version {version}'
+
+    def list_rancher_apps(self) -> str:
+        return str(self.execute("rancher apps ls --format '{{.App.Name}}'"))
+
+    def get_rancher_app_install_command(
+            self, app_name: str, rendered_path: str,
+            namespace: str, chart: str, version: str):
+        return f'rancher apps install --answers {rendered_path} --namespace {namespace} --version {version} {chart} {app_name}'
+
+    def get_rancher_app_upgrade_command(self, app_name: str, rendered_path: str, chart: str, version: str):
+        return f'rancher apps upgrade --answers {rendered_path} {app_name} {version}'
+
     def get_manifest_deploy_command(self, manifest: dict) -> str:
         '''Construct command to apply a Kubernetes YAML manifest using the Rancher CLI.'''
 
@@ -156,7 +94,7 @@ class KubeSubcommandMixIn(object):
         namespace_str = f'--namespace {namespace} ' if namespace else ''
         deploy_label_str = '-l deploy={deploy_label} --prune ' if deploy_label else ''
 
-        command = f'rancher kubectl {namespace_str}{action} {deploy_label_str}--validate -f '
+        command = f'{self.kubectl_command} {namespace_str}{action} {deploy_label_str}--validate -f '
 
         if os.path.isdir(raw_path):
 
@@ -221,7 +159,6 @@ class KubeSubcommandMixIn(object):
         '''
         self.logger.info("Rendering YAML at %s to %s", input_path, output_path)
 
-        # TODO: Add support for multiple YAML documents in a single file
         with open(input_path, 'r') as fh:
             content = fh.read()
 
@@ -269,3 +206,79 @@ class KubeSubcommandMixIn(object):
         self.render_single_yaml(answers_path, rendered_path, AnswersChecker())
 
         return rendered_path
+
+
+class KubeContextMixIn(BaseKubeMixIn):
+    """
+    Mix-in for managing native kubectl CLI context
+    """
+
+
+class RancherContextMixIn(BaseKubeMixIn):
+    """
+    Mix-in for managing Rancher CLI context
+    """
+    kubectl_command = 'rancher kubectl'
+
+    @property
+    @lru_cache()
+    def cluster_listing(self):
+        cluster_ls_command = f"rancher cluster ls --format '{CLUSTER_LS_FORMAT}'"
+        output = str(self.execute(cluster_ls_command)).strip()
+        for err in NONFATAL_ERROR_MESSAGES:
+            if err in output:
+                output = output.replace(err, '')
+        return yaml.load(output)
+
+    @property
+    def cluster_name(self):
+        '''
+        Get the cluster name for the specified target environment.
+
+        If profile_name is in the compose-flow.yml Rancher cluster mapping,
+        use its value - otherwise use workflow.args.profile
+        '''
+        profile_name = self.workflow.args.profile
+        cluster_mapping = self.rancher_config.get('clusters', {})
+
+        if profile_name in EXCLUDE_PROFILES:
+            raise InvalidTargetClusterError(
+                "Invalid profile '{0}' for default cluster logic - please "
+                "specify an explicit cluster mapping in compose-flow.yml and "
+                "use a profile other than '{0}'".format(profile_name))
+
+        return cluster_mapping.get(profile_name, profile_name)
+
+    @property
+    def cluster_id(self):
+        return self.cluster_listing[self.cluster_name]
+
+    def switch_context(self):
+        '''
+        Switch Rancher CLI context to target specified cluster based on environment
+        and specified project name from compose-flow.yml
+        '''
+        # Get the project name specified in compose-flow.yml
+        target_project_name = self.rancher_config['project']
+
+        base_context_switch_command = "rancher context switch "
+        name_context_switch_command = base_context_switch_command + target_project_name
+        try:
+            self.logger.info(name_context_switch_command)
+            self.execute(name_context_switch_command)
+        except sh.ErrorReturnCode_1 as exc:  # pylint: disable=E1101
+            stderr = str(exc.stderr)
+            if 'Multiple resources of type project found for name' in stderr:
+                self.logger.info(
+                    "Multiple clusters have a project called %s - "
+                    "switching context by Project ID", target_project_name
+                )
+                # Choose the one that matches target cluster ID
+                opts = stderr[stderr.find('[')+1:stderr.find(']')].split(' ')
+                target_project_id = [o for o in opts if self.cluster_id in o][0]
+
+                id_context_switch_command = base_context_switch_command + target_project_id
+                self.logger.info(id_context_switch_command)
+                self.execute(id_context_switch_command)
+            else:
+                raise

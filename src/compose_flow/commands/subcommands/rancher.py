@@ -1,11 +1,11 @@
 """
 Rancher CLI subcommand
 """
-from compose_flow.kube.mixins import KubeSubcommandMixIn
+from compose_flow.kube.mixins import RancherContextMixIn
 from .passthrough_base import PassthroughBaseSubcommand
 
 
-class Rancher(PassthroughBaseSubcommand, KubeSubcommandMixIn):
+class Rancher(PassthroughBaseSubcommand, RancherContextMixIn):
     """
     Subcommand for running rancher CLI commands
     """
