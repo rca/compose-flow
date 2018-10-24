@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: airflow-initdb
+  labels:
+    app.kubernetes.io/component: initdb
+spec:
+  backoffLimit: 5
+  activeDeadlineSeconds: 1000
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: initdb
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: initdb
+        image: busybox
+        imagePullPolicy: IfNotPresent
+        command: ["/usr/local/bin/airflow"]
+        args: ["initdb"]
+        envFrom:
+        - secretRef:
+            name: airflow-secrets
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        volumeMounts:
+        - name: airflow-configmap
+          mountPath: ${AIRFLOW_HOME}/airflow.cfg
+          subPath: airflow.cfg
+      volumes:
+      - name: airflow-configmap
+        configMap:
+          name: airflow-configmap
