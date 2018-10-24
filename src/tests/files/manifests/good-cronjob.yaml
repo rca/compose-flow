@@ -1,0 +1,70 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: etcd-snapshot-uploader
+  namespace: cattle-system
+spec:
+  concurrencyPolicy: Allow
+  failedJobsHistoryLimit: 10
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 1000
+      backoffLimit: 3
+      completions: 1
+      parallelism: 1
+      template:
+        metadata:
+          creationTimestamp: null
+        spec:
+          tolerations:
+          - key: node-role.kubernetes.io/controlplane
+            value: "true"
+            effect: NoSchedule
+            operator: Equal
+          - key: node-role.kubernetes.io/etcd
+            value: "true"
+            effect: NoExecute
+            operator: Equal
+          nodeSelector:
+            node-role.kubernetes.io/etcd: "true"
+          containers:
+          - env:
+            - name: AWS_DEFAULT_REGION
+              value: us-east-1
+            command: ["/bin/sh"]
+            args:
+            - -c
+            - "aws s3 cp /opt/rke/etcd-snapshots/`ls -t /opt/rke/etcd-snapshots | head -n 1` s3://oss-rancher-etcd-backups/"
+            image: mesosphere/aws-cli
+            imagePullPolicy: IfNotPresent
+            name: s3-uploader
+            resources:
+              limits:
+                cpu: 0.2
+                memory: 100Mi
+              requests:
+                cpu: 0.1
+                memory: 25Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              privileged: false
+              readOnlyRootFilesystem: false
+              runAsNonRoot: false
+            stdin: true
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            tty: true
+            volumeMounts:
+            - mountPath: /opt/rke/etcd-snapshots
+              name: etcd-snapshots
+          volumes:
+          - name: etcd-snapshots
+            hostPath:
+              path: /opt/rke/etcd-snapshots
+          dnsPolicy: ClusterFirst
+          restartPolicy: Never
+          schedulerName: default-scheduler
+          terminationGracePeriodSeconds: 30
+  schedule: 3 */6 * * *
+  successfulJobsHistoryLimit: 10
+  suspend: false

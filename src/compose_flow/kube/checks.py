@@ -11,8 +11,12 @@ POD_TEMPLATE_RESOURCES = [
     'Deployment',
     'ReplicaSet',
     'Job',
-    'CronJob',
     'StatefulSet',
+    'CronJob',
+]
+
+JOB_TEMPLATE_RESOURCES = [
+    'CronJob',
 ]
 
 
@@ -100,6 +104,13 @@ class ManifestChecker(BaseChecker):
         """Check resource types that deploy Pods for resource constraints."""
         for doc in documents:
             kind = doc.get('kind')
+
+            # If this kind defines a job template, pull it out
+            if kind in JOB_TEMPLATE_RESOURCES:
+                doc = doc.get('spec').get('jobTemplate')
+                if doc is None:
+                    return f'{kind} resources MUST specify a job template!'
+
             if kind in POD_TEMPLATE_RESOURCES:
                 pod_template = doc.get('spec').get('template')
                 if pod_template is None:

@@ -119,6 +119,26 @@ class TestManifestChecker(TestCase):
 
         assert len(errors) > 0
 
+    def test_good_job(self):
+        """
+        Ensure ManifestChecker does not return an error for an NGINX ingress
+        """
+        content = get_content('manifests/good-job.yaml')
+
+        errors = self.checker.check(content)
+
+        assert not errors
+
+    def test_good_cronjob(self):
+        """
+        Ensure ManifestChecker does not return an error for an NGINX ingress
+        """
+        content = get_content('manifests/good-cronjob.yaml')
+
+        errors = self.checker.check(content)
+
+        assert not errors
+
 
 class TestAnswersChecker(TestCase):
     def setUp(self):
