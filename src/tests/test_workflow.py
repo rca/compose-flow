@@ -106,7 +106,7 @@ class WorkflowArgsTestCase(TestCase):
         self.assertEqual(None, workflow.args.environment)
         self.assertEqual(None, workflow.args.remote)
         self.assertEqual(TEST_PROJECT_NAME, workflow.args.config_name)
-        self.assertEqual(TEST_PROJECT_NAME, workflow.args.project_name)
+        self.assertEqual(TEST_PROJECT_NAME, workflow.project_name)
 
     def test_sensible_defaults_with_env(self, *mocks):
         """
@@ -119,7 +119,7 @@ class WorkflowArgsTestCase(TestCase):
         self.assertEqual(env, workflow.args.environment)
         self.assertEqual(env, workflow.args.remote)
         self.assertEqual(f'{env}-{TEST_PROJECT_NAME}', workflow.args.config_name)
-        self.assertEqual(TEST_PROJECT_NAME, workflow.args.project_name)
+        self.assertEqual(TEST_PROJECT_NAME, workflow.project_name)
 
     def test_sensible_defaults_with_env_and_project(self, *mocks):
         """
@@ -132,4 +132,4 @@ class WorkflowArgsTestCase(TestCase):
         self.assertEqual(env, workflow.args.environment)
         self.assertEqual(env, workflow.args.remote)
         self.assertEqual(f'{env}-foo', workflow.args.config_name)
-        self.assertEqual('foo', workflow.args.project_name)
+        self.assertEqual('foo', workflow.project_name)
