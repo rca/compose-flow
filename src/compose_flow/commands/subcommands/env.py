@@ -152,7 +152,7 @@ class Env(ConfigBaseSubcommand):
             return self._docker_image
 
         registry_domain = os.environ['CF_DOCKER_IMAGE_PREFIX']
-        project_name = self.workflow.args.project_name
+        project_name = self.workflow.project_name
         env = self.workflow.args.environment
 
         docker_image = f'{registry_domain}/{project_name}:{env}'

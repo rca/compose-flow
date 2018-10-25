@@ -187,8 +187,9 @@ class Workflow(object):
 
         NOTE: an environment can be None!
         """
-        if self.args.project_name is None:
-            self.args.project_name = PROJECT_NAME
+        self.project_name = self.args.project_name
+        if self.project_name is None:
+            self.project_name = PROJECT_NAME
 
         # when no profile or remote is given, they take on the same as the environment name
         if self.args.profile is None:
@@ -203,7 +204,7 @@ class Workflow(object):
             if self.args.environment:
                 prefix = f'{self.args.environment}-'
 
-            self.args.config_name = f'{prefix}{self.args.project_name}'
+            self.args.config_name = f'{prefix}{self.project_name}'
 
     def _setup_environment(self):
         """
