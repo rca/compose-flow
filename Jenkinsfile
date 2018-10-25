@@ -10,7 +10,7 @@ def customTestFunction = {
 
 def customPublishTask = {
     cfPublish()
-    cf env.DEPLOY_ENV, 'task publish'
+    sh "compose-flow -e ${env.DEPLOY_ENV} --project-name ${env.REPO_NAME} task publish"
 }
 
 def publishWhen = { env.TAG_NAME }

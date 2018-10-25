@@ -16,7 +16,7 @@ profiles:
 
 tasks:
   publish:
-    command: compose-flow compose run --rm app /bin/bash ./scripts/publish.sh
+    command: compose-flow compose run -u root:docker --rm app /bin/bash ./scripts/publish.sh
 
   test:
     command: compose-flow compose run --rm app nosetests -v ./src
