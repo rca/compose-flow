@@ -72,7 +72,7 @@ COPY ./ ${SRC_DIR}/
 
 RUN python setup.py install
 
-RUN chown -R ${user}:${group} ${HOME}
+RUN chown -R ${user}:${group} ${HOME} ${SRC_DIR}
 
 USER ${user}
 

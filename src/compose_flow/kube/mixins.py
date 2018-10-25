@@ -82,7 +82,7 @@ class KubeSubcommandMixIn(object):
         try:
             self.logger.info(name_context_switch_command)
             self.execute(name_context_switch_command)
-        except sh.ErrorReturnCode_1 as exc:  # pylint: disable=E1101
+        except (sh.ErrorReturnCode_1, sh.ErrorReturnCode_255) as exc:  # pylint: disable=E1101
             stderr = str(exc.stderr)
             if 'Multiple resources of type project found for name' in stderr:
                 self.logger.info(
