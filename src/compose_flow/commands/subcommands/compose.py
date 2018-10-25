@@ -29,7 +29,10 @@ class Compose(PassthroughBaseSubcommand):
     def get_command(self):
         command = super().get_command()
 
-        command.extend(['--project-name', self.workflow.args.config_name])
+        compose_project = (self.workflow.args.project_name
+                           if self.workflow.args.project_name
+                           else self.workflow.config_name)
+        command.extend(['--project-name', compose_project])
 
         profile = self.workflow.profile
         command.extend(['-f', profile.filename])
