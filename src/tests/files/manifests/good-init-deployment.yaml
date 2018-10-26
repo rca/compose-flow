@@ -1,0 +1,56 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: airflow-scheduler
+  namespace: ${CF_PROJECT}
+  labels:
+    app.kubernetes.io/name: ${CF_PROJECT}
+    app.kubernetes.io/component: scheduler
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ${CF_PROJECT}
+        app.kubernetes.io/component: scheduler
+    spec:
+      serviceAccountName: ${CF_PROJECT}
+      initContainers:
+      - name: update-variables
+        image: ${DOCKER_IMAGE}
+        imagePullPolicy: IfNotPresent
+        workingDir: ${VARIABLES_DIR}
+        command: ["${VARIABLES_DIR}/update_variables.sh"]
+        resources:
+          requests:
+            cpu: 50m
+            memory: 100Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+      - name: create-connections
+        image: ${DOCKER_IMAGE}
+        imagePullPolicy: IfNotPresent
+        command: ["./scripts/create_connections.sh"]
+        resources:
+          requests:
+            cpu: 50m
+            memory: 100Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+      containers:
+      - name: scheduler
+        image: ${DOCKER_IMAGE}
+        imagePullPolicy: IfNotPresent
+        command: ["/usr/local/bin/airflow"]
+        args: ["scheduler"]
+        resources:
+          requests:
+            cpu: 300m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
