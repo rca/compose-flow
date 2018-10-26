@@ -11,7 +11,7 @@ import yaml
 from compose_flow.errors import InvalidTargetClusterError, MissingManifestError, ManifestCheckError
 from compose_flow.config import get_config
 from compose_flow.kube.checks import BaseChecker, ManifestChecker, AnswersChecker
-from compose_flow.utils import render
+from compose_flow.utils import render, render_jinja
 
 CLUSTER_LS_FORMAT = '{{.Cluster.Name}}: {{.Cluster.ID}}'
 PROJECT_LS_FORMAT = '{{.Project.Name}}: {{.Project.ID}}'
@@ -166,6 +166,7 @@ class BaseKubeMixIn(object):
 
         if not raw:
             rendered = render(content, env=self.workflow.environment.data)
+            rendered = render_jinja(content, env=self.workflow.environment.data)
         else:
             rendered = content
 
