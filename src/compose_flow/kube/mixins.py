@@ -90,6 +90,7 @@ class BaseKubeMixIn(object):
         deploy_label = manifest.get('label')
         namespace = manifest.get('namespace')
         action = manifest.get('action', 'apply')
+        raw = manifest.get('raw', False)
 
         namespace_str = f'--namespace {namespace} ' if namespace else ''
         deploy_label_str = '-l deploy={deploy_label} --prune ' if deploy_label else ''
@@ -97,11 +98,10 @@ class BaseKubeMixIn(object):
         command = f'{self.kubectl_command} {namespace_str}{action} {deploy_label_str}--validate -f '
 
         if os.path.isdir(raw_path):
-
-            rendered_path = self.render_nested_manifests(raw_path)
+            rendered_path = self.render_nested_manifests(raw_path, raw)
             command += rendered_path + ' --recursive'
         elif os.path.isfile(raw_path):
-            rendered_path = self.render_manifest(raw_path)
+            rendered_path = self.render_manifest(raw_path, raw)
             command += rendered_path
         else:
             raise MissingManifestError("Missing manifest at path: {}".format(manifest))
@@ -152,7 +152,9 @@ class BaseKubeMixIn(object):
     def get_answers_filename(self, app_name: str) -> str:
         return f'compose-flow-{self.cluster_name}-{app_name}-answers.yml'
 
-    def render_single_yaml(self, input_path: str, output_path: str, checker: BaseChecker = None) -> None:
+    def render_single_yaml(self, input_path: str, output_path: str,
+                           checker: BaseChecker = None, raw: bool = False
+                           ) -> None:
         '''
         Read in single YAML file from specified path, render environment variables,
         then write out to a known location in the working dir.
@@ -162,7 +164,10 @@ class BaseKubeMixIn(object):
         with open(input_path, 'r') as fh:
             content = fh.read()
 
-        rendered = render(content, env=self.workflow.environment.data)
+        if not raw:
+            rendered = render(content, env=self.workflow.environment.data)
+        else:
+            rendered = content
 
         if checker:
             errors = checker.check(rendered)
@@ -174,15 +179,15 @@ class BaseKubeMixIn(object):
             fh.write(rendered)
 
     @lru_cache()
-    def render_manifest(self, manifest_path: str) -> str:
+    def render_manifest(self, manifest_path: str, raw: bool) -> str:
         '''Render the specified manifest YAML and return the path to the rendered file.'''
         rendered_path = self.get_manifest_filename(manifest_path)
-        self.render_single_yaml(manifest_path, rendered_path, ManifestChecker())
+        self.render_single_yaml(manifest_path, rendered_path, ManifestChecker(), raw)
 
         return rendered_path
 
     @lru_cache()
-    def render_nested_manifests(self, dir_path: str) -> str:
+    def render_nested_manifests(self, dir_path: str, raw: bool) -> str:
         directory = pathlib.Path(dir_path)
         manifests = directory.glob('**/*.y*ml')
         rendered_path = self.get_manifest_filename(dir_path)
@@ -196,14 +201,14 @@ class BaseKubeMixIn(object):
             parent_dest = os.path.dirname(render_dest)
 
             os.makedirs(parent_dest, mode=0o750, exist_ok=True)
-            self.render_single_yaml(manifest, render_dest, ManifestChecker())
+            self.render_single_yaml(manifest, render_dest, ManifestChecker(), raw)
         return rendered_path
 
     @lru_cache()
-    def render_answers(self, answers_path: str, app_name: str) -> str:
+    def render_answers(self, answers_path: str, app_name: str, raw: bool) -> str:
         '''Render the specified manifest YAML and return the path to the rendered file.'''
         rendered_path = self.get_answers_filename(app_name)
-        self.render_single_yaml(answers_path, rendered_path, AnswersChecker())
+        self.render_single_yaml(answers_path, rendered_path, AnswersChecker(), raw)
 
         return rendered_path
 
