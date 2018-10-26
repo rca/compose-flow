@@ -126,7 +126,7 @@ class ManifestChecker(BaseChecker):
 
                 init_containers = pod_spec.get('initContainers')
                 if init_containers:
-                    containers.append(init_containers)
+                    containers = containers + init_containers
 
                 missing_resources_msg = (f'All containers and initContainers in a {kind}'
                                          'must define resource constraints!')
