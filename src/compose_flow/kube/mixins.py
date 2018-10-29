@@ -26,7 +26,7 @@ class KubeMixIn(object):
     Mix-in for generic Kubernetes CLI interactions
     """
 
-    kubectl_command = 'kubectl'
+    kubectl_command = 'rancher kubectl'
 
     @property
     @lru_cache()
@@ -61,7 +61,7 @@ class KubeMixIn(object):
             return install_command_method(app_name, rendered_path, namespace, chart, version)
 
     def list_helm_apps(self) -> str:
-        return str(self.execute("helm ls -q --all"))
+        return str(self.execute("helm ls -q --all")).split('\n')
 
     def get_helm_app_install_command(
             self, app_name: str, rendered_path: str,
@@ -72,7 +72,7 @@ class KubeMixIn(object):
         return f'helm upgrade {app_name} {chart} -f {rendered_path} --version {version}'
 
     def list_rancher_apps(self) -> str:
-        return str(self.execute("rancher apps ls --format '{{.App.Name}}'"))
+        return str(self.execute("rancher apps ls --format '{{.App.Name}}'")).split('\n')
 
     def get_rancher_app_install_command(
             self, app_name: str, rendered_path: str,
