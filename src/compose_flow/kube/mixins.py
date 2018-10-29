@@ -21,9 +21,9 @@ EXCLUDE_PROFILES = ['local']
 NONFATAL_ERROR_MESSAGES = ['strconv.ParseFloat: parsing "']
 
 
-class BaseKubeMixIn(object):
+class KubeMixIn(object):
     """
-    Mix-in for native Kubernetes CLI interactions
+    Mix-in for generic Kubernetes CLI interactions
     """
 
     kubectl_command = 'kubectl'
@@ -214,19 +214,24 @@ class BaseKubeMixIn(object):
 
         return rendered_path
 
+    # Native Kube context management logic
+    def switch_kube_context(self):
+        '''
+        Switch current kubectl context to target specified cluster based on environment
+        '''
+        profile_name = self.workflow.args.profile
+        context_mapping = self.config.get('kubecontext', {})
 
-class KubeContextMixIn(BaseKubeMixIn):
-    """
-    Mix-in for managing native kubectl CLI context
-    """
+        target_context = context_mapping.get(profile_name, profile_name)
+        try:
+            self.execute(f'kubectl config use-context {target_context}')
+        except sh.ErrorReturnCode_1:
+            raise InvalidTargetClusterError("No context is defined for profile {}!\n\n"
+                                            "Please specify a corresponding context in your kubeconfig file "
+                                            "or map this profile name to an existing context "
+                                            "in the kubecontext section of compose-flow.yml".format(profile_name))
 
-
-class RancherContextMixIn(BaseKubeMixIn):
-    """
-    Mix-in for managing Rancher CLI context
-    """
-    kubectl_command = 'rancher kubectl'
-
+    # Rancher context management logic
     @property
     @lru_cache()
     def cluster_listing(self):
@@ -260,7 +265,7 @@ class RancherContextMixIn(BaseKubeMixIn):
     def cluster_id(self):
         return self.cluster_listing[self.cluster_name]
 
-    def switch_context(self):
+    def switch_rancher_context(self):
         '''
         Switch Rancher CLI context to target specified cluster based on environment
         and specified project name from compose-flow.yml

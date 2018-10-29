@@ -1,6 +1,6 @@
 import logging
 
-from compose_flow.kube.mixins import RancherContextMixIn
+from compose_flow.kube.mixins import KubeMixIn
 
 from .base import BaseSubcommand
 from .profile import Profile
@@ -9,7 +9,7 @@ ACTIONS = ['rancher', 'docker', 'rke', 'helm']
 PROFILE_ACTIONS = ['docker']
 
 
-class Deploy(BaseSubcommand, RancherContextMixIn):
+class Deploy(BaseSubcommand, KubeMixIn):
     """
     Subcommand for deploying an image to the docker swarm
     """
@@ -42,7 +42,7 @@ class Deploy(BaseSubcommand, RancherContextMixIn):
             {self.workflow.args.config_name}"""
 
     def build_rancher_command(self) -> list:
-        self.switch_context()
+        self.switch_rancher_context()
 
         command = []
 
