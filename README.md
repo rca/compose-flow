@@ -304,6 +304,11 @@ rancher:
   # Cluster will be inferred from the env name passed to `-e`
   project: Default
 
+  # Optional mapping of environment names to Rancher cluster names
+  clusters:
+    rancher: local
+    staging: dev
+
   # Catalog templates to be deployed
   apps:
   - name: redis
@@ -348,12 +353,27 @@ your `kubeconfig` you could simply run:
 `cf -e dev helm ls`
 
 If instead your `kubeconfig` has a context named `my-dev-cluster`, then you must
-define a `kubecontext` mapping in `compose-flow.yml` like so:
+define a `kubecontexts` mapping in `compose-flow.yml` like so:
 ```yaml
 ...
-kubecontext:
+kubecontexts:
   dev: my-dev-cluster
+...
+```
 
+#### Helm Charts
+
+To install charts via the native `helm` CLI rather than as a Rancher `app`,
+provide a `helm` section in `compose-flow.yml` with the same format as the
+`apps` section from `rancher`
+
+```yaml
+helm:
+- name: my-chart-release
+  namespace: my-namespace
+  chart: my-chart
+  version: "0.0.1"
+  answers: ../my-answers.yml
 ```
 
 # History

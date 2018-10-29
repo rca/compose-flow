@@ -220,7 +220,7 @@ class KubeMixIn(object):
         Switch current kubectl context to target specified cluster based on environment
         '''
         profile_name = self.workflow.args.profile
-        context_mapping = self.config.get('kubecontext', {})
+        context_mapping = self.config.get('kubecontexts', {})
 
         target_context = context_mapping.get(profile_name, profile_name)
         try:
@@ -229,7 +229,7 @@ class KubeMixIn(object):
             raise InvalidTargetClusterError("No context is defined for profile {}!\n\n"
                                             "Please specify a corresponding context in your kubeconfig file "
                                             "or map this profile name to an existing context "
-                                            "in the kubecontext section of compose-flow.yml".format(profile_name))
+                                            "in the 'kubecontexts' section of compose-flow.yml".format(profile_name))
 
     # Rancher context management logic
     @property
