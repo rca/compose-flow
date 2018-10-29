@@ -318,9 +318,12 @@ rancher:
     version: 4.0.1
 
   # Raw Kubernetes YAML to be directly applied
-  # Must include name and namespace metadata
+  # By default, the YAML must include name and namespace metadata
+  # Additional parameters can also be specified for each manifest using a dict
   manifests:
   - ./redis-ingress.yaml
+  - path: ./rbac.yaml
+    action: replace
 
   # Per-environment extra apps and manifests
   extras:
@@ -359,6 +362,21 @@ define a `kubecontexts` mapping in `compose-flow.yml` like so:
 kubecontexts:
   dev: my-dev-cluster
 ...
+```
+
+#### Deploy Native Manifests with `kubectl`
+
+To deploy YAML manifests without going through the Rancher CLI, add a
+`kubectl_manifests` sections to your `compose-flow.yml` with the same format as
+the `manifests` from the `rancher` section:
+
+```yaml
+kubectl_manifests:
+- ./my-manifest.yaml
+- ./my-other-manifests/
+- path: ./my-special-file.yaml
+  action: create
+  raw: true
 ```
 
 #### Helm Charts

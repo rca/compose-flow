@@ -82,8 +82,8 @@ class KubeMixIn(object):
     def get_rancher_app_upgrade_command(self, app_name: str, rendered_path: str, chart: str, version: str):
         return f'rancher apps upgrade --answers {rendered_path} {app_name} {version}'
 
-    def get_manifest_deploy_command(self, manifest: dict) -> str:
-        '''Construct command to apply a Kubernetes YAML manifest using the Rancher CLI.'''
+    def get_kubectl_command(self, manifest: dict, kubectl_prefix: str = 'kubectl') -> str:
+        '''Construct command to apply a Kubernetes YAML manifest using kubectl.'''
 
         deploy_label = self.workflow.args.config_name
 
@@ -96,7 +96,7 @@ class KubeMixIn(object):
         namespace_str = f'--namespace {namespace} ' if namespace else ''
         deploy_label_str = '-l deploy={deploy_label} --prune ' if deploy_label else ''
 
-        command = f'{self.kubectl_command} {namespace_str}{action} {deploy_label_str}--validate -f '
+        command = f'{kubectl_prefix} {namespace_str}{action} {deploy_label_str}--validate -f '
 
         if os.path.isdir(raw_path):
             rendered_path = self.render_nested_manifests(raw_path, raw)
@@ -133,7 +133,10 @@ class KubeMixIn(object):
 
         return default_apps + extra_apps
 
-    def get_manifests(self) -> list:
+    def get_kubectl_manifests(self) -> list:
+        return self.config.get('kubectl_manifests', [])
+
+    def get_rancher_manifests(self) -> list:
         default_manifests = self.rancher_config.get('manifests', [])
         extra_manifests = self.get_extra_section('manifests')
 
