@@ -47,8 +47,9 @@ class BaseKubeMixIn(object):
         version = app['version']
         namespace = app['namespace']
         chart = app['chart']
+        raw = app.get('raw', False)
 
-        rendered_path = self.render_answers(app['answers'], app_name)
+        rendered_path = self.render_answers(app['answers'], app_name, raw)
 
         app_list = getattr(self, f'list_{target}_apps')()
         upgrade_command_method = getattr(self, f'get_{target}_app_upgrade_command')
@@ -166,7 +167,7 @@ class BaseKubeMixIn(object):
 
         if not raw:
             rendered = render(content, env=self.workflow.environment.data)
-            rendered = render_jinja(content, env=self.workflow.environment.data)
+            rendered = render_jinja(rendered, env=self.workflow.environment.data)
         else:
             rendered = content
 
