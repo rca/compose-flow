@@ -72,9 +72,9 @@ class Env(ConfigBaseSubcommand):
 
         return {
             'CF_ENV': args.environment or '',
-            'CF_PROJECT': args.project_name,
+            'CF_PROJECT': self.workflow.project_name,
             # deprecate this env var
-            'CF_ENV_NAME': args.project_name,
+            'CF_ENV_NAME': self.workflow.project_name,
         }
 
     @property
