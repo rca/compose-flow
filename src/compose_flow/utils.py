@@ -1,3 +1,4 @@
+import base64
 import logging
 import re
 import os
@@ -152,7 +153,10 @@ def render_jinja(content: str, env: dict = None) -> str:
     if env is None:
         env = {}
 
-    return Environment().from_string(content).render(env)
+    jinja_env = Environment()
+    jinja_env.filters['b64encode'] = lambda s: base64.b64encode(s.encode())
+
+    return jinja_env.from_string(content).render(env)
 
 
 ##
