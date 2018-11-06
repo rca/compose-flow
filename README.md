@@ -284,9 +284,17 @@ services:
     deploy:
 ```
 
-## Deploying to Kubernetes with Rancher
+## Deploying to Kubernetes
 
-In order to streamline the transition to Kubernetes, we have integrated the Rancher CLI into `compose-flow`.
+In order to streamline the transition to Kubernetes, we have integrated several new CLI tools into `compose-flow`.
+
+* `kubectl` - native CLI interactions with the Kubernetes API
+* `helm` - native package manager
+* `rancher` - interact with Rancher-managed clusters
+* `rke` - deploy new clusters outside of Rancher itself
+* `kompose` - translate `docker-compose` files into Kubernetes YAML manifests
+
+### Rancher
 
 To configure a project for deployment to Rancher, add a section to `compose-flow.yml` with the following format:
 
@@ -295,6 +303,11 @@ rancher:
   # Name of the Rancher Project to deploy into
   # Cluster will be inferred from the env name passed to `-e`
   project: Default
+
+  # Optional mapping of environment names to Rancher cluster names
+  clusters:
+    rancher: local
+    staging: dev
 
   # Catalog templates to be deployed
   apps:
@@ -305,9 +318,12 @@ rancher:
     version: 4.0.1
 
   # Raw Kubernetes YAML to be directly applied
-  # Must include name and namespace metadata
+  # By default, the YAML must include name and namespace metadata
+  # Additional parameters can also be specified for each manifest using a dict
   manifests:
   - ./redis-ingress.yaml
+  - path: ./rbac.yaml
+    action: replace
 
   # Per-environment extra apps and manifests
   extras:
@@ -323,10 +339,59 @@ rancher:
 
 ```
 
-Once configured, run the following command to deploy a `compose-flow` project to a Rancher-managed cluster named `dev`:
+Once configured, ensure your local Rancher CLI is logged in with a valid token, then run the following command to deploy a `compose-flow` project to a Rancher-managed cluster named `dev`:
 
 ```bash
 compose-flow -e dev deploy rancher
+```
+
+### Native Kubernetes Tooling
+
+To use `kubectl` or `helm` you must setup a `kubeconfig` file separately, with contexts
+named correspoding to the target environments you wish to deploy to.
+
+For instance, if you are targeting a cluster named `dev` and you have a context defined in
+your `kubeconfig` you could simply run:
+
+`cf -e dev helm ls`
+
+If instead your `kubeconfig` has a context named `my-dev-cluster`, then you must
+define a `kubecontexts` mapping in `compose-flow.yml` like so:
+```yaml
+...
+kubecontexts:
+  dev: my-dev-cluster
+...
+```
+
+#### Deploy Native Manifests with `kubectl`
+
+To deploy YAML manifests without going through the Rancher CLI, add a
+`kubectl_manifests` sections to your `compose-flow.yml` with the same format as
+the `manifests` from the `rancher` section:
+
+```yaml
+kubectl_manifests:
+- ./my-manifest.yaml
+- ./my-other-manifests/
+- path: ./my-special-file.yaml
+  action: create
+  raw: true
+```
+
+#### Helm Charts
+
+To install charts via the native `helm` CLI rather than as a Rancher `app`,
+provide a `helm` section in `compose-flow.yml` with the same format as the
+`apps` section from `rancher`
+
+```yaml
+helm:
+- name: my-chart-release
+  namespace: my-namespace
+  chart: my-chart
+  version: "0.0.1"
+  answers: ../my-answers.yml
 ```
 
 # History

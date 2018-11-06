@@ -1,15 +1,15 @@
 import logging
 
-from compose_flow.kube.mixins import KubeSubcommandMixIn
+from compose_flow.kube.mixins import KubeMixIn
 
 from .base import BaseSubcommand
 from .profile import Profile
 
-ACTIONS = ['rancher', 'docker', 'rke', 'helm']
+ACTIONS = ['rancher', 'docker', 'rke', 'helm', 'kubectl']
 PROFILE_ACTIONS = ['docker']
 
 
-class Deploy(BaseSubcommand, KubeSubcommandMixIn):
+class Deploy(BaseSubcommand, KubeMixIn):
     """
     Subcommand for deploying an image to the docker swarm
     """
@@ -41,8 +41,20 @@ class Deploy(BaseSubcommand, KubeSubcommandMixIn):
             --compose-file {self.workflow.profile.filename}
             {self.workflow.args.config_name}"""
 
+    def build_kubectl_command(self) -> list:
+        self.switch_kube_context()
+
+        command = []
+
+        for manifest in self.get_kubectl_manifests():
+            if isinstance(manifest, str):
+                manifest = {'path': manifest}
+            command.append(self.get_kubectl_command(manifest))
+
+        return command
+
     def build_rancher_command(self) -> list:
-        self.switch_context()
+        self.switch_rancher_context()
 
         command = []
 
@@ -50,10 +62,10 @@ class Deploy(BaseSubcommand, KubeSubcommandMixIn):
             # check if app is already installed - if so upgrade, if not install
             command.append(self.get_app_deploy_command(app))
 
-        for manifest in self.get_manifests():
+        for manifest in self.get_rancher_manifests():
             if isinstance(manifest, str):
                 manifest = {'path': manifest}
-            command.append(self.get_manifest_deploy_command(manifest))
+            command.append(self.get_kubectl_command(manifest, kubectl_prefix='rancher kubectl'))
 
         return command
 
@@ -61,6 +73,8 @@ class Deploy(BaseSubcommand, KubeSubcommandMixIn):
         return self.get_rke_deploy_command()
 
     def build_helm_command(self) -> str:
+        self.switch_kube_context()
+
         command = []
 
         for app in self.get_helm_apps():

@@ -1,3 +1,4 @@
+import base64
 import logging
 import re
 import os
@@ -6,6 +7,7 @@ import yaml
 from collections import OrderedDict
 
 from boltons.iterutils import remap, get_path, default_enter, default_visit
+from jinja2 import Environment
 
 from compose_flow import shell
 
@@ -145,6 +147,16 @@ def render(content: str, env: dict = None) -> str:
         raise EnvError('Rendering error')
 
     return rendered
+
+
+def render_jinja(content: str, env: dict = None) -> str:
+    if env is None:
+        env = {}
+
+    jinja_env = Environment()
+    jinja_env.filters['b64encode'] = lambda s: base64.b64encode(s.encode())
+
+    return jinja_env.from_string(content).render(env)
 
 
 ##
