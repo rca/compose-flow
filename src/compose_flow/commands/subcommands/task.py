@@ -15,6 +15,11 @@ ALLOWED_COMMANDS = ['compose-flow', 'rancher']
 PROFILE_SUBCOMMANDS = ['compose-flow', 'compose']
 
 class Task(BaseSubcommand):
+    # tasks should update version vars in order to be able to run tasks
+    # that have just been built, but the version vars should not be
+    # persisted to the config
+    update_version_env_vars = True
+
     @classmethod
     def fill_subparser(self, parser, subparser):
         subparser.add_argument('name', help='the task name to process')
