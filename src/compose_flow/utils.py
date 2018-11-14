@@ -154,7 +154,7 @@ def render_jinja(content: str, env: dict = None) -> str:
         env = {}
 
     jinja_env = Environment()
-    jinja_env.filters['b64encode'] = lambda s: base64.b64encode(s.encode())
+    jinja_env.filters['b64encode'] = lambda s: base64.b64encode(s.encode()).decode('utf-8')
 
     return jinja_env.from_string(content).render(env)
 
