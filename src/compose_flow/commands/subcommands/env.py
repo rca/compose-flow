@@ -13,6 +13,7 @@ from functools import lru_cache
 from .config_base import ConfigBaseSubcommand
 
 from compose_flow import docker, errors, utils
+from compose_flow.environment.backends import get_backend
 from compose_flow.settings import APP_ENVIRONMENTS_ROOT
 
 DOCKER_IMAGE_VAR = 'DOCKER_IMAGE'
@@ -40,6 +41,44 @@ class Env(ConfigBaseSubcommand):
         # keys that will be persisted to the docker config
         self._persistable_keys = []
 
+        # the original values for config items whose values have been rendered
+        # for example, the value for `FOO=runtime://` will be whatever $FOO is at runtime
+        # similarly, the value for `FOO=runtime://BAR` will be whatever $BAR is at runtime
+        self._rendered_config = {}
+
+    @property
+    def backend(self):
+        """
+        Returns the environment backend to use
+        """
+        backend_name = 'local'
+
+        remote = self.workflow.args.remote
+        app_config = self.workflow.app_config
+
+        if remote is not None:
+            backend_name = app_config.get('remotes', {}).get('environment', {}).get('backend', backend_name)
+
+        backend = get_backend(backend_name, root=APP_ENVIRONMENTS_ROOT)
+
+        self.logger.debug(f'backend_name={backend_name}, backend={backend}')
+
+        return backend
+
+    def edit(self) -> None:
+        with tempfile.NamedTemporaryFile('w') as fh:
+            path = fh.name
+
+            self.render_buf(fh, runtime_config=False)
+
+            fh.flush()
+
+            editor = os.environ.get('EDITOR', os.environ.get('VISUAL', 'vi'))
+
+            self.execute(f'{editor} {path}', _fg=True)
+
+            self.backend.write(self.workflow.args.config_name, path)
+
     @classmethod
     def fill_subparser(cls, parser, subparser):
         subparser.add_argument('action')
@@ -58,9 +97,8 @@ class Env(ConfigBaseSubcommand):
         Prints the loaded config to stdout
         """
         config_name = self.workflow.config_name
-
-        if config_name not in docker.get_configs():
-            return f'docker config named {config_name} not in swarm'
+        if config_name not in self.backend.list_configs():
+            return f'docker config named {config_name} not in backend={self.backend.__class__.__name__}'
 
         print(self.render())
 
@@ -235,7 +273,7 @@ class Env(ConfigBaseSubcommand):
             return data
 
         try:
-            content = docker.get_config(self.workflow.config_name)
+            content = self.backend.read(self.workflow.config_name)
         except errors.NoSuchConfig as exc:
             if not self.is_missing_config_okay(exc):
                 raise
@@ -289,6 +327,19 @@ class Env(ConfigBaseSubcommand):
         self.render_buf(buf, data=data, runtime_config=runtime_config)
 
         return buf.getvalue()
+
+    def render_buf(self, buf, data: dict = None, runtime_config: bool = True):
+        data = data or self.data  # pylint: disable=E1101
+
+        # reset runtime variables
+        if not runtime_config:
+            data.update(self._rendered_config)
+
+        lines = []
+        for k, v in data.items():
+            lines.append(f'{k}={v}')
+
+        buf.write('\n'.join(sorted(lines)))
 
     def rm(self) -> None:
         """
