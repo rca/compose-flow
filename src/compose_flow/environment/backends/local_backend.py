@@ -33,7 +33,11 @@ class LocalBackend(BaseBackend):
         """
         Reads in the environment file
         """
-        with open(self.get_path(name), 'r') as fh:
+        path = self.get_path(name)
+        if not os.path.exists(path):
+            return ''
+
+        with open(path, 'r') as fh:
             return fh.read()
 
     def write(self, name: str, path: str):
