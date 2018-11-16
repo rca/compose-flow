@@ -39,3 +39,43 @@ class LocalBackendTestCase(TestCase):
         open_mock = mocks[-1]
 
         open_mock.return_value.__enter__.return_value.write.assert_called_with(self.buf)
+
+
+@mock.patch('compose_flow.environment.backends.swarm_backend.docker')
+class SwarmBackendTestCase(TestCase):
+    buf = 'FOO=1\n'
+
+    @property
+    def backend(self):
+        backend = get_backend('swarm')
+
+        return backend
+
+    def _setup_mocks(self, *mocks):
+        self.docker_mock = mocks[-1]
+
+    def test_list(self, *mocks):
+        self._setup_mocks(*mocks)
+
+        self.backend.list_configs()
+
+        self.docker_mock.get_configs.assert_called()
+
+    def test_read(self, *mocks):
+        self._setup_mocks(*mocks)
+
+        name = 'foo'
+
+        self.backend.read(name)
+
+        self.docker_mock.get_config.assert_called_with(name)
+
+    def test_write(self, *mocks):
+        self._setup_mocks(*mocks)
+
+        name = 'foo'
+        path = '/path/to/config'
+
+        self.backend.write(name, path)
+
+        self.docker_mock.load_config.assert_called_with(name, path)
