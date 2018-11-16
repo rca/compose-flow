@@ -12,14 +12,11 @@ from tests import BaseTestCase
 @mock.patch('compose_flow.commands.workflow.PROJECT_NAME', new='testdirname')
 class PublishTestCase(BaseTestCase):
     @mock.patch('compose_flow.commands.subcommands.env.utils')
-    @mock.patch('compose_flow.commands.subcommands.env.docker')
+    @mock.patch('compose_flow.commands.subcommands.env.get_backend')
     def test_profile_env(self, *mocks):
         """
         Ensure the VERSION is updated
         """
-        docker_mock = mocks[0]
-        docker_mock.get_config.return_value = "FOO=1\nBAR=2"
-
         utils_mock = mocks[1]
         utils_mock.get_tag_version.return_value = '0.0.1'
         utils_mock.render = utils.render
@@ -59,7 +56,7 @@ class PublishTestCase(BaseTestCase):
 
     @mock.patch('compose_flow.commands.subcommands.env.Env.rw_env', new=True)
     @mock.patch('compose_flow.commands.subcommands.env.utils')
-    @mock.patch('compose_flow.commands.subcommands.env.docker')
+    @mock.patch('compose_flow.commands.subcommands.env.get_backend')
     def test_update_version(self, *mocks):
         """
         Ensures that version in env is updated when the publish command is run
@@ -72,11 +69,6 @@ class PublishTestCase(BaseTestCase):
         version = '1.2.3'
         new_version = '0.9.999'
         docker_image = 'foo:bar'
-
-        docker_mock = mocks[0]
-        docker_mock.get_config.return_value = (
-            f"FOO=1\nBAR=2\nVERSION={version}\nDOCKER_IMAGE={docker_image}"
-        )
 
         utils_mock = mocks[1]
         utils_mock.get_tag_version.return_value = new_version
