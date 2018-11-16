@@ -59,7 +59,7 @@ class Env(ConfigBaseSubcommand):
         if remote is not None:
             backend_name = app_config.get('remotes', {}).get('environment', {}).get('backend', backend_name)
 
-        backend = get_backend(backend_name, root=APP_ENVIRONMENTS_ROOT)
+        backend = get_backend(backend_name)
 
         self.logger.debug(f'backend_name={backend_name}, backend={backend}')
 

@@ -9,7 +9,7 @@ class LocalBackend(BaseBackend):
     """
     Manages local file storage
     """
-    def __init__(self, *args, root: str, **kwargs):
+    def __init__(self, *args, root: str = None, **kwargs):
         """
         Constructor
 
@@ -18,25 +18,28 @@ class LocalBackend(BaseBackend):
         """
         super().__init__(*args, **kwargs)
 
-        self.root = root
+        self.root = root or APP_ENVIRONMENTS_ROOT
 
     def list_configs(self):
         return os.listdir(self.root)
+
+    def get_path(self, name):
+        return os.path.join(self.root, name)
 
     def read(self, name: str):
         """
         Reads in the environment file
         """
-        with open(os.path.join(APP_ENVIRONMENTS_ROOT, name), 'r') as fh:
+        with open(self.get_path(name), 'r') as fh:
             return fh.read()
 
     def write(self, name: str, path: str):
         # create the directory if it does not exist
-        if not os.path.exists(APP_ENVIRONMENTS_ROOT):
-            os.makedirs(APP_ENVIRONMENTS_ROOT)
+        if not os.path.exists(self.root):
+            os.makedirs(self.root)
 
         with open(path, 'r') as fh:
             buf = fh.read()
 
-        with open(os.path.join(APP_ENVIRONMENTS_ROOT, name), 'w') as fh:
+        with open(self.get_path(name), 'w') as fh:
             fh.write(buf)
