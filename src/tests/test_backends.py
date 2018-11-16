@@ -1,0 +1,41 @@
+from unittest import TestCase, mock
+
+from compose_flow.environment.backends import get_backend
+
+
+@mock.patch('compose_flow.environment.backends.local_backend.open')
+@mock.patch('compose_flow.environment.backends.local_backend.os')
+class LocalBackendTestCase(TestCase):
+    buf = 'FOO=1\n'
+
+    @property
+    def backend(self):
+        backend = get_backend('local')
+
+        return backend
+
+    def _setup_mocks(self, *mocks):
+        open_mock = mocks[-1]
+        open_mock.return_value.__enter__.return_value.read.return_value = self.buf
+
+        os_mock = mocks[-2]
+        os_mock.listdir.return_value = ['foo']
+
+    def test_list(self, *mocks):
+        self._setup_mocks(*mocks)
+
+        self.assertEqual(self.backend.list_configs(), ['foo'])
+
+    def test_read(self, *mocks):
+        self._setup_mocks(*mocks)
+
+        self.assertEqual(self.backend.read('foo'), self.buf)
+
+    def test_write(self, *mocks):
+        self._setup_mocks(*mocks)
+
+        self.backend.write('foo', '/path/to/config')
+
+        open_mock = mocks[-1]
+
+        open_mock.return_value.__enter__.return_value.write.assert_called_with(self.buf)
