@@ -1,5 +1,7 @@
 from .base_backend import BaseBackend
 
+from compose_flow import docker
+
 
 class SwarmBackend(BaseBackend):
     """
@@ -64,14 +66,14 @@ class SwarmBackend(BaseBackend):
         if init_swarm:
             self.execute('docker swarm init')
 
-    def push(self, path: str = None) -> None:
+    def list_configs(self) -> list:
+        return docker.get_configs()
+
+    def read(self, name: str) -> str:
+        return docker.get_config(name)
+
+    def write(self, name: str, path) -> None:
         """
         Saves an environment into the swarm
         """
-        args = self.workflow.args
-
-        path = path or args.path
-        if not path:
-            return self.print_subcommand_help(__doc__, error='path needed to load')
-
-        docker.load_config(args.config_name, path)
+        docker.load_config(name, path)
