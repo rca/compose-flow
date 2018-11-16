@@ -26,10 +26,10 @@ class LocalBackend(BaseBackend):
 
         return os.listdir(self.root)
 
-    def get_path(self, name):
+    def get_path(self, name: str) -> str:
         return os.path.join(self.root, name)
 
-    def read(self, name: str):
+    def read(self, name: str) -> str:
         """
         Reads in the environment file
         """
@@ -40,7 +40,7 @@ class LocalBackend(BaseBackend):
         with open(path, 'r') as fh:
             return fh.read()
 
-    def write(self, name: str, path: str):
+    def write(self, name: str, path: str) -> None:
         # create the directory if it does not exist
         if not os.path.exists(self.root):
             os.makedirs(self.root)
