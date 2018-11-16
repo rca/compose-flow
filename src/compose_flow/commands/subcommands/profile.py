@@ -46,6 +46,8 @@ class Profile(BaseSubcommand):
     """
     Subcommand for managing profiles
     """
+    update_version_env_vars = True
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
