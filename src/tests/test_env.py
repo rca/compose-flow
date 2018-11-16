@@ -10,6 +10,45 @@ from tests import BaseTestCase
 
 @mock.patch('compose_flow.commands.workflow.PROJECT_NAME', new='testdirname')
 class EnvTestCase(BaseTestCase):
+    def test_backend_default(self, *mocks):
+        """
+        Ensure a local backend is returned
+        """
+        flow = mock.Mock()
+        flow.args.remote = None
+
+        env = Env(flow)
+
+        self.assertEqual(env.backend.__class__.__name__, 'LocalBackend')
+
+    @mock.patch('compose_flow.commands.subcommands.env.get_backend')
+    def test_backend_from_app_config(self, *mocks):
+        """
+        Ensure a local backend is returned
+        """
+        backend_name = 'swarm'
+
+        flow = mock.Mock()
+        flow.args.remote = 'dev'
+
+        flow.app_config = {
+            'remotes': {
+                'environment': {
+                    'backend': backend_name,
+                },
+            },
+        }
+
+        get_backend_mock = mocks[0]
+        get_backend_mock.return_value = 'SwarmBackend'
+
+        env = Env(flow)
+        backend = env.backend
+
+        self.assertEqual(backend, 'SwarmBackend')
+
+        get_backend_mock.assert_called_with(backend_name)
+
     def test_config_name_arg(self, *mocks):
         """
         Ensure the config arg updates the config name
