@@ -3,7 +3,7 @@
 This utility is built on top of [Docker Compose](https://docs.docker.com/compose/) and [Swarm Mode](https://docs.docker.com/engine/swarm/).  It establishes conventions for common workflow tasks that are easily shared between team members -- and butlers -- who need to manage running services.  These tasks include:
 
 - managing [Stacks](https://docs.docker.com/get-started/part5/#prerequisites) across multiple Swarms (like separate dev and prod Swarms)
-- easily connecting to and working with service containers
+- connecting to and working with service containers
 - building and publishing images
 
 
@@ -64,7 +64,7 @@ The clear advantage is brevity.  A second advantage is not managing environment 
 Publishing is simple.  For example, to publish a production image:
 
 ```
-compose-flow -e prod publish
+compose-flow publish
 ```
 
 Behind the scenes a unique version is generated for your Docker Image using `git tag`, for example, `1.3.0-3-gf67c2b8-compose-flow`.  The unique docker image is used in your deployment by simply specifying the docker image as a variable in your compose file, for instance:
@@ -89,7 +89,7 @@ Deployment is also simple:
 compose-flow -e prod deploy
 ```
 
-Behind the scenes this uses `docker stack` to clean up and re-deploy your code
+Behind the scenes this uses `docker stack` to clean up and re-deploy your code to the production Swarm cluster.
 
 
 ### Using docker-compose
@@ -99,6 +99,11 @@ All of `docker-compose` is available via the `compose` subcommand, for instance,
 ```
 compose-flow -e local compose up
 ```
+
+So why use `compose-flow` here instead of `docker-compose` directly?
+
+- the docker-compose file is rendered using the `local` profile that is defined in `compose/compose-flow.yml`
+- `${}` variables anywhere in the compose configuration are processed and rendered into the docker-compose yml file
 
 
 ## Managing a remote Docker Swarm
