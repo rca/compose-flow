@@ -33,8 +33,10 @@ class EnvTestCase(BaseTestCase):
 
         flow.app_config = {
             'remotes': {
-                'environment': {
-                    'backend': backend_name,
+                'dev': {
+                    'environment': {
+                        'backend': backend_name,
+                    },
                 },
             },
         }

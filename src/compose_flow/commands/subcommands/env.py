@@ -57,7 +57,7 @@ class Env(ConfigBaseSubcommand):
         app_config = self.workflow.app_config
 
         if remote is not None:
-            backend_name = app_config.get('remotes', {}).get('environment', {}).get('backend', backend_name)
+            backend_name = app_config.get('remotes', {}).get(remote, {}).get('environment', {}).get('backend', backend_name)
 
         backend = get_backend(backend_name)
 
