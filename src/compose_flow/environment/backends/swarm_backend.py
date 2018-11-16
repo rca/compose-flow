@@ -1,3 +1,6 @@
+from .base_backend import BaseBackend
+
+
 class SwarmBackend(BaseBackend):
     """
     Manages `docker config` storage
