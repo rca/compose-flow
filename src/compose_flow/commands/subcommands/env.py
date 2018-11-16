@@ -13,6 +13,7 @@ from functools import lru_cache
 from .config_base import ConfigBaseSubcommand
 
 from compose_flow import docker, errors, utils
+from compose_flow.settings import APP_ENVIRONMENTS_ROOT
 
 DOCKER_IMAGE_VAR = 'DOCKER_IMAGE'
 VERSION_VAR = 'VERSION'
