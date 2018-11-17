@@ -152,6 +152,11 @@ class Workflow(object):
     def profile(self):
         return Profile(self)
 
+    @property
+    @lru_cache()
+    def remote(self):
+        return Remote(self)
+
     def run(self):
         # setup the loglevel
         logging_config = settings.LOGGING
@@ -238,17 +243,15 @@ class Workflow(object):
         if not self.subcommand.remote_action:
             return
 
-        remote = Remote(self)
-
         try:
-            remote.make_connection(use_existing=True)
+            self.remote.make_connection(use_existing=True)
         except (errors.AlreadyConnected, errors.RemoteUndefined):
             pass
         except errors.NotConnected as exc:
             if not self.is_not_connected_okay(exc):  # pylint: disable=E1101
                 raise
 
-        docker_host = remote.docker_host
+        docker_host = self.remote.docker_host
         if docker_host:
             # one of the very few exceptions of updating the os environment directly
             # the docker host is low level in that it's not possible to run docker
