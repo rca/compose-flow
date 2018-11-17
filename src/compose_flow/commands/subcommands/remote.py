@@ -96,6 +96,9 @@ class Remote(BaseSubcommand):
 
     @property
     def host(self):
+        """
+        Returns the host information to SSH into
+        """
         if self._host is not None:
             return self._host
 
