@@ -171,7 +171,7 @@ class Service(BaseSubcommand):
         if container_host.startswith('ip-'):
             container_host = container_host.replace('ip-', '').replace('-', '.')
 
-        host_info = f'{CF_REMOTE_USER}@{container_host}'
+        host_info = f'{self.workflow.remote.username}@{container_host}'
 
         docker_user = ''
         if args.user:
