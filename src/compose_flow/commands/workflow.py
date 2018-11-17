@@ -81,6 +81,13 @@ class Workflow(object):
         return self.args.config_name or self.project_name  # pylint: disable=E1101
 
     @property
+    def docker_image_prefix(self):
+        docker_image_prefix = self.app_config.get('build', {}).get('image_prefix')
+        docker_image_prefix = docker_image_prefix or os.environ['CF_DOCKER_IMAGE_PREFIX']
+
+        return docker_image_prefix
+
+    @property
     @lru_cache()
     def environment(self):
         """

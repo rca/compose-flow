@@ -8,7 +8,6 @@ from compose_flow.commands import Workflow
 from tests import BaseTestCase
 
 
-@mock.patch('compose_flow.commands.subcommands.env.os')
 @mock.patch('compose_flow.commands.workflow.PROJECT_NAME', new='testdirname')
 class PublishTestCase(BaseTestCase):
     @mock.patch('compose_flow.commands.subcommands.env.utils')
@@ -55,13 +54,14 @@ class PublishTestCase(BaseTestCase):
         flow.subcommand.check.assert_not_called()
 
     @mock.patch('compose_flow.commands.subcommands.env.Env.rw_env', new=True)
+    @mock.patch('compose_flow.commands.workflow.os')
     @mock.patch('compose_flow.commands.subcommands.env.utils')
     @mock.patch('compose_flow.commands.subcommands.env.get_backend')
     def test_update_version(self, *mocks):
         """
         Ensures that version in env is updated when the publish command is run
         """
-        os_mock = mocks[-1]
+        os_mock = mocks[2]
         os_mock.environ = {
             'CF_DOCKER_IMAGE_PREFIX': 'test.registry',
         }

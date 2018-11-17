@@ -35,6 +35,33 @@ class WorkflowTestCase(BaseTestCase):
             ['CF_ENV', 'CF_ENV_NAME', 'CF_PROJECT'], sorted(env.data.keys())
         )
 
+    @mock.patch('compose_flow.commands.workflow.os')
+    def test_docker_image_prefix_from_os_env(self, *mocks):
+        os_mock = mocks[0]
+        os_mock.environ = {
+            'CF_DOCKER_IMAGE_PREFIX': 'foo'
+        }
+        os_mock.path.exists.return_value = False
+
+        workflow = Workflow(argv=[])
+
+        self.assertEqual(workflow.docker_image_prefix, 'foo')
+
+    @mock.patch('compose_flow.commands.workflow.Workflow.app_config', new_callable=mock.PropertyMock)
+    def test_docker_image_prefix_from_app_config(self, *mocks):
+        image_prefix = 'registry.prefix.com/foo'
+
+        app_config_mock = mocks[0]
+        app_config_mock.return_value = {
+            'build': {
+                'image_prefix': image_prefix,
+            },
+        }
+
+        workflow = Workflow(argv=[])
+
+        self.assertEqual(workflow.docker_image_prefix, image_prefix)
+
     def test_load_env_when_env_specified(self, *mocks):
         self._setup_docker_config_mock(*mocks)
         self._setup_utils_mock(*mocks)
