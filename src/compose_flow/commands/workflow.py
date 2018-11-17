@@ -82,7 +82,7 @@ class Workflow(object):
     @property
     def docker_image_prefix(self):
         docker_image_prefix = self.app_config.get('build', {}).get('image_prefix')
-        docker_image_prefix = docker_image_prefix or os.environ['CF_DOCKER_IMAGE_PREFIX']
+        docker_image_prefix = docker_image_prefix or settings.DOCKER_IMAGE_PREFIX
 
         return docker_image_prefix
 

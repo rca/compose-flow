@@ -62,7 +62,7 @@ class PublishTestCase(BaseTestCase):
         Ensures that version in env is updated when the publish command is run
         """
         settings_mock = mocks[2]
-        settings_mock.DEFAULT_CF_DOCKER_IMAGE_PREFIX = 'test.registry'
+        settings_mock.DOCKER_IMAGE_PREFIX = 'test.registry'
         settings_mock.LOGGING = {
             'version': 1,
             'loggers': {

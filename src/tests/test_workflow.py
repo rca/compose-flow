@@ -36,12 +36,26 @@ class WorkflowTestCase(BaseTestCase):
         )
 
     @mock.patch('compose_flow.commands.workflow.os')
-    def test_docker_image_prefix_from_os_env(self, *mocks):
+    def test_docker_image_prefix_default(self, *mocks):
+        """
+        Ensure the default image name will not accidentally push the image to a remote registry
+        """
         os_mock = mocks[0]
-        os_mock.environ = {
-            'CF_DOCKER_IMAGE_PREFIX': 'foo'
-        }
+        os_mock.environ = {}
         os_mock.path.exists.return_value = False
+
+        workflow = Workflow(argv=[])
+
+        self.assertEqual(workflow.docker_image_prefix, 'localhost.localdomain')
+
+    @mock.patch('compose_flow.commands.workflow.settings')
+    @mock.patch('compose_flow.commands.workflow.os')
+    def test_docker_image_prefix_from_os_settings(self, *mocks):
+        os_mock = mocks[0]
+        os_mock.path.exists.return_value = False
+
+        settings_mock = mocks[1]
+        settings_mock.DOCKER_IMAGE_PREFIX = 'foo'
 
         workflow = Workflow(argv=[])
 
