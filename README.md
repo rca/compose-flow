@@ -119,10 +119,10 @@ Then you could paste something like the following:
 ```
 remotes:
   dev:
-    ssh: ${CF_REMOTE_USER}@dev-swarm-manager-1
+    ssh: username@dev-swarm-manager-1
 
   prod:
-    ssh: ${CF_REMOTE_USER}@prod-swarm-manager-1
+    ssh: username@prod-swarm-manager-1
 ```
 
 With this configuration in place the above `deploy` example would deploy to `prod-swarm-manager-1`, while using `compose-flow -e dev deploy` would deploy to `dev-swarm-manager-1`.
