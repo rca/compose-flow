@@ -54,16 +54,21 @@ class PublishTestCase(BaseTestCase):
         flow.subcommand.check.assert_not_called()
 
     @mock.patch('compose_flow.commands.subcommands.env.Env.rw_env', new=True)
-    @mock.patch('compose_flow.commands.workflow.os')
+    @mock.patch('compose_flow.commands.workflow.settings')
     @mock.patch('compose_flow.commands.subcommands.env.utils')
     @mock.patch('compose_flow.commands.subcommands.env.get_backend')
     def test_update_version(self, *mocks):
         """
         Ensures that version in env is updated when the publish command is run
         """
-        os_mock = mocks[2]
-        os_mock.environ = {
-            'CF_DOCKER_IMAGE_PREFIX': 'test.registry',
+        settings_mock = mocks[2]
+        settings_mock.DEFAULT_CF_DOCKER_IMAGE_PREFIX = 'test.registry'
+        settings_mock.LOGGING = {
+            'version': 1,
+            'loggers': {
+                'compose_flow': {
+                },
+            },
         }
 
         version = '1.2.3'
