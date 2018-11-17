@@ -158,6 +158,22 @@ class ProfileTestCase(TestCase):
         self.assertEqual(1, open_mock.call_count)
 
     @mock.patch('compose_flow.commands.subcommands.profile.merge_profile')
+    def test_set_resources_empty_resources_left_alone(self, *mocks):
+        """
+        Ensures when services.x.deploy doesn't exist it is not added
+        """
+        content = get_content('profiles/no_constraints.yml')
+        data = yaml_load(content)
+
+        service_name, data = list(data['services'].items())[0]
+
+        profile = Profile(self.workflow)
+
+        profile.set_resources(service_name, data)
+
+        self.assertEqual('deploy' not in data, True)
+
+    @mock.patch('compose_flow.commands.subcommands.profile.merge_profile')
     def test_set_resources_memory_limit_no_reservation(self, *mocks):
         """
         Ensures memory reservation is matched to limit when no reservation is given
