@@ -41,9 +41,6 @@ import time
 from .base import BaseSubcommand
 from compose_flow import errors, shell
 
-USER = os.environ.get('USER', 'nobody')
-CF_REMOTE_USER = os.environ.get('CF_REMOTE_USER', USER)
-
 
 class Service(BaseSubcommand):
     setup_environment = False
