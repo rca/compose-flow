@@ -9,6 +9,7 @@ from .base import BaseSubcommand
 
 from compose_flow import errors, shell
 from compose_flow.errors import EnvError, ErrorMessage
+from compose_flow import settings
 
 UNIX_PREFIX = 'unix://'
 UNIX_REMOTE_HOST_RE = re.compile(UNIX_PREFIX + r'(?P<socket>.*)')
@@ -96,6 +97,9 @@ class Remote(BaseSubcommand):
 
     @property
     def host(self):
+        """
+        Returns the host information to SSH into
+        """
         if self._host is not None:
             return self._host
 
@@ -218,3 +222,20 @@ class Remote(BaseSubcommand):
             print(message)
 
         return status
+
+    @property
+    def username(self):
+        """
+        Returns the remote username
+
+        When the remote host contains a username, e.g. user@hostname, the user
+        component is extracted.  When a username is not found in the remote
+        configuration, the settings are referenced.
+        """
+        username = settings.DEFAULT_CF_REMOTE_USER
+
+        host = self.host
+        if host and '@' in host:
+            username = host.split('@', 1)[0]
+
+        return username

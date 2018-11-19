@@ -41,9 +41,6 @@ import time
 from .base import BaseSubcommand
 from compose_flow import errors, shell
 
-USER = os.environ.get('USER', 'nobody')
-CF_REMOTE_USER = os.environ.get('CF_REMOTE_USER', USER)
-
 
 class Service(BaseSubcommand):
     setup_environment = False
@@ -174,7 +171,7 @@ class Service(BaseSubcommand):
         if container_host.startswith('ip-'):
             container_host = container_host.replace('ip-', '').replace('-', '.')
 
-        host_info = f'{CF_REMOTE_USER}@{container_host}'
+        host_info = f'{self.workflow.remote.username}@{container_host}'
 
         docker_user = ''
         if args.user:
