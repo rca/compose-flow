@@ -92,13 +92,7 @@ So why use `compose-flow` here instead of `docker-compose` directly?
 
 ## Managing a remote Docker Swarm
 
-`compose-flow` can also work across multiple Swarms, for example, when you are developing locally on your own laptop and are deploying to a remote swarm.  You can also have separate installations for dev and prod.  This can be accomplished by defining a "remoteconfig":
-
-```
-compose-flow remoteconfig edit
-```
-
-Then you could paste something like the following:
+`compose-flow` can also work across multiple Swarms, for example, when you are developing locally on your own laptop and are deploying to a remote Swarm.  You can also define separate Swarms for dev and prod.  This can be accomplished by adding a `remotes` section to `~/.compose/config.yml`:
 
 ```
 remotes:
