@@ -1,10 +1,11 @@
 # Compose Flow
 
-This utility is built on top of [Docker Compose](https://docs.docker.com/compose/) and [Swarm Mode](https://docs.docker.com/engine/swarm/).  It establishes conventions for common workflow tasks that are easily shared between team members -- and butlers -- who need to manage running services.  These tasks include:
+This utility is built on top of [Docker Compose](https://docs.docker.com/compose/) and [Swarm Mode](https://docs.docker.com/engine/swarm/).  It establishes workflow conventions that are easily shared between team members -- and butlers -- who need to manage and deploy services, including:
 
 - managing [Stacks](https://docs.docker.com/get-started/part5/#prerequisites) across multiple Swarms (like separate dev and prod Swarms)
 - connecting to and working with service containers
 - building and publishing images
+- sharing service configuration between team members
 
 
 ## Installation
@@ -89,7 +90,7 @@ Deployment is also simple:
 compose-flow -e prod deploy
 ```
 
-Behind the scenes this uses `docker stack` to clean up and re-deploy your code to the production Swarm cluster.
+Behind the scenes this uses `docker stack` to clean up and re-deploy your code to the production Swarm cluster using production environment variables.
 
 
 ### Using docker-compose
