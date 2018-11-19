@@ -180,7 +180,7 @@ class Profile(BaseSubcommand):
         service_message = f'not found in service={name}; please add reservations and limits to deploy.resources'
 
         # check to see that a node constraint has been defined
-        resources = service_data.setdefault('deploy', {}).setdefault('resources', {})
+        resources = service_data.get('deploy', {}).get('resources', {})
         if not resources:
             errors.append(f'resource constraints {service_message}')
 
@@ -480,9 +480,10 @@ class Profile(BaseSubcommand):
         """
         Fills in missing resources
         """
-        resources = service_data.setdefault('deploy', {}).setdefault('resources', {})
+        resources = service_data.get('deploy', {}).get('resources', {})
 
         # init limits and reservations
+        changed = False
         for item, opposite_item in (
                 ('limits', 'reservations'),
                 ('reservations', 'limits'),
@@ -496,6 +497,11 @@ class Profile(BaseSubcommand):
                     self.logger.warning(f'matching {opposite_item} with {item} for service {name}')
 
                     resources[opposite_item]['memory'] = resources[item]['memory']
+
+                    changed = True
+
+        if changed:
+            service_data.setdefault('deploy', {})['resources'] = resources
 
     @lru_cache()
     def write(self) -> None:
