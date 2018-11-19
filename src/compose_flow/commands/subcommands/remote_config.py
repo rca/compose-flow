@@ -2,11 +2,8 @@
 Remote configuration subcommand
 """
 import os
-import tempfile
 
-import yaml
-
-from .config_base import ConfigBaseSubcommand
+from .base import BaseSubcommand
 
 from compose_flow import docker
 from compose_flow.errors import NoSuchConfig
@@ -17,7 +14,7 @@ DEFAULT_CF_REMOTES_CONFIG_NAME = os.environ.get(
 )
 
 
-class RemoteConfig(ConfigBaseSubcommand):
+class RemoteConfig(BaseSubcommand):
     """
     Subcommand for managing remote configuration
     """

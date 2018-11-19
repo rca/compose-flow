@@ -1,14 +1,12 @@
-import os
-import shlex
-import sys
-import tempfile
+from .base_backend import BaseBackend
 
-from compose_flow import docker, shell
-
-from .base import BaseSubcommand
+from compose_flow import docker
 
 
-class ConfigBaseSubcommand(BaseSubcommand):
+class SwarmBackend(BaseBackend):
+    """
+    Manages `docker config` storage
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -16,11 +14,6 @@ class ConfigBaseSubcommand(BaseSubcommand):
         # are not swarm managers.  this test should probably occur somewhere closer to when
         # a config is being pulled out of a local docker instance
         # self._check_swarm()
-
-        # the original values for config items whose values have been rendered
-        # for example, the value for `FOO=runtime://` will be whatever $FOO is at runtime
-        # similarly, the value for `FOO=runtime://BAR` will be whatever $BAR is at runtime
-        self._rendered_config = {}
 
     def _check_swarm(self):
         """
@@ -35,20 +28,6 @@ class ConfigBaseSubcommand(BaseSubcommand):
                 self.init_swarm(prompt=True)
             else:
                 raise
-
-    def edit(self) -> None:
-        with tempfile.NamedTemporaryFile('w') as fh:
-            path = fh.name
-
-            self.render_buf(fh, runtime_config=False)
-
-            fh.flush()
-
-            editor = os.environ.get('EDITOR', os.environ.get('VISUAL', 'vi'))
-
-            self.execute(f'{editor} {path}', _fg=True)
-
-            self.push(path)
 
     def init_swarm(self, prompt: bool = False) -> None:
         """
@@ -87,27 +66,14 @@ class ConfigBaseSubcommand(BaseSubcommand):
         if init_swarm:
             self.execute('docker swarm init')
 
-    def push(self, path: str = None) -> None:
+    def list_configs(self) -> list:
+        return docker.get_configs()
+
+    def read(self, name: str) -> str:
+        return docker.get_config(name)
+
+    def write(self, name: str, path) -> None:
         """
         Saves an environment into the swarm
         """
-        args = self.workflow.args
-
-        path = path or args.path
-        if not path:
-            return self.print_subcommand_help(__doc__, error='path needed to load')
-
-        docker.load_config(args.config_name, path)
-
-    def render_buf(self, buf, data: dict = None, runtime_config: bool = True):
-        data = data or self.data  # pylint: disable=E1101
-
-        # reset runtime variables
-        if not runtime_config:
-            data.update(self._rendered_config)
-
-        lines = []
-        for k, v in data.items():
-            lines.append(f'{k}={v}')
-
-        buf.write('\n'.join(sorted(lines)))
+        docker.load_config(name, path)

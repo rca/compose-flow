@@ -1,5 +1,7 @@
 import os
 
+CF_APP_CONFIG_ROOT = os.environ.get('CF_APP_CONFIG_ROOT', os.path.expanduser(f'~/.compose'))
+APP_ENVIRONMENTS_ROOT = os.path.join(CF_APP_CONFIG_ROOT, 'environments')
 
 LOGGING = {
     'version': 1,

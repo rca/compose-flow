@@ -10,6 +10,47 @@ from tests import BaseTestCase
 
 @mock.patch('compose_flow.commands.workflow.PROJECT_NAME', new='testdirname')
 class EnvTestCase(BaseTestCase):
+    def test_backend_default(self, *mocks):
+        """
+        Ensure a local backend is returned
+        """
+        flow = mock.Mock()
+        flow.args.remote = None
+
+        env = Env(flow)
+
+        self.assertEqual(env.backend.__class__.__name__, 'LocalBackend')
+
+    @mock.patch('compose_flow.commands.subcommands.env.get_backend')
+    def test_backend_from_app_config(self, *mocks):
+        """
+        Ensure a local backend is returned
+        """
+        backend_name = 'swarm'
+
+        flow = mock.Mock()
+        flow.args.remote = 'dev'
+
+        flow.app_config = {
+            'remotes': {
+                'dev': {
+                    'environment': {
+                        'backend': backend_name,
+                    },
+                },
+            },
+        }
+
+        get_backend_mock = mocks[0]
+        get_backend_mock.return_value = 'SwarmBackend'
+
+        env = Env(flow)
+        backend = env.backend
+
+        self.assertEqual(backend, 'SwarmBackend')
+
+        get_backend_mock.assert_called_with(backend_name)
+
     def test_config_name_arg(self, *mocks):
         """
         Ensure the config arg updates the config name
@@ -52,7 +93,7 @@ class EnvTestCase(BaseTestCase):
 
         self.assertEqual(flow.config_name, 'dev-testdirname')
 
-    @mock.patch('compose_flow.commands.subcommands.env.docker')
+    @mock.patch('compose_flow.commands.subcommands.env.get_backend')
     def test_load_ro(self, *mocks):
         """
         Ensures that env.load does not reset the VERSION var
@@ -63,8 +104,8 @@ class EnvTestCase(BaseTestCase):
         version = '1.2.3'
         docker_image = 'foo:bar'
 
-        docker_mock = mocks[0]
-        docker_mock.get_config.return_value = (
+        get_backend_mock = mocks[0]
+        get_backend_mock.return_value.read.return_value = (
             f"FOO=1\nBAR=2\nVERSION={version}\nDOCKER_IMAGE={docker_image}"
         )
 
@@ -81,33 +122,3 @@ class EnvTestCase(BaseTestCase):
         self.assertEqual(
             ['BAR', 'DOCKER_IMAGE', 'FOO', 'VERSION'], sorted(env._persistable_keys)
         )
-
-    @mock.patch('compose_flow.commands.subcommands.env.Env.rw_env', new=True)
-    @mock.patch('compose_flow.commands.subcommands.env.utils')
-    @mock.patch('compose_flow.commands.subcommands.env.docker')
-    def test_update_version(self, *mocks):
-        """
-        Ensures that version in env is updated when the publish command is run
-        """
-        version = '1.2.3'
-        new_version = '0.9.999'
-        docker_image = 'foo:bar'
-
-        docker_mock = mocks[0]
-        docker_mock.get_config.return_value = (
-            f"FOO=1\nBAR=2\nVERSION={version}\nDOCKER_IMAGE={docker_image}"
-        )
-
-        utils_mock = mocks[1]
-        utils_mock.get_tag_version.return_value = new_version
-        utils_mock.render = utils.render
-
-        command = shlex.split('-e dev publish')
-        flow = Workflow(argv=command)
-
-        env = Env(flow)
-
-        env.update_workflow_env()
-
-        self.assertEqual(utils_mock.get_tag_version.return_value, env.data['VERSION'])
-        self.assertEqual(f'test.registry.prefix.com/testdirname:{new_version}', env.data['DOCKER_IMAGE'])

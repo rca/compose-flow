@@ -8,7 +8,7 @@ from compose_flow.commands.subcommands.profile import Profile
 from tests import BaseTestCase
 
 
-@mock.patch('compose_flow.commands.subcommands.env.docker')
+@mock.patch('compose_flow.commands.subcommands.env.get_backend')
 @mock.patch('compose_flow.commands.subcommands.env.os')
 @mock.patch('compose_flow.commands.subcommands.profile.Profile.write')
 class DeployTestCase(BaseTestCase):
