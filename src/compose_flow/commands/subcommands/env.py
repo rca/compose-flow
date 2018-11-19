@@ -4,8 +4,6 @@ Env subcommand
 import io
 import logging
 import os
-import shlex
-import sys
 import tempfile
 
 from functools import lru_cache
@@ -13,7 +11,6 @@ from functools import lru_cache
 from compose_flow import docker, errors, utils
 from compose_flow.commands.subcommands import BaseSubcommand
 from compose_flow.environment.backends import get_backend
-from compose_flow.settings import APP_ENVIRONMENTS_ROOT
 
 DOCKER_IMAGE_VAR = 'DOCKER_IMAGE'
 VERSION_VAR = 'VERSION'

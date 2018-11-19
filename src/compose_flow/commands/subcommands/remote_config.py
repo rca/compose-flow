@@ -2,9 +2,6 @@
 Remote configuration subcommand
 """
 import os
-import tempfile
-
-import yaml
 
 from .base import BaseSubcommand
 
