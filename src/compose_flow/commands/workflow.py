@@ -23,14 +23,13 @@ from .subcommands.remote import Remote
 from .. import errors, settings
 from ..config import DC_CONFIG_ROOT
 from ..errors import CommandError, ErrorMessage
-from ..settings import CF_APP_CONFIG_ROOT
 from ..utils import get_repo_name, yaml_load
 
 PACKAGE_NAME = __name__.split('.', 1)[0].replace('_', '-')
 PROJECT_NAME = get_repo_name()
 
 CF_REMOTES_CONFIG_FILENAME = 'config.yml'
-CF_REMOTES_CONFIG_PATH = os.path.expanduser(f'{CF_APP_CONFIG_ROOT}/{CF_REMOTES_CONFIG_FILENAME}')
+CF_REMOTES_CONFIG_PATH = os.path.expanduser(f'{settings.APP_CONFIG_ROOT}/{CF_REMOTES_CONFIG_FILENAME}')
 
 
 class Workflow(object):
@@ -79,6 +78,13 @@ class Workflow(object):
     @property
     def config_name(self):
         return self.args.config_name or self.project_name  # pylint: disable=E1101
+
+    @property
+    def docker_image_prefix(self):
+        docker_image_prefix = self.app_config.get('build', {}).get('image_prefix')
+        docker_image_prefix = docker_image_prefix or settings.DOCKER_IMAGE_PREFIX
+
+        return docker_image_prefix
 
     @property
     @lru_cache()
