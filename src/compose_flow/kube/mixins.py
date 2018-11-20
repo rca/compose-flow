@@ -1,6 +1,7 @@
 """
 Compose subcommand
 """
+import base64
 from functools import lru_cache
 import os
 import pathlib
@@ -8,7 +9,7 @@ import sh
 import yaml
 
 
-from compose_flow.errors import InvalidTargetClusterError, MissingManifestError, ManifestCheckError
+from compose_flow.errors import InvalidTargetClusterError, MissingKubeContextError, MissingManifestError, ManifestCheckError, NoSuchConfig
 from compose_flow.config import get_config
 from compose_flow.kube.checks import BaseChecker, ManifestChecker, AnswersChecker
 from compose_flow.utils import render, render_jinja
@@ -37,6 +38,175 @@ class KubeMixIn(object):
     def rancher_config(self):
         return self.config['rancher']
 
+    @property
+    def namespace(self):
+        return f'{self.workflow.args.profile}-compose-flow'
+
+    @property
+    def secret_name(self):
+        return f'{self.workflow.config_name}'
+
+    # check methods to validate setup
+    def _check_kube_context(self):
+        """
+        Checks to see if there is a kubecontext configured
+        """
+        try:
+            self.execute('kubectl config current-context')
+        except sh.ErrorReturnCode_1 as exc:
+            message = exc.stderr.decode('utf8').strip().lower()
+
+            if 'current-context is not set' in message:
+                raise MissingKubeContextError('No current context configured in kubectl!')
+
+    def _check_namespace(self):
+        """
+        Checks for existence of the target namespace.
+
+        If not found, attempt to create it.
+        """
+        try:
+            self.execute(f'{self.kubectl_command} get namespace {self.namespace}')
+        except sh.ErrorReturnCode_1 as exc:
+            message = exc.stderr.decode('utf8').strip().lower()
+
+            if f'namespaces "{self.namespace}" not found' in message:
+                self.logger.warning("Namespace '%s' not found - attempting to create it...", self.namespace)
+                self.execute(f'{self.kubectl_command} create namespace {self.namespace}')
+
+    # Secret management methods for use by Backends
+    def _list_secrets(self):
+        return self.execute(f'{self.kubectl_command} get secrets --namespace {self.namespace}')
+
+    def _get_secret(self, name: str):
+        return self.execute(
+                f'{self.kubectl_command} get secrets --namespace {self.namespace} -o yaml {self.secret_name}'
+            )
+
+    def _read_secret_env(self, name: str) -> str:
+        """
+        Reads environment from a Secret
+        """
+        try:
+            raw_secret = self._get_secret(name)
+            self.secret_exists = True
+        except sh.ErrorReturnCode_1 as exc:
+            message = exc.stderr.decode('utf8').strip().lower()
+
+            if f'secrets "{self.secret_name}" not found' in message:
+                self.secret_exists = False
+                raise NoSuchConfig(f'secret name={self.secret_name} not found')
+
+            raise
+
+        secret_yaml = yaml.load(raw_secret.stdout)
+        payload = secret_yaml.get('data')
+        if not payload or '_env' not in payload:
+            raise NoSuchConfig("secret name={self.secret_name} is empty")
+
+        return base64.b64decode(secret_yaml['data']['_env']).decode('utf8')
+
+    def _write_secret_env(self, name: str, path: str) -> None:
+        """
+        Saves an environment into a Secret
+        """
+        with open(path, 'r') as stream:
+            b64_env = base64.b64encode(stream.read().encode()).decode('utf8')
+
+        patch_string = f'{{"data": {{"{self.env_key}": "{b64_env}"}}}}'
+        if not self.secret_exists:
+            try:
+                self.execute(f"{self.kubectl_command} create secret generic --namespace {self.namespace} {self.secret_name}")
+            except sh.ErrorReturnCode_1 as exc:
+                message = exc.stderr.decode('utf8').strip().lower()
+
+                if f'secrets "{self.secret_name}" already exists' not in message:
+                    raise
+
+        self.execute(f"{self.kubectl_command} patch secrets --namespace {self.namespace} {self.secret_name} --patch '{patch_string}'")
+
+    # Native Kube context management logic
+    def switch_kube_context(self):
+        '''
+        Switch current kubectl context to target specified cluster based on environment
+        '''
+        profile_name = self.workflow.args.profile
+        context_mapping = self.config.get('kubecontexts', {})
+
+        target_context = context_mapping.get(profile_name, profile_name)
+        try:
+            self.execute(f'kubectl config use-context {target_context}')
+        except sh.ErrorReturnCode_1:
+            raise InvalidTargetClusterError("No context is defined for profile {}!\n\n"
+                                            "Please specify a corresponding context in your kubeconfig file "
+                                            "or map this profile name to an existing context "
+                                            "in the 'kubecontexts' section of compose-flow.yml".format(profile_name))
+
+    # Rancher context management logic
+    @property
+    @lru_cache()
+    def cluster_listing(self):
+        cluster_ls_command = f"rancher cluster ls --format '{CLUSTER_LS_FORMAT}'"
+        output = str(self.execute(cluster_ls_command)).strip()
+        for err in NONFATAL_ERROR_MESSAGES:
+            if err in output:
+                output = output.replace(err, '')
+        return yaml.load(output)
+
+    @property
+    def cluster_name(self):
+        '''
+        Get the cluster name for the specified target environment.
+
+        If profile_name is in the compose-flow.yml Rancher cluster mapping,
+        use its value - otherwise use workflow.args.profile
+        '''
+        profile_name = self.workflow.args.profile
+        cluster_mapping = self.rancher_config.get('clusters', {})
+
+        if profile_name in EXCLUDE_PROFILES:
+            raise InvalidTargetClusterError(
+                "Invalid profile '{0}' for default cluster logic - please "
+                "specify an explicit cluster mapping in compose-flow.yml and "
+                "use a profile other than '{0}'".format(profile_name))
+
+        return cluster_mapping.get(profile_name, profile_name)
+
+    @property
+    def cluster_id(self):
+        return self.cluster_listing[self.cluster_name]
+
+    def switch_rancher_context(self):
+        '''
+        Switch Rancher CLI context to target specified cluster based on environment
+        and specified project name from compose-flow.yml
+        '''
+        # Get the project name specified in compose-flow.yml
+        target_project_name = self.rancher_config['project']
+
+        base_context_switch_command = "rancher context switch "
+        name_context_switch_command = base_context_switch_command + target_project_name
+        try:
+            self.logger.info(name_context_switch_command)
+            self.execute(name_context_switch_command)
+        except sh.ErrorReturnCode_1 as exc:  # pylint: disable=E1101
+            stderr = str(exc.stderr)
+            if 'Multiple resources of type project found for name' in stderr:
+                self.logger.info(
+                    "Multiple clusters have a project called %s - "
+                    "switching context by Project ID", target_project_name
+                )
+                # Choose the one that matches target cluster ID
+                opts = stderr[stderr.find('[')+1:stderr.find(']')].split(' ')
+                target_project_id = [o for o in opts if self.cluster_id in o][0]
+
+                id_context_switch_command = base_context_switch_command + target_project_id
+                self.logger.info(id_context_switch_command)
+                self.execute(id_context_switch_command)
+            else:
+                raise
+
+    # YAML rendering and deployment methods
     def get_app_deploy_command(self, app: dict, target: str = 'rancher') -> str:
         '''
         Construct command to install or upgrade a Rancher app
@@ -216,84 +386,3 @@ class KubeMixIn(object):
         self.render_single_yaml(answers_path, rendered_path, AnswersChecker(), raw)
 
         return rendered_path
-
-    # Native Kube context management logic
-    def switch_kube_context(self):
-        '''
-        Switch current kubectl context to target specified cluster based on environment
-        '''
-        profile_name = self.workflow.args.profile
-        context_mapping = self.config.get('kubecontexts', {})
-
-        target_context = context_mapping.get(profile_name, profile_name)
-        try:
-            self.execute(f'kubectl config use-context {target_context}')
-        except sh.ErrorReturnCode_1:
-            raise InvalidTargetClusterError("No context is defined for profile {}!\n\n"
-                                            "Please specify a corresponding context in your kubeconfig file "
-                                            "or map this profile name to an existing context "
-                                            "in the 'kubecontexts' section of compose-flow.yml".format(profile_name))
-
-    # Rancher context management logic
-    @property
-    @lru_cache()
-    def cluster_listing(self):
-        cluster_ls_command = f"rancher cluster ls --format '{CLUSTER_LS_FORMAT}'"
-        output = str(self.execute(cluster_ls_command)).strip()
-        for err in NONFATAL_ERROR_MESSAGES:
-            if err in output:
-                output = output.replace(err, '')
-        return yaml.load(output)
-
-    @property
-    def cluster_name(self):
-        '''
-        Get the cluster name for the specified target environment.
-
-        If profile_name is in the compose-flow.yml Rancher cluster mapping,
-        use its value - otherwise use workflow.args.profile
-        '''
-        profile_name = self.workflow.args.profile
-        cluster_mapping = self.rancher_config.get('clusters', {})
-
-        if profile_name in EXCLUDE_PROFILES:
-            raise InvalidTargetClusterError(
-                "Invalid profile '{0}' for default cluster logic - please "
-                "specify an explicit cluster mapping in compose-flow.yml and "
-                "use a profile other than '{0}'".format(profile_name))
-
-        return cluster_mapping.get(profile_name, profile_name)
-
-    @property
-    def cluster_id(self):
-        return self.cluster_listing[self.cluster_name]
-
-    def switch_rancher_context(self):
-        '''
-        Switch Rancher CLI context to target specified cluster based on environment
-        and specified project name from compose-flow.yml
-        '''
-        # Get the project name specified in compose-flow.yml
-        target_project_name = self.rancher_config['project']
-
-        base_context_switch_command = "rancher context switch "
-        name_context_switch_command = base_context_switch_command + target_project_name
-        try:
-            self.logger.info(name_context_switch_command)
-            self.execute(name_context_switch_command)
-        except sh.ErrorReturnCode_1 as exc:  # pylint: disable=E1101
-            stderr = str(exc.stderr)
-            if 'Multiple resources of type project found for name' in stderr:
-                self.logger.info(
-                    "Multiple clusters have a project called %s - "
-                    "switching context by Project ID", target_project_name
-                )
-                # Choose the one that matches target cluster ID
-                opts = stderr[stderr.find('[')+1:stderr.find(']')].split(' ')
-                target_project_id = [o for o in opts if self.cluster_id in o][0]
-
-                id_context_switch_command = base_context_switch_command + target_project_id
-                self.logger.info(id_context_switch_command)
-                self.execute(id_context_switch_command)
-            else:
-                raise

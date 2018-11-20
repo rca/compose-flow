@@ -6,11 +6,11 @@ from compose_flow.kube.mixins import KubeMixIn
 from compose_flow import shell
 
 
-class KubeBackend(BaseBackend, KubeMixIn):
+class RancherBackend(BaseBackend, KubeMixIn):
     """
     Manages native `kubectl secret` storage
     """
-    kubectl_command = 'kubectl'
+    kubectl_command = 'rancher kubectl'
     env_key = '_env'
 
     def __init__(self, *args, **kwargs):
@@ -19,8 +19,7 @@ class KubeBackend(BaseBackend, KubeMixIn):
         self.secret_exists = None
         self.workflow = kwargs.get('workflow')
 
-        self.switch_kube_context()
-        self._check_kube_context()
+        self.switch_rancher_context()
         self._check_namespace()
 
     def execute(self, command: str, **kwargs):
