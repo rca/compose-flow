@@ -34,7 +34,7 @@ class Env(BaseSubcommand):
         # when data is modified, set this to True
         self._data_modified = False
 
-        # keys that will be persisted to the docker config
+        # keys that will be persisted to the backend
         self._persistable_keys = []
 
         # the original values for config items whose values have been rendered
@@ -55,7 +55,7 @@ class Env(BaseSubcommand):
         if remote is not None:
             backend_name = app_config.get('remotes', {}).get(remote, {}).get('environment', {}).get('backend', backend_name)
 
-        backend = get_backend(backend_name)
+        backend = get_backend(backend_name, workflow=self.workflow)
 
         self.logger.debug(f'backend_name={backend_name}, backend={backend}')
 
@@ -93,7 +93,7 @@ class Env(BaseSubcommand):
         Prints the loaded config to stdout
         """
         config_name = self.workflow.config_name
-        if config_name not in self.backend.list_configs():
+        if config_name not in self.backend.ls():
             return f'docker config named {config_name} not in backend={self.backend.__class__.__name__}'
 
         print(self.render())
@@ -213,7 +213,7 @@ class Env(BaseSubcommand):
         """
         Updates the environment data with the new given data
 
-        When persistable is True, the values being set are flagged for persisting into the docker config
+        When persistable is True, the values being set are flagged for persisting into the backend
         and the _data_modified flag is set
         """
         data = self._data or {}
@@ -259,7 +259,7 @@ class Env(BaseSubcommand):
 
     def load(self) -> dict:
         """
-        Loads an environment from the docker swarm config
+        Loads an environment from the backend
         """
         data = {}
 
@@ -339,7 +339,7 @@ class Env(BaseSubcommand):
 
     def rm(self) -> None:
         """
-        Removes an environment from the swarm
+        Removes an environment from the backend
         """
         docker.remove_config(self.project_name)  # pylint: disable=E1101
 
@@ -380,7 +380,7 @@ class Env(BaseSubcommand):
 
     def write(self) -> None:
         """
-        Writes the environment into the docker config
+        Writes the environment into the backend
         """
         data = self.data
 

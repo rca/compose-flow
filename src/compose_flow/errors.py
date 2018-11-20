@@ -101,3 +101,9 @@ class ManifestCheckError(ErrorMessage):
     """
     Raised when a rendered YAML manifest fails to pass a check
     """
+
+
+class MissingKubeContextError(ErrorMessage):
+    """
+    Raised when a kubeconfig context is missing.
+    """

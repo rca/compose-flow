@@ -20,7 +20,7 @@ class LocalBackend(BaseBackend):
 
         self.root = root or APP_ENVIRONMENTS_ROOT
 
-    def list_configs(self):
+    def ls(self):
         if not os.path.exists(self.root):
             return []
 

@@ -1,8 +1,21 @@
-class BaseBackend:
-    def list_configs(self):
+import logging
+
+
+class BaseBackend(object):
+    def __init__(self, *args, **kwargs):
+        pass
+
+    @property
+    def logger(self):
+        return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
+
+
+    def ls(self):
+        """List the available environments"""
         raise NotImplementedError()
 
     def read(self, name: str):
+        """Read a specific environment"""
         raise NotImplementedError()
 
     def write(self, name: str, path: str):
