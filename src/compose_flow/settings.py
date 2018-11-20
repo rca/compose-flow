@@ -1,6 +1,6 @@
 import os
 
-APP_CONFIG_ROOT = os.environ.get('APP_CONFIG_ROOT', os.path.expanduser(f'~/.compose'))
+APP_CONFIG_ROOT = os.environ.get('CF_APP_CONFIG_ROOT', os.path.expanduser(f'~/.compose'))
 APP_ENVIRONMENTS_ROOT = os.path.join(APP_CONFIG_ROOT, 'environments')
 
 LOGGING = {
