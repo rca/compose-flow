@@ -21,7 +21,11 @@ class KubeBackend(BaseBackend, KubeMixIn):
 
         self.switch_kube_context()
         self._check_kube_context()
-        self._check_namespace()
+        self._check_kube_namespace()
+
+    @property
+    def namespace(self):
+        return f'compose-flow-{self.workflow.args.profile}'
 
     def execute(self, command: str, **kwargs):
         env = os.environ

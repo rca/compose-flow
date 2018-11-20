@@ -8,10 +8,14 @@ from compose_flow import shell
 
 class RancherBackend(BaseBackend, KubeMixIn):
     """
-    Manages native `kubectl secret` storage
+    Manages Kubernetes Secret storage via Rancher CLI
     """
     kubectl_command = 'rancher kubectl'
     env_key = '_env'
+
+    @property
+    def namespace(self):
+        return f'compose-flow-{self.project_name.lower()}'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -20,7 +24,7 @@ class RancherBackend(BaseBackend, KubeMixIn):
         self.workflow = kwargs.get('workflow')
 
         self.switch_rancher_context()
-        self._check_namespace()
+        self._check_rancher_namespace()
 
     def execute(self, command: str, **kwargs):
         env = os.environ

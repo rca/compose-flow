@@ -107,3 +107,9 @@ class MissingKubeContextError(ErrorMessage):
     """
     Raised when a kubeconfig context is missing.
     """
+
+
+class MissingRancherProject(ErrorMessage):
+    """
+    Raised when no Rancher project is configured or the configured project is not found.
+    """

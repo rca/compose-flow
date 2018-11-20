@@ -9,7 +9,9 @@ import sh
 import yaml
 
 
-from compose_flow.errors import InvalidTargetClusterError, MissingKubeContextError, MissingManifestError, ManifestCheckError, NoSuchConfig
+from compose_flow.errors import InvalidTargetClusterError, MissingKubeContextError, \
+                                MissingManifestError, ManifestCheckError, NoSuchConfig, \
+                                MissingRancherProject
 from compose_flow.config import get_config
 from compose_flow.kube.checks import BaseChecker, ManifestChecker, AnswersChecker
 from compose_flow.utils import render, render_jinja
@@ -39,12 +41,8 @@ class KubeMixIn(object):
         return self.config['rancher']
 
     @property
-    def namespace(self):
-        return f'{self.workflow.args.profile}-compose-flow'
-
-    @property
     def secret_name(self):
-        return f'{self.workflow.config_name}'
+        return self.workflow.config_name
 
     # check methods to validate setup
     def _check_kube_context(self):
@@ -59,9 +57,9 @@ class KubeMixIn(object):
             if 'current-context is not set' in message:
                 raise MissingKubeContextError('No current context configured in kubectl!')
 
-    def _check_namespace(self):
+    def _check_kube_namespace(self):
         """
-        Checks for existence of the target namespace.
+        Checks for existence of the target namespace for native kubectl.
 
         If not found, attempt to create it.
         """
@@ -73,6 +71,18 @@ class KubeMixIn(object):
             if f'namespaces "{self.namespace}" not found' in message:
                 self.logger.warning("Namespace '%s' not found - attempting to create it...", self.namespace)
                 self.execute(f'{self.kubectl_command} create namespace {self.namespace}')
+
+    def _check_rancher_namespace(self):
+        """
+        Checks for existence of the target namespace for Rancher.
+
+        If not found, attempt to create it.
+        """
+        namespaces = self.execute(f'rancher namespace ls --quiet').stdout.decode('utf8').strip().split('\n')
+
+        if self.namespace not in namespaces:
+            self.logger.warning("Namespace '%s' not found - attempting to create it...", self.namespace)
+            self.execute(f'rancher namespaces create {self.namespace}')
 
     # Secret management methods for use by Backends
     def _list_secrets(self):
@@ -176,13 +186,22 @@ class KubeMixIn(object):
     def cluster_id(self):
         return self.cluster_listing[self.cluster_name]
 
+    @property
+    def project_name(self):
+        try:
+            return self.rancher_config['project']
+        except KeyError:
+            raise MissingRancherProject('ERROR: You must configure a Rancher project in '
+                                        'compose-flow.yml in order to use Rancher '
+                                        'as a backend or deployment target!')
+
     def switch_rancher_context(self):
         '''
         Switch Rancher CLI context to target specified cluster based on environment
         and specified project name from compose-flow.yml
         '''
         # Get the project name specified in compose-flow.yml
-        target_project_name = self.rancher_config['project']
+        target_project_name = self.project_name
 
         base_context_switch_command = "rancher context switch "
         name_context_switch_command = base_context_switch_command + target_project_name
