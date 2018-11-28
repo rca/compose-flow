@@ -62,6 +62,9 @@ class Env(BaseSubcommand):
         return backend
 
     def edit(self) -> None:
+        """
+        Open the current backend data in an editor and write changes back
+        """
         with tempfile.NamedTemporaryFile('w') as fh:
             path = fh.name
 
@@ -74,6 +77,16 @@ class Env(BaseSubcommand):
             self.execute(f'{editor} {path}', _fg=True)
 
             self.backend.write(self.workflow.args.config_name, path)
+
+    def write(self) -> None:
+        """
+        Writes the environment into the backend
+        """
+        with tempfile.NamedTemporaryFile('w+') as fh:
+            self.render_buf(fh, runtime_config=False)
+            fh.flush()
+
+            self.backend.write(self.workflow.args.config_name, fh.name)
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
@@ -377,17 +390,3 @@ class Env(BaseSubcommand):
                 )
 
         return tag_version
-
-    def write(self) -> None:
-        """
-        Writes the environment into the backend
-        """
-        data = self.data
-
-        with tempfile.NamedTemporaryFile('w+') as fh:
-            fh.write(self.render(data))
-            fh.flush()
-
-            fh.seek(0, 0)
-
-            self.push(path=fh.name)
