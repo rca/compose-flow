@@ -37,6 +37,9 @@ class RancherBackend(BaseBackend, KubeMixIn):
     def read(self, name: str) -> str:
         return self._read_secret_env(name)
 
+    def rm(self, name: str) -> None:
+        self._remove_secret(name)
+
     def write(self, name: str, path) -> None:
         """
         Saves an environment into a Secret

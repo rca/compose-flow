@@ -354,7 +354,7 @@ class Env(BaseSubcommand):
         """
         Removes an environment from the backend
         """
-        docker.remove_config(self.project_name)  # pylint: disable=E1101
+        self.backend.rm(self.workflow.config_name)
 
     def update_workflow_env(self):
         """

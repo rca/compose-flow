@@ -72,6 +72,12 @@ class SwarmBackend(BaseBackend):
     def read(self, name: str) -> str:
         return docker.get_config(name)
 
+    def rm(self, name: str) -> None:
+        """
+        Removes a config from Swarm
+        """
+        docker.remove_config(name)
+
     def write(self, name: str, path) -> None:
         """
         Saves an environment into the swarm

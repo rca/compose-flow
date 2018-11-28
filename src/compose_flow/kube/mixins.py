@@ -135,6 +135,13 @@ class KubeMixIn(object):
 
         self.execute(f"{self.kubectl_command} patch secrets --namespace {self.namespace} {self.secret_name} --patch '{patch_string}'")
 
+    def _remove_secret(self, name: str) -> None:
+        """
+        Removes a Secret corresponding to an environment
+        """
+        self.execute(f"{self.kubectl_command} delete secrets --namespace {self.namespace} {self.secret_name}")
+
+
     # Native Kube context management logic
     def switch_kube_context(self):
         '''
