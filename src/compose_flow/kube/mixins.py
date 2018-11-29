@@ -6,6 +6,7 @@ from functools import lru_cache
 import os
 import pathlib
 import sh
+import shutil
 import yaml
 
 
@@ -392,6 +393,10 @@ class KubeMixIn(object):
         directory = pathlib.Path(dir_path)
         manifests = directory.glob('**/*.y*ml')
         rendered_path = self.get_manifest_filename(dir_path)
+
+        # reset rendered_path to avoid deploying lingering files
+        if os.path.isdir(rendered_path):
+            shutil.rmtree(rendered_path)
 
         for manifest in manifests:
             render_dest = os.path.join(
