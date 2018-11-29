@@ -20,7 +20,7 @@ class LocalBackend(BaseBackend):
 
         self.root = root or APP_ENVIRONMENTS_ROOT
 
-    def list_configs(self):
+    def ls(self):
         if not os.path.exists(self.root):
             return []
 
@@ -39,6 +39,14 @@ class LocalBackend(BaseBackend):
 
         with open(path, 'r') as fh:
             return fh.read()
+
+    def rm(self, name: str) -> None:
+        """
+        Removes an environment file
+        """
+        path = self.get_path(name)
+        if os.path.exists(path):
+            os.remove(path)
 
     def write(self, name: str, path: str) -> None:
         # create the directory if it does not exist

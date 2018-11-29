@@ -66,11 +66,17 @@ class SwarmBackend(BaseBackend):
         if init_swarm:
             self.execute('docker swarm init')
 
-    def list_configs(self) -> list:
+    def ls(self) -> list:
         return docker.get_configs()
 
     def read(self, name: str) -> str:
         return docker.get_config(name)
+
+    def rm(self, name: str) -> None:
+        """
+        Removes a config from Swarm
+        """
+        docker.remove_config(name)
 
     def write(self, name: str, path) -> None:
         """

@@ -34,7 +34,7 @@ class Env(BaseSubcommand):
         # when data is modified, set this to True
         self._data_modified = False
 
-        # keys that will be persisted to the docker config
+        # keys that will be persisted to the backend
         self._persistable_keys = []
 
         # the original values for config items whose values have been rendered
@@ -55,13 +55,16 @@ class Env(BaseSubcommand):
         if remote is not None:
             backend_name = app_config.get('remotes', {}).get(remote, {}).get('environment', {}).get('backend', backend_name)
 
-        backend = get_backend(backend_name)
+        backend = get_backend(backend_name, workflow=self.workflow)
 
         self.logger.debug(f'backend_name={backend_name}, backend={backend}')
 
         return backend
 
     def edit(self) -> None:
+        """
+        Open the current backend data in an editor and write changes back
+        """
         with tempfile.NamedTemporaryFile('w') as fh:
             path = fh.name
 
@@ -74,6 +77,16 @@ class Env(BaseSubcommand):
             self.execute(f'{editor} {path}', _fg=True)
 
             self.backend.write(self.workflow.args.config_name, path)
+
+    def write(self) -> None:
+        """
+        Writes the environment into the backend
+        """
+        with tempfile.NamedTemporaryFile('w+') as fh:
+            self.render_buf(fh, runtime_config=False)
+            fh.flush()
+
+            self.backend.write(self.workflow.args.config_name, fh.name)
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
@@ -93,7 +106,7 @@ class Env(BaseSubcommand):
         Prints the loaded config to stdout
         """
         config_name = self.workflow.config_name
-        if config_name not in self.backend.list_configs():
+        if config_name not in self.backend.ls():
             return f'docker config named {config_name} not in backend={self.backend.__class__.__name__}'
 
         print(self.render())
@@ -213,7 +226,7 @@ class Env(BaseSubcommand):
         """
         Updates the environment data with the new given data
 
-        When persistable is True, the values being set are flagged for persisting into the docker config
+        When persistable is True, the values being set are flagged for persisting into the backend
         and the _data_modified flag is set
         """
         data = self._data or {}
@@ -259,7 +272,7 @@ class Env(BaseSubcommand):
 
     def load(self) -> dict:
         """
-        Loads an environment from the docker swarm config
+        Loads an environment from the backend
         """
         data = {}
 
@@ -339,9 +352,9 @@ class Env(BaseSubcommand):
 
     def rm(self) -> None:
         """
-        Removes an environment from the swarm
+        Removes an environment from the backend
         """
-        docker.remove_config(self.project_name)  # pylint: disable=E1101
+        self.backend.rm(self.workflow.config_name)
 
     def update_workflow_env(self):
         """
@@ -377,17 +390,3 @@ class Env(BaseSubcommand):
                 )
 
         return tag_version
-
-    def write(self) -> None:
-        """
-        Writes the environment into the docker config
-        """
-        data = self.data
-
-        with tempfile.NamedTemporaryFile('w+') as fh:
-            fh.write(self.render(data))
-            fh.flush()
-
-            fh.seek(0, 0)
-
-            self.push(path=fh.name)

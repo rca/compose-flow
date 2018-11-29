@@ -24,7 +24,7 @@ class LocalBackendTestCase(TestCase):
     def test_list(self, *mocks):
         self._setup_mocks(*mocks)
 
-        self.assertEqual(self.backend.list_configs(), ['foo'])
+        self.assertEqual(self.backend.ls(), ['foo'])
 
     def test_read(self, *mocks):
         self._setup_mocks(*mocks)
@@ -57,7 +57,7 @@ class SwarmBackendTestCase(TestCase):
     def test_list(self, *mocks):
         self._setup_mocks(*mocks)
 
-        self.backend.list_configs()
+        self.backend.ls()
 
         self.docker_mock.get_configs.assert_called()
 
