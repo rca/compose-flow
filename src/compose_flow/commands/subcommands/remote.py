@@ -105,12 +105,12 @@ class Remote(BaseSubcommand):
 
         args = self.workflow.args
         data = self.workflow.app_config
-        environment = args.environment
+        remote = args.remote
 
         try:
-            self._host = data['remotes'][environment]['ssh']
+            self._host = data['remotes'][remote]['ssh']
         except KeyError:
-            # it's perfectly fine to not have a remote config for an environment
+            # it's perfectly fine to not have a remote config
             pass
 
         return self._host
