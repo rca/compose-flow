@@ -10,6 +10,7 @@ from functools import lru_cache
 
 from compose_flow import docker, errors, utils
 from compose_flow.commands.subcommands import BaseSubcommand
+from compose_flow.config import get_config
 from compose_flow.environment.backends import get_backend
 
 DOCKER_IMAGE_VAR = 'DOCKER_IMAGE'
@@ -51,9 +52,15 @@ class Env(BaseSubcommand):
 
         remote = self.workflow.args.remote
         app_config = self.workflow.app_config
+        project_config = get_config()
 
         if remote is not None:
-            backend_name = app_config.get('remotes', {}).get(remote, {}).get('environment', {}).get('backend', backend_name)
+            project_backend_name = project_config.get('remotes', {}).get(remote, {}).get('backend')
+
+            if project_backend_name:
+                backend_name = project_backend_name
+            else:
+                backend_name = app_config.get('remotes', {}).get(remote, {}).get('environment', {}).get('backend', backend_name)
 
         backend = get_backend(backend_name, workflow=self.workflow)
 
