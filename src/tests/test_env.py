@@ -49,7 +49,7 @@ class EnvTestCase(BaseTestCase):
 
         self.assertEqual(backend, 'SwarmBackend')
 
-        get_backend_mock.assert_called_with(backend_name)
+        get_backend_mock.assert_called_with(backend_name, workflow=flow)
 
     def test_config_name_arg(self, *mocks):
         """

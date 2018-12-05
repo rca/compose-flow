@@ -5,11 +5,13 @@ import io
 import logging
 import os
 import tempfile
+import warnings
 
 from functools import lru_cache
 
 from compose_flow import docker, errors, utils
 from compose_flow.commands.subcommands import BaseSubcommand
+from compose_flow.config import get_config
 from compose_flow.environment.backends import get_backend
 
 DOCKER_IMAGE_VAR = 'DOCKER_IMAGE'
@@ -42,18 +44,40 @@ class Env(BaseSubcommand):
         # similarly, the value for `FOO=runtime://BAR` will be whatever $BAR is at runtime
         self._rendered_config = {}
 
+    def _get_default_backend(self, remote):
+
+        app_config = self.workflow.app_config
+
+        remote_section = app_config.get('remotes', {}).get(remote, {})
+
+        if 'environment' in remote_section.keys():
+            warning_msg = ("The environment subsection of .compose/config.yml has been deprecated! "
+                           "Please flatten your remotes to just the backend field.")
+            warnings.warn(warning_msg)
+            remote_section = remote_section.get('environment', {})
+
+        return remote_section.get('backend')
+
     @property
     def backend(self):
         """
         Returns the environment backend to use
         """
         backend_name = 'local'
-
         remote = self.workflow.args.remote
-        app_config = self.workflow.app_config
+        project_config = get_config()
 
         if remote is not None:
-            backend_name = app_config.get('remotes', {}).get(remote, {}).get('environment', {}).get('backend', backend_name)
+            project_backend_name = project_config.get('remotes', {}).get(remote, {}).get('backend')
+            default_backend_name = self._get_default_backend(remote)
+
+            if project_backend_name:
+                # If a project backend is defined, use that
+                backend_name = project_backend_name
+            elif default_backend_name:
+                # If the remote has a default backend defined in the global config, use that
+                backend_name = default_backend_name
+            # Otherwise use the hard-coded backend_name above
 
         backend = get_backend(backend_name, workflow=self.workflow)
 
