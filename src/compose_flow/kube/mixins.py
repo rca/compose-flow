@@ -218,8 +218,8 @@ class KubeMixIn(object):
             return default_project
         else:
             raise MissingRancherProject('ERROR: You must configure a Rancher project in '
-                                        'compose-flow.yml in order to use Rancher '
-                                        'as a backend or deployment target!')
+                                        'compose-flow.yml or .compose/config.yml in order '
+                                        'to use Rancher as a backend or deployment target!')
 
     def switch_rancher_context(self):
         '''
