@@ -229,6 +229,14 @@ class KubeMixIn(object):
         # Get the project name specified in compose-flow.yml
         target_project_name = self.project_name
 
+        current_context = self.execute("rancher context current").stdout.decode('utf8').strip().split(' ')
+        correct_cluster = current_context[0] == f'Cluster:{self.cluster_name}'
+        correct_project = current_context[1] == f'Project:{target_project_name}'
+
+        if correct_cluster and correct_project:
+            # Don't do anything if context is already correct
+            return
+
         base_context_switch_command = "rancher context switch "
         name_context_switch_command = base_context_switch_command + target_project_name
         try:
