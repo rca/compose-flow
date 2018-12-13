@@ -42,6 +42,11 @@ class KubeMixIn(object):
         return self.config['rancher']
 
     @property
+    def remotes(self):
+        """Section from the global app config for accessing defaults"""
+        return self.workflow.app_config.get('remotes')
+
+    @property
     def secret_name(self):
         return self.workflow.config_name
 
@@ -177,9 +182,11 @@ class KubeMixIn(object):
         Get the cluster name for the specified target environment.
 
         If profile_name is in the compose-flow.yml Rancher cluster mapping,
-        use its value - otherwise use workflow.args.profile
+        use its value - otherwise check the global remote config,
+        then finally use workflow.args.profile if nothing else is defined
         '''
         profile_name = self.workflow.args.profile
+        default_cluster = self.remotes.get(profile_name, {}).get('rancher', {}).get('cluster')
         cluster_mapping = self.rancher_config.get('clusters', {})
 
         if profile_name in EXCLUDE_PROFILES:
@@ -188,7 +195,14 @@ class KubeMixIn(object):
                 "specify an explicit cluster mapping in compose-flow.yml and "
                 "use a profile other than '{0}'".format(profile_name))
 
-        return cluster_mapping.get(profile_name, profile_name)
+        # If project defines
+        configured_name = cluster_mapping.get(profile_name)
+        if configured_name:
+            return configured_name
+        elif default_cluster:
+            return default_cluster
+        else:
+            return profile_name
 
     @property
     def cluster_id(self):
@@ -196,9 +210,13 @@ class KubeMixIn(object):
 
     @property
     def project_name(self):
-        try:
-            return self.rancher_config['project']
-        except KeyError:
+        default_project = self.remotes.get(self.workflow.args.profile, {}).get('rancher', {}).get('project')
+        configured_project = self.rancher_config.get('project')
+        if configured_project:
+            return configured_project
+        elif default_project:
+            return default_project
+        else:
             raise MissingRancherProject('ERROR: You must configure a Rancher project in '
                                         'compose-flow.yml in order to use Rancher '
                                         'as a backend or deployment target!')
