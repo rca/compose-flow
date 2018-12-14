@@ -42,6 +42,11 @@ class KubeMixIn(object):
         return self.config['rancher']
 
     @property
+    def remotes(self):
+        """Section from the global app config for accessing defaults"""
+        return self.workflow.app_config.get('remotes')
+
+    @property
     def secret_name(self):
         return self.workflow.config_name
 
@@ -177,9 +182,11 @@ class KubeMixIn(object):
         Get the cluster name for the specified target environment.
 
         If profile_name is in the compose-flow.yml Rancher cluster mapping,
-        use its value - otherwise use workflow.args.profile
+        use its value - otherwise check the global remote config,
+        then finally use workflow.args.profile if nothing else is defined
         '''
         profile_name = self.workflow.args.profile
+        default_cluster = self.remotes.get(profile_name, {}).get('rancher', {}).get('cluster')
         cluster_mapping = self.rancher_config.get('clusters', {})
 
         if profile_name in EXCLUDE_PROFILES:
@@ -188,7 +195,14 @@ class KubeMixIn(object):
                 "specify an explicit cluster mapping in compose-flow.yml and "
                 "use a profile other than '{0}'".format(profile_name))
 
-        return cluster_mapping.get(profile_name, profile_name)
+        # If project defines
+        configured_name = cluster_mapping.get(profile_name)
+        if configured_name:
+            return configured_name
+        elif default_cluster:
+            return default_cluster
+        else:
+            return profile_name
 
     @property
     def cluster_id(self):
@@ -196,12 +210,16 @@ class KubeMixIn(object):
 
     @property
     def project_name(self):
-        try:
-            return self.rancher_config['project']
-        except KeyError:
+        default_project = self.remotes.get(self.workflow.args.profile, {}).get('rancher', {}).get('project')
+        configured_project = self.rancher_config.get('project')
+        if configured_project:
+            return configured_project
+        elif default_project:
+            return default_project
+        else:
             raise MissingRancherProject('ERROR: You must configure a Rancher project in '
-                                        'compose-flow.yml in order to use Rancher '
-                                        'as a backend or deployment target!')
+                                        'compose-flow.yml or .compose/config.yml in order '
+                                        'to use Rancher as a backend or deployment target!')
 
     def switch_rancher_context(self):
         '''
@@ -210,6 +228,14 @@ class KubeMixIn(object):
         '''
         # Get the project name specified in compose-flow.yml
         target_project_name = self.project_name
+
+        current_context = self.execute("rancher context current").stdout.decode('utf8').strip().split(' ')
+        correct_cluster = current_context[0] == f'Cluster:{self.cluster_name}'
+        correct_project = current_context[1] == f'Project:{target_project_name}'
+
+        if correct_cluster and correct_project:
+            # Don't do anything if context is already correct
+            return
 
         base_context_switch_command = "rancher context switch "
         name_context_switch_command = base_context_switch_command + target_project_name

@@ -27,8 +27,8 @@ RUN groupadd -for -g ${DOCKER_GID} docker \
  && usermod -a -G docker,staff ${user}
 
 # Install kubectl
-ENV KUBE_LATEST_VERSION="v1.11.2"
-ENV KUBE_SHA="a634804554a8619c6e15f43534332e5bdae37cb8"
+ENV KUBE_LATEST_VERSION="v1.13.0"
+ENV KUBE_SHA="5c619006fa45afce6efc51db819aff7d5ba7ef0e"
 RUN curl -L https://storage.googleapis.com/kubernetes-release/release/${KUBE_LATEST_VERSION}/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl \
  && echo "$KUBE_SHA /usr/local/bin/kubectl" | sha1sum -c - \
  && chmod +x /usr/local/bin/kubectl
