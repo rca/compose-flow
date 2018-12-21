@@ -97,8 +97,8 @@ class RancherBackend(TestCase):
         Test that when we store a secret all invalid characters are replaced with `-`
         """
         backend = self.backend
-        backend.workflow = mock.MagicMock(config_name='oss_reporting')
+        backend.workflow = mock.MagicMock(config_name='dev-oss_reporting')
 
-        validation_regex = r'[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*'
+        validation_regex = re.compile(r'^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$')
 
-        self.assertTrue(re.match(validation_regex, backend.secret_name))
+        self.assertTrue(re.match(validation_regex, backend.secret_name) is not None)
