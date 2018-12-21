@@ -48,7 +48,8 @@ class KubeMixIn(object):
 
     @property
     def secret_name(self):
-        return self.workflow.config_name
+        # k8s doesn't support _ in names
+        return self.workflow.config_name.replace('_', '-')
 
     # check methods to validate setup
     def _check_kube_context(self):

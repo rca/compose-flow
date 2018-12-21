@@ -1,4 +1,5 @@
 from unittest import TestCase, mock
+import re
 
 from compose_flow.environment.backends import get_backend
 
@@ -79,3 +80,25 @@ class SwarmBackendTestCase(TestCase):
         self.backend.write(name, path)
 
         self.docker_mock.load_config.assert_called_with(name, path)
+
+
+class RancherBackend(TestCase):
+
+    @property
+    def backend(self):
+        backend = get_backend('rancher')
+
+        return backend
+
+    @mock.patch('compose_flow.environment.backends.rancher_backend.RancherBackend.switch_rancher_context')
+    @mock.patch('compose_flow.environment.backends.rancher_backend.RancherBackend._check_rancher_namespace')
+    def test_secret_contains_no_invalid_characters(self, *mocks):
+        """
+        Test that when we store a secret all invalid characters are replaced with `-`
+        """
+        backend = self.backend
+        backend.workflow = mock.MagicMock(config_name='oss_reporting')
+
+        validation_regex = r'[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*'
+
+        self.assertTrue(re.match(validation_regex, backend.secret_name))
