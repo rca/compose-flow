@@ -14,6 +14,17 @@ profiles:
     - docker-compose.yml
     - docker-compose.publish.yml
 
+rancher:
+  project: Ops
+
+remotes:
+  test:
+    backend: rancher
+  dev:
+    backend: rancher
+  prod:
+    backend: rancher
+
 tasks:
   publish:
     command: compose-flow compose run -u root:docker --rm app /bin/bash ./scripts/publish.sh
