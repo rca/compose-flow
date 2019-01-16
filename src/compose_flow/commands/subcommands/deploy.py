@@ -62,6 +62,8 @@ class Deploy(BaseSubcommand, KubeMixIn):
             # check if app is already installed - if so upgrade, if not install
             command.append(self.get_app_deploy_command(app))
 
+        self.upsert_rancher_namespaces(self.workflow.args.dry_run)
+
         for manifest in self.get_rancher_manifests():
             if isinstance(manifest, str):
                 manifest = {'path': manifest}

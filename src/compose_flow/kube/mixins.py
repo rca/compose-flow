@@ -7,12 +7,11 @@ import os
 import pathlib
 import sh
 import shutil
+from typing import List
 import yaml
 
 
-from compose_flow.errors import InvalidTargetClusterError, MissingKubeContextError, \
-                                MissingManifestError, ManifestCheckError, NoSuchConfig, \
-                                MissingRancherProject
+from compose_flow import errors
 from compose_flow.config import get_config
 from compose_flow.kube.checks import BaseChecker, ManifestChecker, AnswersChecker
 from compose_flow.utils import render, render_jinja
@@ -62,7 +61,7 @@ class KubeMixIn(object):
             message = exc.stderr.decode('utf8').strip().lower()
 
             if 'current-context is not set' in message:
-                raise MissingKubeContextError('No current context configured in kubectl!')
+                raise errors.MissingKubeContext('No current context configured in kubectl!')
 
     def _check_kube_namespace(self):
         """
@@ -112,14 +111,14 @@ class KubeMixIn(object):
 
             if f'secrets "{self.secret_name}" not found' in message:
                 self.secret_exists = False
-                raise NoSuchConfig(f'secret name={self.secret_name} not found')
+                raise errors.NoSuchConfig(f'secret name={self.secret_name} not found')
 
             raise
 
         secret_yaml = yaml.load(raw_secret.stdout)
         payload = secret_yaml.get('data')
         if not payload or '_env' not in payload:
-            raise NoSuchConfig("secret name={self.secret_name} is empty")
+            raise errors.NoSuchConfig("secret name={self.secret_name} is empty")
 
         return base64.b64decode(secret_yaml['data']['_env']).decode('utf8')
 
@@ -160,7 +159,7 @@ class KubeMixIn(object):
         try:
             self.execute(f'kubectl config use-context {target_context}')
         except sh.ErrorReturnCode_1:  # pylint: disable=E1101
-            raise InvalidTargetClusterError("No context is defined for profile {}!\n\n"
+            raise errors.InvalidTargetCluster("No context is defined for profile {}!\n\n"
                                             "Please specify a corresponding context in your kubeconfig file "
                                             "or map this profile name to an existing context "
                                             "in the 'kubecontexts' section of compose-flow.yml".format(profile_name))
@@ -190,7 +189,7 @@ class KubeMixIn(object):
         cluster_mapping = self.rancher_config.get('clusters', {})
 
         if profile_name in EXCLUDE_PROFILES:
-            raise InvalidTargetClusterError(
+            raise errors.InvalidTargetCluster(
                 "Invalid profile '{0}' for default cluster logic - please "
                 "specify an explicit cluster mapping in compose-flow.yml and "
                 "use a profile other than '{0}'".format(profile_name))
@@ -217,7 +216,7 @@ class KubeMixIn(object):
         elif default_project:
             return default_project
         else:
-            raise MissingRancherProject('ERROR: You must configure a Rancher project in '
+            raise errors.MissingRancherProject('ERROR: You must configure a Rancher project in '
                                         'compose-flow.yml or .compose/config.yml in order '
                                         'to use Rancher as a backend or deployment target!')
 
@@ -301,7 +300,7 @@ class KubeMixIn(object):
             namespace_command = ''
         return str(self.execute(f'{self.kubectl_command} get pods {namespace_command}'))
 
-    def list_rancher_apps(self) -> str:
+    def list_rancher_apps(self) -> List[str]:
         return str(self.execute("rancher apps ls --format '{{.App.Name}}'")).split('\n')
 
     def get_rancher_app_install_command(
@@ -311,6 +310,35 @@ class KubeMixIn(object):
 
     def get_rancher_app_upgrade_command(self, app_name: str, rendered_path: str, chart: str, version: str):
         return f'rancher apps upgrade --answers {rendered_path} {app_name} {version}'
+
+    def list_rancher_namespaces(self) -> List[str]:
+        return str(self.execute("rancher namespaces ls --format '{{.Namespace.ID}}'")).split('\n')
+
+    def create_rancher_namespace(self, namespace, dry_run=False):
+        creation_command = f"rancher namespaces create {namespace}"
+
+        if dry_run:
+            print(creation_command)
+        else:
+            try:
+                self.execute(creation_command)
+            except sh.ErrorReturnCode_1 as exc:
+                message = exc.stderr.decode('utf8').strip().lower()
+
+                if 'code=AlreadyExists' in message:
+                    raise errors.RancherNamespaceAlreadyExists(f'Namespace {namespace} already exists in another project!')
+                else:
+                    raise
+
+    def upsert_rancher_namespaces(self, dry_run) -> str:
+        namespaces = self.get_rancher_namespaces()
+        existing = self.list_rancher_namespaces()
+
+        for ns in namespaces:
+            if ns in existing:
+                continue
+            else:
+                self.create_rancher_namespace(ns, dry_run)
 
     def get_kubectl_command(self, manifest: dict, kubectl_prefix: str = 'kubectl') -> str:
         """Construct command to apply a Kubernetes YAML manifest using kubectl."""
@@ -335,7 +363,7 @@ class KubeMixIn(object):
             rendered_path = self.render_manifest(raw_path, raw)
             command += rendered_path
         else:
-            raise MissingManifestError("Missing manifest at path: {}".format(manifest))
+            raise errors.MissingManifest("Missing manifest at path: {}".format(manifest))
 
         return command
 
@@ -365,6 +393,12 @@ class KubeMixIn(object):
 
     def get_kubectl_manifests(self) -> list:
         return self.config.get('kubectl_manifests', [])
+
+    def get_rancher_namespaces(self) -> list:
+        default_namespaces = self.rancher_config.get('namespaces', [])
+        extra_namespaces = self.get_extra_section('namespaces')
+
+        return default_namespaces + extra_namespaces
 
     def get_rancher_manifests(self) -> list:
         default_manifests = self.rancher_config.get('manifests', [])
@@ -408,7 +442,7 @@ class KubeMixIn(object):
             errors = checker.check(rendered)
 
             if errors:
-                raise ManifestCheckError('\n'.join(errors))
+                raise errors.ManifestCheckError('\n'.join(errors))
 
         with open(output_path, 'w') as fh:
             fh.write(rendered)

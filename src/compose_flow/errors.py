@@ -83,7 +83,7 @@ class TagVersionError(Exception):
         self.tag_version = tag_version
 
 
-class InvalidTargetClusterError(ErrorMessage):
+class InvalidTargetCluster(ErrorMessage):
     """
     Raised when a profile is provided with the -e flag
     which would target an invalid Rancher cluster,
@@ -91,19 +91,19 @@ class InvalidTargetClusterError(ErrorMessage):
     """
 
 
-class MissingManifestError(ErrorMessage):
+class MissingManifest(ErrorMessage):
     """
     Raised when a YAML manifest path is specified but not found
     """
 
 
-class ManifestCheckError(ErrorMessage):
+class ManifestCheck(ErrorMessage):
     """
     Raised when a rendered YAML manifest fails to pass a check
     """
 
 
-class MissingKubeContextError(ErrorMessage):
+class MissingKubeContext(ErrorMessage):
     """
     Raised when a kubeconfig context is missing.
     """
@@ -112,4 +112,10 @@ class MissingKubeContextError(ErrorMessage):
 class MissingRancherProject(ErrorMessage):
     """
     Raised when no Rancher project is configured or the configured project is not found.
+    """
+
+
+class RancherNamespaceAlreadyExists(ErrorMessage):
+    """
+    Raised when a namespace is specified for creation but that namespace already exists.
     """
