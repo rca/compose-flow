@@ -308,6 +308,13 @@ rancher:
   - path: ./rbac.yaml
     action: replace
 
+  # Ensure all the namespaces referenced in your
+  # manifests exist and are associated with the
+  # appropriate Rancher project
+  # NOTE: Helm charts create their own namespace
+  namespaces:
+  - my-app
+
   # Per-environment extra apps and manifests
   extras:
     prod:
@@ -317,6 +324,8 @@ rancher:
           chart: custom-redis-backup-chart
           answers: redis-backup-answers.yaml
           version: 0.0.1
+      namespaces:
+        - my-extra-namespace
       manifests:
         - ./redis-lb.yaml
 
