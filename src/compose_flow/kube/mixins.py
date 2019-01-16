@@ -317,9 +317,8 @@ class KubeMixIn(object):
     def create_rancher_namespace(self, namespace, dry_run=False):
         creation_command = f"rancher namespaces create {namespace}"
 
-        if dry_run:
-            print(creation_command)
-        else:
+        print(f"Creating namespace {namespace} in project {self.project_name}")
+        if not dry_run:
             try:
                 self.execute(creation_command)
             except sh.ErrorReturnCode_1 as exc:
