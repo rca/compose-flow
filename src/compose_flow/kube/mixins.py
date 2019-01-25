@@ -294,6 +294,13 @@ class KubeMixIn(object):
     def get_helm_app_upgrade_command(self, app_name: str, rendered_path: str, chart: str, version: str):
         return f'helm upgrade {app_name} {chart} -f {rendered_path} --version {version}'
 
+    def list_pods(self, namespace: str = None):
+        if namespace:
+            namespace_command = f' -n {namespace} '
+        else:
+            namespace_command = ''
+        return str(self.execute(f'rancher kubectl get pods {namespace_command}'))
+
     def list_rancher_apps(self) -> str:
         return str(self.execute("rancher apps ls --format '{{.App.Name}}'")).split('\n')
 
