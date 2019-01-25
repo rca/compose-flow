@@ -1,0 +1,45 @@
+import shlex
+from unittest import mock
+
+from compose_flow.commands import Workflow
+from tests import BaseTestCase
+
+
+class PodTestCase(BaseTestCase):
+
+    @mock.patch('compose_flow.shell.execute')
+    @mock.patch('compose_flow.commands.subcommands.pod.Pod.switch_kube_context')
+    def test_exec_pod(self, *mocks):
+        """
+        Basic test to ensure the command runs as expected
+        """
+        argv = shlex.split(
+            '-e test pod exec sample-namespace generic-workers --container generic-workers -i 2 /bin/bash'
+        )
+        workflow = Workflow(argv=argv)
+
+        pod = workflow.subcommand
+
+        pod.list_pods = mock.MagicMock()
+        pod.list_pods.return_value = (
+            'NAME                                          READY     STATUS    RESTARTS   AGE\n'
+            'celerybeat-568bdbc99d-m8x4n                   1/1       Running   0          96m\n'
+            'generic-workers-6c744b8fb8-7sjb8              1/1       Running   0          96m\n'
+            'generic-workers-6c744b8fb8-9rrjx              1/1       Running   0          96m\n'
+            'generic-workers-6c744b8fb8-c66gl              1/1       Running   0          96m\n'
+            'generic-workers-6c744b8fb8-rjrns              1/1       Running   0          96m\n'
+            'published-frontend-reports-5dd4b54fd5-r42gg   1/1       Running   0          96m\n'
+            'redis-master-0                                1/1       Running   0          2d3h\n'
+            'web-b5496d46f-hjt4q                           1/1       Running   0          96m\n'
+            'web-b5496d46f-k9lwq                           1/1       Running   0          96m\n'
+            'web-b5496d46f-spdqd                           1/1       Running   0          96m\n'
+        )
+
+        workflow.run()
+
+        target_command = (
+            'rancher kubectl -n sample-namespace exec -it generic-workers-6c744b8fb8-c66gl ' 
+            '--container generic-workers -- /bin/bash'
+        )
+
+        self.assertEqual(target_command, mocks[1].call_args[0][0])
