@@ -7,21 +7,12 @@ from tests import BaseTestCase
 
 class PodTestCase(BaseTestCase):
 
-    @mock.patch('compose_flow.shell.execute')
-    @mock.patch('compose_flow.commands.subcommands.pod.Pod.switch_kube_context')
-    def test_exec_pod(self, *mocks):
+    def _get_mock_pod_list_raw(self):
         """
-        Basic test to ensure the command runs as expected
+        Return a string mocking raw pod list data
         """
-        argv = shlex.split(
-            '-e test pod exec sample-namespace generic-workers --container generic-workers -i 2 /bin/bash'
-        )
-        workflow = Workflow(argv=argv)
 
-        pod = workflow.subcommand
-
-        pod.list_pods = mock.MagicMock()
-        pod.list_pods.return_value = (
+        raw_data = (
             'NAME                                          READY     STATUS    RESTARTS   AGE\n'
             'celerybeat-568bdbc99d-m8x4n                   1/1       Running   0          96m\n'
             'generic-workers-6c744b8fb8-7sjb8              1/1       Running   0          96m\n'
@@ -35,11 +26,53 @@ class PodTestCase(BaseTestCase):
             'web-b5496d46f-spdqd                           1/1       Running   0          96m\n'
         )
 
+        return raw_data
+
+    @mock.patch('compose_flow.shell.execute')
+    @mock.patch('compose_flow.commands.subcommands.pod.Pod.switch_kube_context')
+    def test_exec_pod_with_specified_container_and_index(self, *mocks):
+        """
+        Basic test to ensure the command runs as expected
+        """
+        argv = shlex.split(
+            '-e test pod exec sample-namespace generic-workers --container generic-workers -i 2 /bin/bash'
+        )
+        workflow = Workflow(argv=argv)
+
+        pod = workflow.subcommand
+
+        pod.list_pods = mock.MagicMock()
+        pod.list_pods.return_value = self._get_mock_pod_list_raw()
+
         workflow.run()
 
         target_command = (
             'rancher kubectl -n sample-namespace exec -it generic-workers-6c744b8fb8-c66gl ' 
             '--container generic-workers -- /bin/bash'
+        )
+
+        self.assertEqual(target_command, mocks[1].call_args[0][0])
+
+    @mock.patch('compose_flow.shell.execute')
+    @mock.patch('compose_flow.commands.subcommands.pod.Pod.switch_kube_context')
+    def test_exec_pod_without_specified_container(self, *mocks):
+        """
+        Basic test to ensure the command runs as expected
+        """
+        argv = shlex.split(
+            '-e test pod exec sample-namespace generic-workers /bin/bash'
+        )
+        workflow = Workflow(argv=argv)
+
+        pod = workflow.subcommand
+
+        pod.list_pods = mock.MagicMock()
+        pod.list_pods.return_value = self._get_mock_pod_list_raw()
+
+        workflow.run()
+
+        target_command = (
+            'rancher kubectl -n sample-namespace exec -it generic-workers-6c744b8fb8-7sjb8  -- /bin/bash'
         )
 
         self.assertEqual(target_command, mocks[1].call_args[0][0])
