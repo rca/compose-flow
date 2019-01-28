@@ -148,12 +148,11 @@ class KubeMixIn(object):
         """
         self.execute(f"{self.kubectl_command} delete secrets --namespace {self.namespace} {self.secret_name}")
 
-
     # Native Kube context management logic
     def switch_kube_context(self):
-        '''
+        """
         Switch current kubectl context to target specified cluster based on environment
-        '''
+        """
         profile_name = self.workflow.args.profile
         context_mapping = self.config.get('kubecontexts', {})
 
@@ -179,13 +178,13 @@ class KubeMixIn(object):
 
     @property
     def cluster_name(self):
-        '''
+        """
         Get the cluster name for the specified target environment.
 
         If profile_name is in the compose-flow.yml Rancher cluster mapping,
         use its value - otherwise check the global remote config,
         then finally use workflow.args.profile if nothing else is defined
-        '''
+        """
         profile_name = self.workflow.args.profile
         default_cluster = self.remotes.get(profile_name, {}).get('rancher', {}).get('cluster')
         cluster_mapping = self.rancher_config.get('clusters', {})
@@ -223,10 +222,10 @@ class KubeMixIn(object):
                                         'to use Rancher as a backend or deployment target!')
 
     def switch_rancher_context(self):
-        '''
+        """
         Switch Rancher CLI context to target specified cluster based on environment
         and specified project name from compose-flow.yml
-        '''
+        """
         # Get the project name specified in compose-flow.yml
         target_project_name = self.project_name
 
@@ -262,10 +261,10 @@ class KubeMixIn(object):
 
     # YAML rendering and deployment methods
     def get_app_deploy_command(self, app: dict, target: str = 'rancher') -> str:
-        '''
+        """
         Construct command to install or upgrade a Rancher app
         depending on whether or not it is already deployed.
-        '''
+        """
 
         app_name = app['name']
         version = app['version']
@@ -295,6 +294,13 @@ class KubeMixIn(object):
     def get_helm_app_upgrade_command(self, app_name: str, rendered_path: str, chart: str, version: str):
         return f'helm upgrade {app_name} {chart} -f {rendered_path} --version {version}'
 
+    def list_pods(self, namespace: str = None):
+        if namespace:
+            namespace_command = f' -n {namespace} '
+        else:
+            namespace_command = ''
+        return str(self.execute(f'{self.kubectl_command} get pods {namespace_command}'))
+
     def list_rancher_apps(self) -> str:
         return str(self.execute("rancher apps ls --format '{{.App.Name}}'")).split('\n')
 
@@ -307,7 +313,7 @@ class KubeMixIn(object):
         return f'rancher apps upgrade --answers {rendered_path} {app_name} {version}'
 
     def get_kubectl_command(self, manifest: dict, kubectl_prefix: str = 'kubectl') -> str:
-        '''Construct command to apply a Kubernetes YAML manifest using kubectl.'''
+        """Construct command to apply a Kubernetes YAML manifest using kubectl."""
 
         deploy_label = self.workflow.args.config_name
 
@@ -383,10 +389,10 @@ class KubeMixIn(object):
     def render_single_yaml(self, input_path: str, output_path: str,
                            checker: BaseChecker = None, raw: bool = False
                            ) -> None:
-        '''
+        """
         Read in single YAML file from specified path, render environment variables,
         then write out to a known location in the working dir.
-        '''
+        """
         self.logger.info("Rendering YAML at %s to %s", input_path, output_path)
 
         with open(input_path, 'r') as fh:
@@ -409,7 +415,7 @@ class KubeMixIn(object):
 
     @lru_cache()
     def render_manifest(self, manifest_path: str, raw: bool) -> str:
-        '''Render the specified manifest YAML and return the path to the rendered file.'''
+        """Render the specified manifest YAML and return the path to the rendered file."""
         rendered_path = self.get_manifest_filename(manifest_path)
         self.render_single_yaml(manifest_path, rendered_path, ManifestChecker(), raw)
 
@@ -439,7 +445,7 @@ class KubeMixIn(object):
 
     @lru_cache()
     def render_answers(self, answers_path: str, app_name: str, raw: bool) -> str:
-        '''Render the specified manifest YAML and return the path to the rendered file.'''
+        """Render the specified manifest YAML and return the path to the rendered file."""
         rendered_path = self.get_answers_filename(app_name)
         self.render_single_yaml(answers_path, rendered_path, AnswersChecker(), raw)
 
