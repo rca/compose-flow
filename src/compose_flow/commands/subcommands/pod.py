@@ -2,7 +2,7 @@
 """
 Subcommand for working with pods
 
-This subcommand provides two actions:
+This subcommand provides one action:
 
 - exec
 
