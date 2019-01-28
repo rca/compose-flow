@@ -299,7 +299,7 @@ class KubeMixIn(object):
             namespace_command = f' -n {namespace} '
         else:
             namespace_command = ''
-        return str(self.execute(f'rancher kubectl get pods {namespace_command}'))
+        return str(self.execute(f'{self.kubectl_command} get pods {namespace_command}'))
 
     def list_rancher_apps(self) -> str:
         return str(self.execute("rancher apps ls --format '{{.App.Name}}'")).split('\n')

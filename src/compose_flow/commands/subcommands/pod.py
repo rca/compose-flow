@@ -98,7 +98,7 @@ class Pod(BaseSubcommand, KubeMixIn):
             target_container = ''
 
         command = (
-                f'rancher kubectl -n {args.namespace} exec -it {pod} {target_container} -- '
+                f'{self.kubectl_command} -n {args.namespace} exec -it {pod} {target_container} -- '
                 f'{" ".join(self.workflow.args_remainder)}'
             )
 
