@@ -1,3 +1,6 @@
+import sys
+import sh
+
 from .base_backend import BaseBackend
 
 from compose_flow import docker
@@ -20,8 +23,8 @@ class SwarmBackend(BaseBackend):
         Checks to see if Docker is setup as a swarm
         """
         try:
-            self.execute('docker config ls')
-        except shell.ErrorReturnCode_1 as exc:
+            self.execute('docker config ls')  # pylint: disable=E1101
+        except sh.ErrorReturnCode_1 as exc:  # pylint: disable=E1101
             message = exc.stderr.decode('utf8').strip().lower()
 
             if 'this node is not a swarm manager' in message:
@@ -34,13 +37,13 @@ class SwarmBackend(BaseBackend):
         Prompts to initialize a local swarm
         """
         try:
-            self.execute('docker config ls')
+            self.execute('docker config ls')  # pylint: disable=E1101
         except:
             pass
         else:
             return
 
-        environment = self.workflow.environment
+        environment = self.workflow.environment  # pylint: disable=E1101
 
         docker_host = environment.data.get('DOCKER_HOST')
         if docker_host:
@@ -64,7 +67,7 @@ class SwarmBackend(BaseBackend):
                 init_swarm = False
 
         if init_swarm:
-            self.execute('docker swarm init')
+            self.execute('docker swarm init')  # pylint: disable=E1101
 
     def ls(self) -> list:
         return docker.get_configs()
