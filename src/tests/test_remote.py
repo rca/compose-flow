@@ -44,7 +44,7 @@ class RemoteTestCase(TestCase):
         """
         Ensure username is extracted from remote host
         """
-        username = 'testuserfoo'
+        username = 'testuser'
 
         self.workflow.args.environment = 'dev'
         self.workflow.app_config = {
