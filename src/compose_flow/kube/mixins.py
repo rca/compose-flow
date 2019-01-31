@@ -321,7 +321,7 @@ class KubeMixIn(object):
         if not dry_run:
             try:
                 self.execute(creation_command)
-            except sh.ErrorReturnCode_1 as exc:
+            except sh.ErrorReturnCode_1 as exc:  # pylint: disable=E1101
                 message = exc.stderr.decode('utf8').strip()
                 if 'code=AlreadyExists' in message:
                     raise errors.RancherNamespaceAlreadyExists(f'Namespace {namespace} already exists in another project!')
