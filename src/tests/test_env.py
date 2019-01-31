@@ -26,7 +26,7 @@ class EnvTestCase(BaseTestCase):
         """
         Ensure a local backend is returned
         """
-        backend_name = 'swarm'
+        backend_name = 'rancher'
 
         flow = mock.Mock()
         flow.args.remote = 'dev'
@@ -42,12 +42,12 @@ class EnvTestCase(BaseTestCase):
         }
 
         get_backend_mock = mocks[0]
-        get_backend_mock.return_value = 'SwarmBackend'
+        get_backend_mock.return_value = 'RancherBackend'
 
         env = Env(flow)
         backend = env.backend
 
-        self.assertEqual(backend, 'SwarmBackend')
+        self.assertEqual(backend, 'RancherBackend')
 
         get_backend_mock.assert_called_with(backend_name, workflow=flow)
 

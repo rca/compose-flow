@@ -58,7 +58,7 @@ class KubeMixIn(object):
         """
         try:
             self.execute('kubectl config current-context')
-        except sh.ErrorReturnCode_1 as exc:
+        except sh.ErrorReturnCode_1 as exc:  # pylint: disable=E1101
             message = exc.stderr.decode('utf8').strip().lower()
 
             if 'current-context is not set' in message:
@@ -72,7 +72,7 @@ class KubeMixIn(object):
         """
         try:
             self.execute(f'{self.kubectl_command} get namespace {self.namespace}')
-        except sh.ErrorReturnCode_1 as exc:
+        except sh.ErrorReturnCode_1 as exc:  # pylint: disable=E1101
             message = exc.stderr.decode('utf8').strip().lower()
 
             if f'namespaces "{self.namespace}" not found' in message:
@@ -107,7 +107,7 @@ class KubeMixIn(object):
         try:
             raw_secret = self._get_secret(name)
             self.secret_exists = True
-        except sh.ErrorReturnCode_1 as exc:
+        except sh.ErrorReturnCode_1 as exc:  # pylint: disable=E1101
             message = exc.stderr.decode('utf8').strip().lower()
 
             if f'secrets "{self.secret_name}" not found' in message:
@@ -134,7 +134,7 @@ class KubeMixIn(object):
         if not self.secret_exists:
             try:
                 self.execute(f"{self.kubectl_command} create secret generic --namespace {self.namespace} {self.secret_name}")
-            except sh.ErrorReturnCode_1 as exc:
+            except sh.ErrorReturnCode_1 as exc:  # pylint: disable=E1101
                 message = exc.stderr.decode('utf8').strip().lower()
 
                 if f'secrets "{self.secret_name}" already exists' not in message:
@@ -159,7 +159,7 @@ class KubeMixIn(object):
         target_context = context_mapping.get(profile_name, profile_name)
         try:
             self.execute(f'kubectl config use-context {target_context}')
-        except sh.ErrorReturnCode_1:
+        except sh.ErrorReturnCode_1:  # pylint: disable=E1101
             raise InvalidTargetClusterError("No context is defined for profile {}!\n\n"
                                             "Please specify a corresponding context in your kubeconfig file "
                                             "or map this profile name to an existing context "
