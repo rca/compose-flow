@@ -11,7 +11,7 @@ For example, the following command will launch an interactive shell in the `app`
 container:
 
 ```
-compose-flow -e dev service exec ad-api web /bin/bash
+compose-flow -e dev service exec web /bin/bash
 ```
 """
 import argparse
