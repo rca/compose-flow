@@ -35,7 +35,7 @@ class PodTestCase(BaseTestCase):
         Basic test to ensure the command runs as expected
         """
         argv = shlex.split(
-            '-e test pod exec sample-namespace generic-workers --container generic-workers -i 2 /bin/bash'
+            '-e test pod exec generic-workers --container generic-workers -i 2 /bin/bash'
         )
         workflow = Workflow(argv=argv)
 
@@ -47,20 +47,20 @@ class PodTestCase(BaseTestCase):
         workflow.run()
 
         target_command = (
-            'rancher kubectl -n sample-namespace exec -it generic-workers-6c744b8fb8-c66gl ' 
+            f'rancher kubectl -n {workflow.project_name} exec -it generic-workers-6c744b8fb8-c66gl ' 
             '--container generic-workers -- /bin/bash'
         )
 
         self.assertEqual(target_command, mocks[1].call_args[0][0])
 
     @mock.patch('compose_flow.shell.execute')
-    @mock.patch('compose_flow.commands.subcommands.pod.Pod.switch_kube_context')
+    @mock.patch('compose_flow.commands.subcommands.pod.Pod.switch_rancher_context')
     def test_exec_pod_without_specified_container(self, *mocks):
         """
         Basic test to ensure the command runs as expected
         """
         argv = shlex.split(
-            '-e test pod exec sample-namespace generic-workers /bin/bash'
+            '-e test pod exec generic-workers /bin/bash'
         )
         workflow = Workflow(argv=argv)
 
@@ -72,7 +72,7 @@ class PodTestCase(BaseTestCase):
         workflow.run()
 
         target_command = (
-            'rancher kubectl -n sample-namespace exec -it generic-workers-6c744b8fb8-7sjb8  -- /bin/bash'
+            f'rancher kubectl -n {workflow.project_name} exec -it generic-workers-6c744b8fb8-7sjb8  -- /bin/bash'
         )
 
         self.assertEqual(target_command, mocks[1].call_args[0][0])

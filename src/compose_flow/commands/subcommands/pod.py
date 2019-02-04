@@ -57,7 +57,6 @@ class Pod(BaseSubcommand, KubeMixIn):
 
         # ToDo: make this a subparser itself
         subparser.add_argument('action', help='action to run. options: [exec,]')
-        subparser.add_argument('namespace', help='namespace to target')
         subparser.add_argument('pod_name', help='name of desired pod, e.g. `web`')
 
     def action_exec(self):
@@ -98,7 +97,7 @@ class Pod(BaseSubcommand, KubeMixIn):
             target_container = ''
 
         command = (
-                f'{self.kubectl_command} -n {args.namespace} exec -it {pod} {target_container} -- '
+                f'{self.kubectl_command} -n {self.workflow.project_name} exec -it {pod} {target_container} -- '
                 f'{" ".join(self.workflow.args_remainder)}'
             )
 
@@ -108,7 +107,7 @@ class Pod(BaseSubcommand, KubeMixIn):
 
     def select_pod(self):
         args = self.workflow.args
-        pods_list_raw = self.list_pods(namespace=args.namespace)
+        pods_list_raw = self.list_pods(namespace=self.workflow.project_name)
         pods_list = self.format_pods_output(pods_list_raw)
 
         pod_name_re = rf'^{args.pod_name}\-.*\-.*$'
