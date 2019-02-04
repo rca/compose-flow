@@ -114,4 +114,10 @@ class Pod(BaseSubcommand, KubeMixIn):
 
         matched_pods = [p for p in pods_list if re.match(pod_name_re, p[0])]
 
-        return matched_pods[args.container_index][0]
+        try:
+            target_pod = matched_pods[args.container_index][0]
+            return target_pod
+        except IndexError:
+            raise errors.PodNotFound(
+                f'Could not find pod with index {args.container_index} matching regex {pod_name_re}'
+            )

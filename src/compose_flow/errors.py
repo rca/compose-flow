@@ -119,3 +119,7 @@ class RancherNamespaceAlreadyExists(ErrorMessage):
     """
     Raised when a namespace is specified for creation but that namespace already exists.
     """
+
+
+class PodNotFound(ErrorMessage):
+    """Raised when no pod is found matching a certain set of criteria."""
