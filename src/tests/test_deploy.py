@@ -119,3 +119,25 @@ class DeployTestCase(BaseTestCase):
         # make sure the new namespace is created
         mock_create_ns = mocks[0]
         mock_create_ns.assert_not_called()
+
+    @mock.patch('compose_flow.commands.subcommands.deploy.Deploy.switch_rancher_context')
+    @mock.patch('compose_flow.commands.subcommands.deploy.Deploy.get_apps', return_value=[])
+    @mock.patch('compose_flow.commands.subcommands.deploy.Deploy.get_rancher_manifests', return_value=[])
+    @mock.patch('compose_flow.commands.subcommands.deploy.Deploy.get_rancher_namespaces', return_value=[])
+    @mock.patch('compose_flow.commands.subcommands.deploy.Deploy.list_rancher_namespaces', return_value=['existing-namespace'])
+    @mock.patch('compose_flow.commands.subcommands.deploy.Deploy.create_rancher_namespace')
+    def test_rancher_no_namespaces_defined(self, *mocks):
+        """
+        Ensures that Rancher namespaces are not created when none are defined
+        """
+        command = shlex.split('-e dev deploy rancher')
+        workflow = Workflow(argv=command)
+
+        workflow.environment.write = mock.Mock()
+        workflow.profile.check = mock.Mock()
+
+        workflow.run()
+
+        # make sure the new namespace is created
+        mock_create_ns = mocks[0]
+        mock_create_ns.assert_not_called()
