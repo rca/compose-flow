@@ -29,7 +29,7 @@ class PodTestCase(BaseTestCase):
         return raw_data
 
     @mock.patch('compose_flow.shell.execute')
-    @mock.patch('compose_flow.commands.subcommands.pod.Pod.switch_kube_context')
+    @mock.patch('compose_flow.commands.subcommands.pod.Pod.switch_rancher_context')
     def test_exec_pod_with_specified_container_and_index(self, *mocks):
         """
         Basic test to ensure the command runs as expected

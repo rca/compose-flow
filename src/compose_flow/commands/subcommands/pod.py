@@ -63,7 +63,7 @@ class Pod(BaseSubcommand, KubeMixIn):
     def action_exec(self):
         args = self.workflow.args
 
-        self.switch_kube_context()
+        self.switch_rancher_context()
 
         for i in range(args.retries):
             try:
