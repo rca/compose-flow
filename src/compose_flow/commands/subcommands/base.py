@@ -1,7 +1,7 @@
+from functools import lru_cache
 import logging
-import os
 
-from abc import ABC, abstractclassmethod
+from abc import ABC
 
 from compose_flow import errors, shell
 from compose_flow.config import get_config
@@ -154,3 +154,41 @@ class BaseSubcommand(ABC):
         subparser.set_defaults(subcommand_cls=cls)
 
         cls.fill_subparser(parser, subparser)
+
+
+class BaseBuildSubcommand(BaseSubcommand):
+    """
+    Provides common functionality used by subcommands which build images
+    """
+
+    rw_env = True
+    remote_action = True
+    update_version_env_vars = True
+
+    def do_validate_profile(self):
+        return False
+
+    @classmethod
+    def fill_subparser(cls, parser, subparser) -> None:
+        pass
+
+    def is_missing_env_arg_okay(self):
+        return True
+
+    @property
+    @lru_cache()
+    def compose(self):
+        """
+        Returns a Compose subcommand
+        """
+        from .compose import Compose
+
+        return Compose(self.workflow)
+
+    def build(self, pull=True):
+        compose_args = ['build']
+
+        if pull:
+            compose_args.append('--pull')
+
+        self.compose.handle(extra_args=compose_args)
