@@ -76,3 +76,27 @@ class PodTestCase(BaseTestCase):
         )
 
         self.assertEqual(target_command, mocks[1].call_args[0][0])
+
+    @mock.patch('compose_flow.shell.execute')
+    @mock.patch('compose_flow.commands.subcommands.pod.Pod.switch_rancher_context')
+    def test_exec_pod_with_specified_namespace(self, *mocks):
+        """
+        Basic test to ensure the command runs as expected
+        """
+        argv = shlex.split(
+            '-e test pod exec --namespace foobar generic-workers /bin/bash'
+        )
+        workflow = Workflow(argv=argv)
+
+        pod = workflow.subcommand
+
+        pod.list_pods = mock.MagicMock()
+        pod.list_pods.return_value = self._get_mock_pod_list_raw()
+
+        workflow.run()
+
+        target_command = (
+            f'rancher kubectl -n foobar exec -it generic-workers-6c744b8fb8-7sjb8  -- /bin/bash'
+        )
+
+        self.assertEqual(target_command, mocks[1].call_args[0][0])

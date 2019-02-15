@@ -104,7 +104,7 @@ class Pod(BaseSubcommand, KubeMixIn):
             target_container = ''
 
         command = (
-                f'{self.kubectl_command} -n {self.workflow.project_name} exec -it {pod} {target_container} -- '
+                f'{self.kubectl_command} -n {self.namespace} exec -it {pod} {target_container} -- '
                 f'{" ".join(self.workflow.args_remainder)}'
             )
 
@@ -114,7 +114,7 @@ class Pod(BaseSubcommand, KubeMixIn):
 
     def select_pod(self):
         args = self.workflow.args
-        pods_list_raw = self.list_pods(namespace=self.workflow.project_name)
+        pods_list_raw = self.list_pods(namespace=self.namespace)
         pods_list = self.format_pods_output(pods_list_raw)
 
         pod_name_re = rf'^{args.pod_name}\-.*\-.*$'
