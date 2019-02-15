@@ -35,7 +35,7 @@ class Pod(BaseSubcommand, KubeMixIn):
 
     @property
     def namespace(self):
-        return self.workflow.args.namespace or f'{self.project_name.lower()}'
+        return self.workflow.args.namespace or f'{self.workflow.project_name}'
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
