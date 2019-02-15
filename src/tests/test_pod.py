@@ -57,7 +57,7 @@ class PodTestCase(BaseTestCase):
     @mock.patch('compose_flow.commands.subcommands.pod.Pod.switch_rancher_context')
     def test_exec_pod_without_specified_container(self, *mocks):
         """
-        Basic test to ensure the command runs as expected
+        Test that the command works when no container is specified
         """
         argv = shlex.split(
             '-e test pod exec generic-workers /bin/bash'
@@ -81,7 +81,7 @@ class PodTestCase(BaseTestCase):
     @mock.patch('compose_flow.commands.subcommands.pod.Pod.switch_rancher_context')
     def test_exec_pod_with_specified_namespace(self, *mocks):
         """
-        Basic test to ensure the command runs as expected
+        Test that we can override the namespace with --namespace.
         """
         argv = shlex.split(
             '-e test pod exec --namespace foobar generic-workers /bin/bash'
