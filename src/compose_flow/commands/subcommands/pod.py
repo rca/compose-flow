@@ -33,6 +33,10 @@ class Pod(BaseSubcommand, KubeMixIn):
 
     setup_profile = False
 
+    @property
+    def namespace(self):
+        return self.workflow.args.namespace or f'{self.project_name.lower()}'
+
     @classmethod
     def fill_subparser(cls, parser, subparser):
         subparser.epilog = __doc__
@@ -53,6 +57,9 @@ class Pod(BaseSubcommand, KubeMixIn):
         )
         subparser.add_argument(
             '--retries', type=int, default=30, help='number of times to retry'
+        )
+        subparser.add_argument(
+            '--namespace', type=str, help='override the namespace. defaults to project name.'
         )
 
         # ToDo: make this a subparser itself
