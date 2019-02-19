@@ -416,10 +416,10 @@
         },
         "requests-toolbelt": {
             "hashes": [
-                "sha256:a582006f08e12d871fcaa746c4a0ff16313312d18964a2f42a8ba9c8b3ece571",
-                "sha256:dc5b3660764fd224495575e2190ef53d3f8228e4e080ac92c9fa9420dc777c18"
+                "sha256:380606e1d10dc85c3bd47bf5a6095f815ec007be7a8b69c878507068df059e6f",
+                "sha256:968089d4584ad4ad7c171454f0a5c6dac23971e9472521ea3b6d49d610aa6fc0"
             ],
-            "version": "==0.9.0"
+            "version": "==0.9.1"
         },
         "six": {
             "hashes": [
@@ -444,11 +444,11 @@
         },
         "twine": {
             "hashes": [
-                "sha256:7d89bc6acafb31d124e6e5b295ef26ac77030bf098960c2a4c4e058335827c5c",
-                "sha256:fad6f1251195f7ddd1460cb76d6ea106c93adb4e56c41e0da79658e56e547d2c"
+                "sha256:0fb0bfa3df4f62076cab5def36b1a71a2e4acb4d1fa5c97475b048117b1a6446",
+                "sha256:d6c29c933ecfc74e9b1d9fa13aa1f87c5d5770e119f5a4ce032092f0ff5b14dc"
             ],
             "index": "pypi",
-            "version": "==1.12.1"
+            "version": "==1.13.0"
         },
         "typed-ast": {
             "hashes": [
