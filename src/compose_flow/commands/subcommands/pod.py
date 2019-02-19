@@ -11,7 +11,7 @@ For example, the following command will launch an interactive shell in the `app`
 container:
 
 ```
-compose-flow -e dev service exec ad-api web /bin/bash
+compose-flow -e dev service exec web /bin/bash
 ```
 """
 import argparse
@@ -32,6 +32,10 @@ class Pod(BaseSubcommand, KubeMixIn):
     setup_environment = True
 
     setup_profile = False
+
+    @property
+    def namespace(self):
+        return self.workflow.args.namespace or self.workflow.project_name
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
@@ -54,16 +58,18 @@ class Pod(BaseSubcommand, KubeMixIn):
         subparser.add_argument(
             '--retries', type=int, default=30, help='number of times to retry'
         )
+        subparser.add_argument(
+            '--namespace', type=str, help='override the namespace. defaults to project name.'
+        )
 
         # ToDo: make this a subparser itself
         subparser.add_argument('action', help='action to run. options: [exec,]')
-        subparser.add_argument('namespace', help='namespace to target')
         subparser.add_argument('pod_name', help='name of desired pod, e.g. `web`')
 
     def action_exec(self):
         args = self.workflow.args
 
-        self.switch_kube_context()
+        self.switch_rancher_context()
 
         for i in range(args.retries):
             try:
@@ -98,7 +104,7 @@ class Pod(BaseSubcommand, KubeMixIn):
             target_container = ''
 
         command = (
-                f'{self.kubectl_command} -n {args.namespace} exec -it {pod} {target_container} -- '
+                f'{self.kubectl_command} -n {self.namespace} exec -it {pod} {target_container} -- '
                 f'{" ".join(self.workflow.args_remainder)}'
             )
 
@@ -108,11 +114,17 @@ class Pod(BaseSubcommand, KubeMixIn):
 
     def select_pod(self):
         args = self.workflow.args
-        pods_list_raw = self.list_pods(namespace=args.namespace)
+        pods_list_raw = self.list_pods(namespace=self.namespace)
         pods_list = self.format_pods_output(pods_list_raw)
 
         pod_name_re = rf'^{args.pod_name}\-.*\-.*$'
 
         matched_pods = [p for p in pods_list if re.match(pod_name_re, p[0])]
 
-        return matched_pods[args.container_index][0]
+        try:
+            target_pod = matched_pods[args.container_index][0]
+            return target_pod
+        except IndexError:
+            raise errors.PodNotFound(
+                f'Could not find pod with index {args.container_index} matching regex {pod_name_re}'
+            )
