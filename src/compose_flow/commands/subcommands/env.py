@@ -16,6 +16,7 @@ from compose_flow.environment.backends import get_backend
 
 DOCKER_IMAGE_VAR = 'DOCKER_IMAGE'
 VERSION_VAR = 'VERSION'
+RUNTIME_PLACEHOLDER = 'runtime://'
 
 
 class Env(BaseSubcommand):
@@ -161,7 +162,7 @@ class Env(BaseSubcommand):
 
         # render placeholders
         for k, v in data.items():
-            if not v.startswith('runtime://'):
+            if not v.startswith(RUNTIME_PLACEHOLDER):
                 continue
 
             location, location_ref = v.split('://', 1)
@@ -172,9 +173,12 @@ class Env(BaseSubcommand):
 
             new_val = os.environ.get(location_ref)
             if new_val is None:
-                raise errors.RuntimeEnvError(
-                    f'runtime substitution for {k}={v} not found'
-                )
+                if hasattr(self.workflow.args, 'action') and self.is_env_modification_action():
+                    new_val = RUNTIME_PLACEHOLDER
+                else:
+                    raise errors.RuntimeEnvError(
+                        f'runtime substitution for {k}={v} not found'
+                    )
 
             data[k] = new_val
 
