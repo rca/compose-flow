@@ -85,17 +85,13 @@ class PrivateImage(AbstractImage):
 
     def publish_with_auto_tags(self):
         """Publish an image and auto-tag major and minor releases"""
-        if self.can_publish_with_auto_tags():
-            latest_version = self._get_latest_published_version()
-            if latest_version < self.version_info:
-                self.publish()
-                self._publish_major()
-                self._publish_minor()
-            else:
-                self.logger.warning(f'Publishing with auto tags is only allowed for most recent tags')
+        if self.can_publish_with_auto_tags() and self.version_info > self._get_latest_published_version():
+            self.publish()
+            self._publish_major()
+            self._publish_minor()
         else:
             raise PublishAutoTagsError(
-                f'Publishing with auto tags is only allowed for images tagged with a MAJOR.MINOR.PATCH semver'
+                    f'Publishing with auto tags is only allowed for most recent tags of format MAJOR.MINOR.PATCH semver'
             )
 
     def publish(self):
