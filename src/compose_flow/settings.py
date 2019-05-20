@@ -17,3 +17,6 @@ USER = os.environ.get('USER', 'nobody')
 DEFAULT_CF_REMOTE_USER = os.environ.get('CF_REMOTE_USER', USER)
 
 DOCKER_IMAGE_PREFIX = os.environ.get('CF_DOCKER_IMAGE_PREFIX', 'localhost.localdomain')
+
+PRIVATE_REGISTRY_USER = os.environ.get('PRIVATE_REGISTRY_USER')
+PRIVATE_REGISTRY_PASSWORD = os.environ.get('PRIVATE_REGISTRY_PASSWORD')
