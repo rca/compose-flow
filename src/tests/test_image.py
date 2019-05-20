@@ -3,13 +3,12 @@ from unittest import TestCase, mock
 
 import semver
 
-from compose_flow.commands.subcommands.publish import Publish
-
+from compose_flow.errors import PublishAutoTagsError
 from compose_flow.image import PrivateImage
 from tests.utils import get_content
 
 
-class PrivateImageHappyPathTestCase(TestCase):
+class PrivateImageMixin:
     _default_repository = 'my-registry.foobar.org'
     _default_image_name = 'compose-flow'
     _default_tag = '3.5.9'
@@ -22,6 +21,9 @@ class PrivateImageHappyPathTestCase(TestCase):
         tagged_image_name = tagged_image_name or self._default_tagged_image_name
         return PrivateImage(tagged_image_name=tagged_image_name, publish_callable=mock.MagicMock(),
                             tag_callable=mock.MagicMock())
+
+
+class PrivateImageHappyPathTestCase(PrivateImageMixin, TestCase):
 
     @mock.patch('compose_flow.image.requests.Session.get')
     @mock.patch('compose_flow.commands.subcommands.base.BaseSubcommand.execute')
@@ -117,3 +119,14 @@ class PrivateImageHappyPathTestCase(TestCase):
         target_tagged_image_name = f'{self._default_repository}/{self._default_image_name}:3.5'
         private_image._tag_callable.assert_any_call(*(self._default_tagged_image_name, target_tagged_image_name))
         private_image._publish_callable.assert_any_call(target_tagged_image_name)
+
+
+class PrivateImageUnhappyPathTestCase(PrivateImageMixin, TestCase):
+
+    def test_e2e_invalid_publish_with_auto_tags(self, *mocks):
+        """Ensure unhappy path works as we expect"""
+        bad_tag = '2.0.3-999-385uegfd-feature--21345-foo-bar-baz'
+        invalid_tagged_image_name = f'{self._default_repository}/{self._default_image_name}:{bad_tag}'
+        private_image = self._get_private_image(invalid_tagged_image_name)
+        with self.assertRaises(PublishAutoTagsError):
+            private_image.publish_with_auto_tags()
