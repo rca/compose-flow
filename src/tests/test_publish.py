@@ -92,3 +92,42 @@ class PublishTestCase(BaseTestCase):
 
         self.assertEqual(utils_mock.get_tag_version.return_value, env.data['VERSION'])
         self.assertEqual(f'test.registry/testdirname:{new_version}', env.data['DOCKER_IMAGE'])
+
+    @mock.patch('compose_flow.commands.workflow.settings')
+    @mock.patch('compose_flow.commands.subcommands.env.utils')
+    @mock.patch('compose_flow.commands.subcommands.env.get_backend')
+    def test_publish_with_auto_tags(self, *mocks):
+
+        settings_mock = mocks[2]
+        settings_mock.DOCKER_IMAGE_PREFIX = 'test.registry'
+        settings_mock.LOGGING = {
+            'version': 1,
+            'loggers': {
+                'compose_flow': {
+                },
+            },
+        }
+
+        version = '1.2.3'
+        new_version = '0.9.999'
+        docker_image = 'foo:bar'
+
+        utils_mock = mocks[1]
+        utils_mock.get_tag_version.return_value = new_version
+        utils_mock.render = utils.render
+
+        command = shlex.split('-e prod publish --auto-tag')
+        flow = Workflow(argv=command)
+
+        publish = flow.subcommand
+        publish.get_built_docker_images = mock.Mock()
+        publish.get_built_docker_images.return_value = []
+
+        flow.run()
+
+        env = flow.environment
+
+        self.assertEqual(utils_mock.get_tag_version.return_value, env.data['VERSION'])
+        self.assertEqual(f'test.registry/testdirname:{new_version}', env.data['DOCKER_IMAGE'])
+
+
