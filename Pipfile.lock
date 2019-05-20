@@ -158,6 +158,14 @@
             ],
             "version": "==2.20.1"
         },
+        "semver": {
+            "hashes": [
+                "sha256:41c9aa26c67dc16c54be13074c352ab666bce1fa219c7110e8f03374cd4206b0",
+                "sha256:5b09010a66d9a3837211bb7ae5a20d10ba88f8cb49e92cb139a69ef90d5060d8"
+            ],
+            "index": "pypi",
+            "version": "==2.8.1"
+        },
         "sh": {
             "hashes": [
                 "sha256:ae3258c5249493cebe73cb4e18253a41ed69262484bad36fdb3efcb8ad8870bb",
