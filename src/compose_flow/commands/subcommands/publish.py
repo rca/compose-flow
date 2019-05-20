@@ -29,7 +29,10 @@ class Publish(BaseBuildSubcommand):
             if self.workflow.args.dry_run:
                 self.logger.info(f'docker push {docker_image}')
             else:
-                self.execute(f'docker push {docker_image}', _fg=True)
+                self.execute_publish(docker_image)
+
+    def execute_publish(self, tagged_image_name: str):
+        self.execute(f'docker push {tagged_image_name}', _fg=True)
 
     def handle(self):
         self.build(pull=False)
