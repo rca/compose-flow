@@ -1,5 +1,7 @@
 services:
   app:
     environment:
+      - PRIVATE_REGISTRY_USER
+      - PRIVATE_REGISTRY_PASSWORD
       - PYPI_USERNAME
       - PYPI_PASSWORD
