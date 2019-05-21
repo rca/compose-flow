@@ -85,7 +85,7 @@ class PrivateImageHappyPathTestCase(PrivateImageMixin, TestCase):
         mocks[0].return_value.json.return_value = json.loads(get_content('registry_tags_response.json'))
         private_image = self._get_private_image()
         target_tags = json.loads(get_content('registry_tags_response.json')).get('tags')
-        published_tags = private_image._get_published_tags()
+        published_tags = private_image._get_published_tags(private_image.name)
         self.assertEqual(target_tags, published_tags)
 
     def test_ut_can_publish_with_auto_tags(self, *mocks):

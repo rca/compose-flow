@@ -38,7 +38,7 @@ class PrivateImage(AbstractImage):
 
     def _get_latest_published_version(self):
         """Take a list of tags and return the most recent"""
-        published_tags = self._get_published_tags()
+        published_tags = self._get_published_tags(self.name)
         semver_published_tags = []
         for tag in published_tags:
             try:
@@ -52,11 +52,12 @@ class PrivateImage(AbstractImage):
         else:
             return None
 
-    def _get_published_tags(self) -> list():
+    @lru_cache()
+    def _get_published_tags(self, image_name) -> list():
         """
         Return a list of published tags from the repository/registry
         """
-        url = f'https://{self.repository}/v2/{self.name}/tags/list'
+        url = f'https://{self.repository}/v2/{image_name}/tags/list'
         session = requests.Session()
         response = session.get(url, auth=requests.auth.HTTPBasicAuth(PRIVATE_REGISTRY_USER, PRIVATE_REGISTRY_PASSWORD))
         tags = response.json().get('tags')
