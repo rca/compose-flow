@@ -60,6 +60,7 @@ class PrivateImage(AbstractImage):
         url = f'https://{self.repository}/v2/{image_name}/tags/list'
         session = requests.Session()
         response = session.get(url, auth=requests.auth.HTTPBasicAuth(PRIVATE_REGISTRY_USER, PRIVATE_REGISTRY_PASSWORD))
+        response.raise_for_status()
         tags = response.json().get('tags')
         return tags
 
