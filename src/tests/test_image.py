@@ -35,10 +35,10 @@ class PrivateImageHappyPathTestCase(PrivateImageMixin, TestCase):
         private_image = self._get_private_image()
         private_image.publish_with_auto_tags()
 
-        major_tagged_image_name = 'registry.osslabs.net/compose-flow:3'
-        minor_tagged_image_name = 'registry.osslabs.net/compose-flow:3.5'
+        major_tagged_image_name = f'{self._default_repository}/{self._default_image_name}:3'
+        minor_tagged_image_name = f'{self._default_repository}/{self._default_image_name}:3.5'
         target_publish_call_args = [
-            ('registry.osslabs.net/compose-flow:3.5.9'),
+            (self._default_tagged_image_name),
             (major_tagged_image_name),
             (minor_tagged_image_name),
         ]
