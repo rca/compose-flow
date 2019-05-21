@@ -121,7 +121,7 @@ class PrivateImageHappyPathTestCase(PrivateImageMixin, TestCase):
         private_image._publish_callable.assert_any_call(target_tagged_image_name)
 
 
-class PrivateImageUnhappyPathTestCase(PrivateImageMixin, TestCase):
+class PrivateImageSadPathTestCase(PrivateImageMixin, TestCase):
 
     def test_e2e_invalid_publish_with_auto_tags(self, *mocks):
         """Ensure unhappy path works as we expect"""
