@@ -30,7 +30,8 @@ class PrivateImage(AbstractImage):
         self._publish_callable = publish_callable
         self._tag_callable = tag_callable
 
-    def can_publish_with_auto_tags(self):
+    @property
+    def official_release(self) -> bool:
         """Return whether or not we can publish with auto tags."""
         semver_components_clean = [self.version_info.major, self.version_info.minor, self.version_info.patch]
         semver_components_dirty = [self.version_info.prerelease, self.version_info.build]
@@ -88,13 +89,14 @@ class PrivateImage(AbstractImage):
 
     def publish_with_auto_tags(self):
         """Publish an image and auto-tag major and minor releases"""
-        if self.can_publish_with_auto_tags() and self.version_info > self._get_latest_published_version():
+        if self.official_release:
             self.publish()
             self._publish_major()
             self._publish_minor()
         else:
             raise PublishAutoTagsError(
-                    f'Publishing with auto tags is only allowed for most recent tags of format MAJOR.MINOR.PATCH semver'
+                    f'Publishing with auto tags is only allowed for official release MAJOR.MINOR.PATCH tags.'
+                    f'Current tag: {self.version_info}'
             )
 
     def publish(self):

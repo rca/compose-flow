@@ -88,12 +88,12 @@ class PrivateImageHappyPathTestCase(PrivateImageMixin, TestCase):
         published_tags = private_image._get_published_tags(private_image.name)
         self.assertEqual(target_tags, published_tags)
 
-    def test_ut_can_publish_with_auto_tags(self, *mocks):
+    def test_ut_official_release(self, *mocks):
         """
-        Ensure can publish with auto tags happy path.
+        Ensure official release property happy path works.
         """
         private_image = self._get_private_image()
-        self.assertEqual(True, private_image.can_publish_with_auto_tags())
+        self.assertEqual(True, private_image.official_release)
 
     def test_ut_publish(self, *mocks):
         """Ensure `publish` publishes the original private image"""
