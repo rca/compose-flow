@@ -25,13 +25,11 @@ class PrivateImageMixin:
 
 class PrivateImageHappyPathTestCase(PrivateImageMixin, TestCase):
 
-    @mock.patch('compose_flow.image.requests.Session.get')
     @mock.patch('compose_flow.commands.subcommands.base.BaseSubcommand.execute')
     def test_e2e_publish_auto_tags(self, *mocks):
         """
         Test that we can publish and auto-tag an image.
         """
-        mocks[1].return_value.json.return_value = json.loads(get_content('registry_tags_response.json'))
         private_image = self._get_private_image()
         private_image.publish_with_auto_tags()
 
@@ -69,24 +67,6 @@ class PrivateImageHappyPathTestCase(PrivateImageMixin, TestCase):
         private_image = self._get_private_image()
         target_version_info = semver.VersionInfo.parse(self._default_tag)
         self.assertEqual(target_version_info, private_image.version_info)
-
-    @mock.patch('compose_flow.image.PrivateImage._get_published_tags')
-    def test_ut__get_latest_published_version(self, *mocks):
-        """Ensure PrivateImage can find the most recently published tag"""
-        mocks[0].return_value = json.loads(get_content('registry_tags_response.json')).get('tags')
-        private_image = self._get_private_image()
-        target_latest_published_version = semver.VersionInfo.parse('3.5.8')
-        latest_published_version = private_image._get_latest_published_version()
-        self.assertEqual(target_latest_published_version, latest_published_version)
-
-    @mock.patch('compose_flow.image.requests.Session.get')
-    def test_ut__get_published_tags(self, *mocks):
-        """Ensure we appropriately process the docker registry tags response"""
-        mocks[0].return_value.json.return_value = json.loads(get_content('registry_tags_response.json'))
-        private_image = self._get_private_image()
-        target_tags = json.loads(get_content('registry_tags_response.json')).get('tags')
-        published_tags = private_image._get_published_tags(private_image.name)
-        self.assertEqual(target_tags, published_tags)
 
     def test_ut_official_release(self, *mocks):
         """

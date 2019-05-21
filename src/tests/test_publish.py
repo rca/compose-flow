@@ -1,14 +1,11 @@
-import json
 import shlex
 
-from unittest import TestCase, mock
+from unittest import mock
 
 from compose_flow import utils
 from compose_flow.commands import Workflow
-from compose_flow.errors import PublishAutoTagsError
 
 from tests import BaseTestCase
-from tests.utils import get_content
 
 
 @mock.patch('compose_flow.commands.workflow.PROJECT_NAME', new='testdirname')
@@ -96,7 +93,6 @@ class PublishTestCase(BaseTestCase):
         self.assertEqual(utils_mock.get_tag_version.return_value, env.data['VERSION'])
         self.assertEqual(f'test.registry/testdirname:{new_version}', env.data['DOCKER_IMAGE'])
 
-    @mock.patch('compose_flow.image.PrivateImage._get_published_tags')
     @mock.patch('compose_flow.commands.subcommands.env.utils')
     @mock.patch('compose_flow.commands.subcommands.env.get_backend')
     def test_e2e_happy_path_publish_with_auto_tags(self, *mocks):
@@ -105,8 +101,6 @@ class PublishTestCase(BaseTestCase):
         utils_mock = mocks[1]
         utils_mock.get_tag_version.return_value = new_version
         utils_mock.render = utils.render
-
-        mocks[2].return_value = json.loads(get_content('registry_tags_response.json')).get('tags')
 
         command = shlex.split('-e prod publish --auto-tag')
         flow = Workflow(argv=command)
@@ -131,7 +125,6 @@ class PublishTestCase(BaseTestCase):
             self.assertEqual((target_args,), args)
             self.assertEqual(target_kwargs, kwargs)
 
-    @mock.patch('compose_flow.image.requests.Session.get')
     @mock.patch('compose_flow.commands.subcommands.base.BaseSubcommand.execute')
     @mock.patch('compose_flow.commands.subcommands.env.utils')
     @mock.patch('compose_flow.commands.subcommands.env.get_backend')

@@ -1,12 +1,9 @@
 import re
-from functools import lru_cache
 from typing import Callable
 
-import requests
 import semver
 
 from compose_flow.errors import PublishAutoTagsError
-from compose_flow.settings import PRIVATE_REGISTRY_USER, PRIVATE_REGISTRY_PASSWORD
 
 
 class AbstractImage:
@@ -36,34 +33,6 @@ class PrivateImage(AbstractImage):
         semver_components_clean = [self.version_info.major, self.version_info.minor, self.version_info.patch]
         semver_components_dirty = [self.version_info.prerelease, self.version_info.build]
         return all(semver_components_clean) and not any(semver_components_dirty)
-
-    def _get_latest_published_version(self):
-        """Take a list of tags and return the most recent"""
-        published_tags = self._get_published_tags(self.name)
-        semver_published_tags = []
-        for tag in published_tags:
-            try:
-                version_info = semver.VersionInfo.parse(tag)
-                semver_published_tags.append(version_info)
-            except ValueError:
-                continue
-        sorted_semver_published_tags = sorted(semver_published_tags, reverse=True)
-        if sorted_semver_published_tags:
-            return sorted_semver_published_tags[0]
-        else:
-            return None
-
-    @lru_cache()
-    def _get_published_tags(self, image_name) -> list():
-        """
-        Return a list of published tags from the repository/registry
-        """
-        url = f'https://{self.repository}/v2/{image_name}/tags/list'
-        session = requests.Session()
-        response = session.get(url, auth=requests.auth.HTTPBasicAuth(PRIVATE_REGISTRY_USER, PRIVATE_REGISTRY_PASSWORD))
-        response.raise_for_status()
-        tags = response.json().get('tags')
-        return tags
 
     def _get_tagged_image_name(self, tag: str = None):
         """Utility for getting a tagged image name"""
