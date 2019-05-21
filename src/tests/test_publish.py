@@ -1,11 +1,14 @@
+import json
 import shlex
 
 from unittest import TestCase, mock
 
 from compose_flow import utils
 from compose_flow.commands import Workflow
+from compose_flow.errors import PublishAutoTagsError
 
 from tests import BaseTestCase
+from tests.utils import get_content
 
 
 @mock.patch('compose_flow.commands.workflow.PROJECT_NAME', new='testdirname')
@@ -93,24 +96,48 @@ class PublishTestCase(BaseTestCase):
         self.assertEqual(utils_mock.get_tag_version.return_value, env.data['VERSION'])
         self.assertEqual(f'test.registry/testdirname:{new_version}', env.data['DOCKER_IMAGE'])
 
-    @mock.patch('compose_flow.commands.workflow.settings')
+    @mock.patch('compose_flow.image.PrivateImage._get_published_tags')
     @mock.patch('compose_flow.commands.subcommands.env.utils')
     @mock.patch('compose_flow.commands.subcommands.env.get_backend')
-    def test_publish_with_auto_tags(self, *mocks):
+    def test_e2e_happy_path_publish_with_auto_tags(self, *mocks):
+        new_version = '3.5.9'
 
-        settings_mock = mocks[2]
-        settings_mock.DOCKER_IMAGE_PREFIX = 'test.registry'
-        settings_mock.LOGGING = {
-            'version': 1,
-            'loggers': {
-                'compose_flow': {
-                },
-            },
-        }
+        utils_mock = mocks[1]
+        utils_mock.get_tag_version.return_value = new_version
+        utils_mock.render = utils.render
 
-        version = '1.2.3'
+        mocks[2].return_value = json.loads(get_content('registry_tags_response.json')).get('tags')
+
+        command = shlex.split('-e prod publish --auto-tag')
+        flow = Workflow(argv=command)
+
+        publish = flow.subcommand
+        execute_mock = mock.MagicMock()
+        publish.execute = execute_mock
+
+        flow.run()
+
+        target_executions = [
+            ('docker push localhost.localdomain/testdirname:3.5.9', {'_fg': True}),
+            ('docker tag localhost.localdomain/testdirname:3.5.9 localhost.localdomain/testdirname:3', {}),
+            ('docker push localhost.localdomain/testdirname:3', {'_fg': True}),
+            ('docker tag localhost.localdomain/testdirname:3.5.9 localhost.localdomain/testdirname:3.5', {}),
+            ('docker push localhost.localdomain/testdirname:3.5', {'_fg': True})
+        ]
+
+        for call, target_call in zip(execute_mock.call_args_list, target_executions):
+            args, kwargs = call
+            target_args, target_kwargs = target_call
+            self.assertEqual((target_args,), args)
+            self.assertEqual(target_kwargs, kwargs)
+
+    @mock.patch('compose_flow.image.requests.Session.get')
+    @mock.patch('compose_flow.commands.subcommands.base.BaseSubcommand.execute')
+    @mock.patch('compose_flow.commands.subcommands.env.utils')
+    @mock.patch('compose_flow.commands.subcommands.env.get_backend')
+    def test_ut_get_built_tagged_image_names(self, *mocks):
+        """Ensure we return built docker image names."""
         new_version = '0.9.999'
-        docker_image = 'foo:bar'
 
         utils_mock = mocks[1]
         utils_mock.get_tag_version.return_value = new_version
@@ -120,14 +147,5 @@ class PublishTestCase(BaseTestCase):
         flow = Workflow(argv=command)
 
         publish = flow.subcommand
-        publish.get_built_docker_images = mock.Mock()
-        publish.get_built_docker_images.return_value = []
-
-        flow.run()
-
-        env = flow.environment
-
-        self.assertEqual(utils_mock.get_tag_version.return_value, env.data['VERSION'])
-        self.assertEqual(f'test.registry/testdirname:{new_version}', env.data['DOCKER_IMAGE'])
-
-
+        values = publish.get_built_tagged_image_names()
+        self.assertEqual(['localhost.localdomain/testdirname:0.9.999'], values)
