@@ -10,7 +10,7 @@ from tests.utils import get_content
 
 class PrivateImageMixin:
     _default_repository = 'my-registry.foobar.org'
-    _default_image_name = 'compose-flow'
+    _default_image_name = 'tompose-flow'
     _default_tag = '3.5.9'
     _default_tagged_image_name = f'{_default_repository}/{_default_image_name}:{_default_tag}'
 

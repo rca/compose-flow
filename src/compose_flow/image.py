@@ -1,3 +1,4 @@
+import re
 from functools import lru_cache
 from typing import Callable
 
@@ -77,7 +78,7 @@ class PrivateImage(AbstractImage):
             'Private images must have a repository set.'
         )
         self.tag = self._tagged_image_name.split(':')[1] if ':' in self._tagged_image_name else None
-        self.name = self._tagged_image_name.lstrip(f'{self.repository}/').rstrip(f':{self.tag}')
+        self.name = re.match(rf'{self.repository}/(.*):{self.tag}', self._tagged_image_name).group(1)
         try:
             self.version_info = semver.VersionInfo.parse(self.tag)
         except ValueError:
