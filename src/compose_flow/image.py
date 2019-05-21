@@ -119,3 +119,9 @@ class PrivateImage(AbstractImage):
         """Tag the private image with a new tag"""
         tagged_image_name = self._get_tagged_image_name(tag)
         self._tag_callable(self._tagged_image_name, tagged_image_name)
+
+    def __str__(self):
+        return self._get_tagged_image_name()
+
+    def __repr__(self):
+        return self._get_tagged_image_name()
