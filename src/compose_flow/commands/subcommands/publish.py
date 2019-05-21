@@ -23,10 +23,8 @@ class Publish(BaseBuildSubcommand):
             help='automatically publish major and major.minor tags pointing to the new docker image',
         )
 
-    def get_built_docker_images(self) -> List[PrivateImage]:
-        """
-        Returns a list of docker images built in the compose file
-        """
+    def get_built_tagged_image_names(self) -> List[str]:
+        """Return a list of built tagged image names"""
         docker_images = set()
 
         profile = self.workflow.profile
@@ -34,14 +32,23 @@ class Publish(BaseBuildSubcommand):
             if service_data.get('build'):
                 tagged_image_name = service_data.get('image')
                 docker_images.add(tagged_image_name)
-        return [
+
+        return list(docker_images)
+
+    def get_built_docker_images(self) -> List[PrivateImage]:
+        """
+        Returns a list of docker images built in the compose file
+        """
+        tagged_image_names = self.get_built_tagged_image_names()
+        private_images = [
             PrivateImage(
                 tagged_image_name=tagged_image_name,
                 publish_callable=self.execute_publish,
                 tag_callable=self.execute_tag,
             )
-            for tagged_image_name in docker_images
+            for tagged_image_name in tagged_image_names
         ]
+        return private_images
 
     def push(self):
         docker_images = self.get_built_docker_images()
