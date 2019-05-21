@@ -30,9 +30,11 @@ class PrivateImage(AbstractImage):
     @property
     def official_release(self) -> bool:
         """Return whether or not we can publish with auto tags."""
-        semver_components_clean = [self.version_info.major, self.version_info.minor, self.version_info.patch]
+        semver_components_official_release = [self.version_info.major, self.version_info.minor, self.version_info.patch]
         semver_components_dirty = [self.version_info.prerelease, self.version_info.build]
-        return all(semver_components_clean) and not any(semver_components_dirty)
+        official_release = all([x is not None for x in semver_components_official_release])
+        dirty_release = all([x is not None for x in semver_components_dirty])
+        return official_release and not dirty_release
 
     def _get_tagged_image_name(self, tag: str = None):
         """Utility for getting a tagged image name"""

@@ -100,6 +100,12 @@ class PrivateImageHappyPathTestCase(PrivateImageMixin, TestCase):
         private_image._tag_callable.assert_any_call(*(self._default_tagged_image_name, target_tagged_image_name))
         private_image._publish_callable.assert_any_call(target_tagged_image_name)
 
+    def test_ut_official_release_0_in_version(self, *mocks):
+        """Ensure official_release happy path works with releases containing a 0"""
+        tagged_image_name = f'{self._default_repository}/{self._default_image_name}:1.0.1'
+        private_image = self._get_private_image(tagged_image_name)
+        self.assertEqual(True, private_image.official_release)
+
 
 class PrivateImageSadPathTestCase(PrivateImageMixin, TestCase):
 
