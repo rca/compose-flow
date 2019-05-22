@@ -80,16 +80,16 @@ class PrivateImage(AbstractImage):
     def _publish_major(self):
         """Publish image tagged to major version"""
         tag = self.version_info.major
-        self._tag(tag)
+        self._add_tag_to_image(tag)
         self._publish(tag)
 
     def _publish_minor(self):
         """Publish image tagged to major.minor version"""
         tag = f'{self.version_info.major}.{self.version_info.minor}'
-        self._tag(tag)
+        self._add_tag_to_image(tag)
         self._publish(tag)
 
-    def _tag(self, tag: str):
+    def _add_tag_to_image(self, tag: str):
         """Tag the private image with a new tag"""
         tagged_image_name = self._get_tagged_image_name(tag)
         self._tag_callable(self._tagged_image_name, tagged_image_name)
