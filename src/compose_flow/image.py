@@ -6,6 +6,9 @@ import semver
 from compose_flow.errors import PublishAutoTagsError
 
 
+OFFICIAL_RELEASE_REGEX = re.compile(r'^\d+\.\d+\.\d+$')
+
+
 class AbstractImage:
     pass
 
@@ -30,11 +33,7 @@ class PrivateImage(AbstractImage):
     @property
     def official_release(self) -> bool:
         """Return whether or not we can publish with auto tags."""
-        semver_components_official_release = [self.version_info.major, self.version_info.minor, self.version_info.patch]
-        semver_components_dirty = [self.version_info.prerelease, self.version_info.build]
-        official_release = all([x is not None for x in semver_components_official_release])
-        dirty_release = any([x is not None for x in semver_components_dirty])
-        return official_release and not dirty_release
+        return bool(OFFICIAL_RELEASE_REGEX.match(self.tag))
 
     def _get_tagged_image_name(self, tag: str = None):
         """Utility for getting a tagged image name"""
