@@ -123,3 +123,7 @@ class RancherNamespaceAlreadyExists(ErrorMessage):
 
 class PodNotFound(ErrorMessage):
     """Raised when no pod is found matching a certain set of criteria."""
+
+
+class PublishMajorMinorTagsError(ErrorMessage):
+    """Raised when publish_with_major_minor_tags is called on an invalid PrivateImage"""
