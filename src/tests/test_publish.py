@@ -102,7 +102,7 @@ class PublishTestCase(BaseTestCase):
         utils_mock.get_tag_version.return_value = new_version
         utils_mock.render = utils.render
 
-        command = shlex.split('-e prod publish --auto-tag')
+        command = shlex.split('-e prod publish --tag-major-minor')
         flow = Workflow(argv=command)
 
         publish = flow.subcommand
@@ -119,6 +119,9 @@ class PublishTestCase(BaseTestCase):
             ('docker push localhost.localdomain/testdirname:3.5', {'_fg': True})
         ]
 
+        call_target_tuples = list(zip(execute_mock.call_args_list, target_executions))
+
+        self.assertEqual(len(target_executions), len(call_target_tuples))
         for call, target_call in zip(execute_mock.call_args_list, target_executions):
             args, kwargs = call
             target_args, target_kwargs = target_call

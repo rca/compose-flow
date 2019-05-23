@@ -17,7 +17,7 @@ class Publish(BaseBuildSubcommand):
         subparser.formatter_class = argparse.RawDescriptionHelpFormatter
 
         subparser.add_argument(
-            '--auto-tag',
+            '--tag-major-minor',
             default=False,
             action='store_true',
             help='automatically publish major and major.minor tags pointing to the new docker image',
@@ -58,7 +58,7 @@ class Publish(BaseBuildSubcommand):
 
             if self.workflow.args.dry_run:
                 self.logger.info(f'docker push {docker_image}')
-            elif self.workflow.args.auto_tag:
+            elif self.workflow.args.tag_major_minor:
                 docker_image.publish_with_major_minor_tags()
             else:
                 docker_image.publish()
