@@ -59,7 +59,7 @@ class Publish(BaseBuildSubcommand):
             if self.workflow.args.dry_run:
                 self.logger.info(f'docker push {docker_image}')
             elif self.workflow.args.auto_tag:
-                docker_image.publish_with_auto_tags()
+                docker_image.publish_with_major_minor_tags()
             else:
                 docker_image.publish()
 

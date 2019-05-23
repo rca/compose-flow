@@ -3,7 +3,7 @@ from unittest import TestCase, mock
 
 import semver
 
-from compose_flow.errors import PublishAutoTagsError
+from compose_flow.errors import PublishMajorMinorTagsError
 from compose_flow.docker_image import DockerImage
 from tests.utils import get_content
 
@@ -31,7 +31,7 @@ class DockerImageHappyPathTestCase(DockerImageTestMixin, TestCase):
         Test that we can publish and auto-tag an image.
         """
         docker_image = self._get_docker_image()
-        docker_image.publish_with_auto_tags()
+        docker_image.publish_with_major_minor_tags()
 
         major_tagged_image_name = f'{self._default_repository}/{self._default_image_name}:3'
         minor_tagged_image_name = f'{self._default_repository}/{self._default_image_name}:3.5'
@@ -114,5 +114,5 @@ class DockerImageSadPathTestCase(DockerImageTestMixin, TestCase):
         bad_tag = '2.0.3-999-385uegfd-feature--21345-foo-bar-baz'
         invalid_tagged_image_name = f'{self._default_repository}/{self._default_image_name}:{bad_tag}'
         docker_image = self._get_docker_image(invalid_tagged_image_name)
-        with self.assertRaises(PublishAutoTagsError):
-            docker_image.publish_with_auto_tags()
+        with self.assertRaises(PublishMajorMinorTagsError):
+            docker_image.publish_with_major_minor_tags()

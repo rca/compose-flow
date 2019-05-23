@@ -3,7 +3,7 @@ from typing import Callable
 
 import semver
 
-from compose_flow.errors import PublishAutoTagsError
+from compose_flow.errors import PublishMajorMinorTagsError
 
 
 OFFICIAL_RELEASE_REGEX = re.compile(r'^\d+\.\d+\.\d+$')
@@ -49,14 +49,14 @@ class DockerImage:
         except ValueError:
             self.version_info = None
 
-    def publish_with_auto_tags(self):
+    def publish_with_major_minor_tags(self):
         """Publish an image and auto-tag major and minor releases"""
         if self.official_release:
             self.publish()
             self._publish_major()
             self._publish_minor()
         else:
-            raise PublishAutoTagsError(
+            raise PublishMajorMinorTagsError(
                     f'Publishing with auto tags is only allowed for official release MAJOR.MINOR.PATCH tags.'
                     f'Current tag: {self.version_info}'
             )
