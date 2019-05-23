@@ -9,11 +9,7 @@ from compose_flow.errors import PublishAutoTagsError
 OFFICIAL_RELEASE_REGEX = re.compile(r'^\d+\.\d+\.\d+$')
 
 
-class AbstractImage:
-    pass
-
-
-class PrivateImage(AbstractImage):
+class DockerImage:
 
     def __init__(self, tagged_image_name: str = None, publish_callable: Callable = None, tag_callable: Callable = None):
         """
@@ -46,10 +42,6 @@ class PrivateImage(AbstractImage):
         :return:
         """
         self.repository = self._tagged_image_name.split('/')[0] if '/' in self._tagged_image_name else None
-        assert self.repository, (
-            f'Invalid repository value of {self.repository}.' 
-            'Private images must have a repository set.'
-        )
         self.tag = self._tagged_image_name.split(':')[1] if ':' in self._tagged_image_name else None
         self.name = re.match(rf'{self.repository}/(.*):{self.tag}', self._tagged_image_name).group(1)
         try:

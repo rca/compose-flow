@@ -1,7 +1,7 @@
 import argparse
 from typing import List
 
-from compose_flow.image import PrivateImage
+from compose_flow.docker_image import DockerImage
 
 from .base import BaseBuildSubcommand
 
@@ -35,20 +35,20 @@ class Publish(BaseBuildSubcommand):
 
         return list(docker_images)
 
-    def get_built_docker_images(self) -> List[PrivateImage]:
+    def get_built_docker_images(self) -> List[DockerImage]:
         """
         Returns a list of docker images built in the compose file
         """
         tagged_image_names = self.get_built_tagged_image_names()
-        private_images = [
-            PrivateImage(
+        docker_images = [
+            DockerImage(
                 tagged_image_name=tagged_image_name,
                 publish_callable=self.execute_publish,
                 tag_callable=self.execute_tag,
             )
             for tagged_image_name in tagged_image_names
         ]
-        return private_images
+        return docker_images
 
     def push(self):
         docker_images = self.get_built_docker_images()
