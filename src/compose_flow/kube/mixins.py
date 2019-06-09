@@ -7,12 +7,11 @@ import os
 import pathlib
 import sh
 import shutil
+from typing import List
 import yaml
 
 
-from compose_flow.errors import InvalidTargetClusterError, MissingKubeContextError, \
-                                MissingManifestError, ManifestCheckError, NoSuchConfig, \
-                                MissingRancherProject
+from compose_flow import errors
 from compose_flow.config import get_config
 from compose_flow.kube.checks import BaseChecker, ManifestChecker, AnswersChecker
 from compose_flow.utils import render, render_jinja
@@ -58,11 +57,11 @@ class KubeMixIn(object):
         """
         try:
             self.execute('kubectl config current-context')
-        except sh.ErrorReturnCode_1 as exc:
+        except sh.ErrorReturnCode_1 as exc:  # pylint: disable=E1101
             message = exc.stderr.decode('utf8').strip().lower()
 
             if 'current-context is not set' in message:
-                raise MissingKubeContextError('No current context configured in kubectl!')
+                raise errors.MissingKubeContext('No current context configured in kubectl!')
 
     def _check_kube_namespace(self):
         """
@@ -72,7 +71,7 @@ class KubeMixIn(object):
         """
         try:
             self.execute(f'{self.kubectl_command} get namespace {self.namespace}')
-        except sh.ErrorReturnCode_1 as exc:
+        except sh.ErrorReturnCode_1 as exc:  # pylint: disable=E1101
             message = exc.stderr.decode('utf8').strip().lower()
 
             if f'namespaces "{self.namespace}" not found' in message:
@@ -107,19 +106,19 @@ class KubeMixIn(object):
         try:
             raw_secret = self._get_secret(name)
             self.secret_exists = True
-        except sh.ErrorReturnCode_1 as exc:
+        except sh.ErrorReturnCode_1 as exc:  # pylint: disable=E1101
             message = exc.stderr.decode('utf8').strip().lower()
 
             if f'secrets "{self.secret_name}" not found' in message:
                 self.secret_exists = False
-                raise NoSuchConfig(f'secret name={self.secret_name} not found')
+                raise errors.NoSuchConfig(f'secret name={self.secret_name} not found')
 
             raise
 
         secret_yaml = yaml.load(raw_secret.stdout)
         payload = secret_yaml.get('data')
         if not payload or '_env' not in payload:
-            raise NoSuchConfig("secret name={self.secret_name} is empty")
+            raise errors.NoSuchConfig("secret name={self.secret_name} is empty")
 
         return base64.b64decode(secret_yaml['data']['_env']).decode('utf8')
 
@@ -134,7 +133,7 @@ class KubeMixIn(object):
         if not self.secret_exists:
             try:
                 self.execute(f"{self.kubectl_command} create secret generic --namespace {self.namespace} {self.secret_name}")
-            except sh.ErrorReturnCode_1 as exc:
+            except sh.ErrorReturnCode_1 as exc:  # pylint: disable=E1101
                 message = exc.stderr.decode('utf8').strip().lower()
 
                 if f'secrets "{self.secret_name}" already exists' not in message:
@@ -148,20 +147,19 @@ class KubeMixIn(object):
         """
         self.execute(f"{self.kubectl_command} delete secrets --namespace {self.namespace} {self.secret_name}")
 
-
     # Native Kube context management logic
     def switch_kube_context(self):
-        '''
+        """
         Switch current kubectl context to target specified cluster based on environment
-        '''
+        """
         profile_name = self.workflow.args.profile
         context_mapping = self.config.get('kubecontexts', {})
 
         target_context = context_mapping.get(profile_name, profile_name)
         try:
             self.execute(f'kubectl config use-context {target_context}')
-        except sh.ErrorReturnCode_1:
-            raise InvalidTargetClusterError("No context is defined for profile {}!\n\n"
+        except sh.ErrorReturnCode_1:  # pylint: disable=E1101
+            raise errors.InvalidTargetCluster("No context is defined for profile {}!\n\n"
                                             "Please specify a corresponding context in your kubeconfig file "
                                             "or map this profile name to an existing context "
                                             "in the 'kubecontexts' section of compose-flow.yml".format(profile_name))
@@ -179,19 +177,19 @@ class KubeMixIn(object):
 
     @property
     def cluster_name(self):
-        '''
+        """
         Get the cluster name for the specified target environment.
 
         If profile_name is in the compose-flow.yml Rancher cluster mapping,
         use its value - otherwise check the global remote config,
         then finally use workflow.args.profile if nothing else is defined
-        '''
+        """
         profile_name = self.workflow.args.profile
         default_cluster = self.remotes.get(profile_name, {}).get('rancher', {}).get('cluster')
         cluster_mapping = self.rancher_config.get('clusters', {})
 
         if profile_name in EXCLUDE_PROFILES:
-            raise InvalidTargetClusterError(
+            raise errors.InvalidTargetCluster(
                 "Invalid profile '{0}' for default cluster logic - please "
                 "specify an explicit cluster mapping in compose-flow.yml and "
                 "use a profile other than '{0}'".format(profile_name))
@@ -218,15 +216,15 @@ class KubeMixIn(object):
         elif default_project:
             return default_project
         else:
-            raise MissingRancherProject('ERROR: You must configure a Rancher project in '
+            raise errors.MissingRancherProject('ERROR: You must configure a Rancher project in '
                                         'compose-flow.yml or .compose/config.yml in order '
                                         'to use Rancher as a backend or deployment target!')
 
     def switch_rancher_context(self):
-        '''
+        """
         Switch Rancher CLI context to target specified cluster based on environment
         and specified project name from compose-flow.yml
-        '''
+        """
         # Get the project name specified in compose-flow.yml
         target_project_name = self.project_name
 
@@ -262,10 +260,10 @@ class KubeMixIn(object):
 
     # YAML rendering and deployment methods
     def get_app_deploy_command(self, app: dict, target: str = 'rancher') -> str:
-        '''
+        """
         Construct command to install or upgrade a Rancher app
         depending on whether or not it is already deployed.
-        '''
+        """
 
         app_name = app['name']
         version = app['version']
@@ -295,7 +293,14 @@ class KubeMixIn(object):
     def get_helm_app_upgrade_command(self, app_name: str, rendered_path: str, chart: str, version: str):
         return f'helm upgrade {app_name} {chart} -f {rendered_path} --version {version}'
 
-    def list_rancher_apps(self) -> str:
+    def list_pods(self, namespace: str = None):
+        if namespace:
+            namespace_command = f' -n {namespace} '
+        else:
+            namespace_command = ''
+        return str(self.execute(f'{self.kubectl_command} get pods {namespace_command}'))
+
+    def list_rancher_apps(self) -> List[str]:
         return str(self.execute("rancher apps ls --format '{{.App.Name}}'")).split('\n')
 
     def get_rancher_app_install_command(
@@ -306,8 +311,35 @@ class KubeMixIn(object):
     def get_rancher_app_upgrade_command(self, app_name: str, rendered_path: str, chart: str, version: str):
         return f'rancher apps upgrade --answers {rendered_path} {app_name} {version}'
 
+    def list_rancher_namespaces(self) -> List[str]:
+        return str(self.execute("rancher namespaces ls --format '{{.Namespace.ID}}'")).split('\n')
+
+    def create_rancher_namespace(self, namespace, dry_run=False):
+        creation_command = f"rancher namespaces create {namespace}"
+
+        print(f"Creating namespace {namespace} in project {self.project_name}")
+        if not dry_run:
+            try:
+                self.execute(creation_command)
+            except sh.ErrorReturnCode_1 as exc:  # pylint: disable=E1101
+                message = exc.stderr.decode('utf8').strip()
+                if 'code=AlreadyExists' in message:
+                    raise errors.RancherNamespaceAlreadyExists(f'Namespace {namespace} already exists in another project!')
+                else:
+                    raise
+
+    def upsert_rancher_namespaces(self, dry_run) -> str:
+        namespaces = self.get_rancher_namespaces()
+        existing = self.list_rancher_namespaces()
+
+        for ns in namespaces:
+            if ns in existing:
+                continue
+            else:
+                self.create_rancher_namespace(ns, dry_run)
+
     def get_kubectl_command(self, manifest: dict, kubectl_prefix: str = 'kubectl') -> str:
-        '''Construct command to apply a Kubernetes YAML manifest using kubectl.'''
+        """Construct command to apply a Kubernetes YAML manifest using kubectl."""
 
         deploy_label = self.workflow.args.config_name
 
@@ -329,7 +361,7 @@ class KubeMixIn(object):
             rendered_path = self.render_manifest(raw_path, raw)
             command += rendered_path
         else:
-            raise MissingManifestError("Missing manifest at path: {}".format(manifest))
+            raise errors.MissingManifest("Missing manifest at path: {}".format(manifest))
 
         return command
 
@@ -360,6 +392,12 @@ class KubeMixIn(object):
     def get_kubectl_manifests(self) -> list:
         return self.config.get('kubectl_manifests', [])
 
+    def get_rancher_namespaces(self) -> list:
+        default_namespaces = self.rancher_config.get('namespaces', [])
+        extra_namespaces = self.get_extra_section('namespaces')
+
+        return default_namespaces + extra_namespaces
+
     def get_rancher_manifests(self) -> list:
         default_manifests = self.rancher_config.get('manifests', [])
         extra_manifests = self.get_extra_section('manifests')
@@ -383,10 +421,10 @@ class KubeMixIn(object):
     def render_single_yaml(self, input_path: str, output_path: str,
                            checker: BaseChecker = None, raw: bool = False
                            ) -> None:
-        '''
+        """
         Read in single YAML file from specified path, render environment variables,
         then write out to a known location in the working dir.
-        '''
+        """
         self.logger.info("Rendering YAML at %s to %s", input_path, output_path)
 
         with open(input_path, 'r') as fh:
@@ -402,14 +440,14 @@ class KubeMixIn(object):
             errors = checker.check(rendered)
 
             if errors:
-                raise ManifestCheckError('\n'.join(errors))
+                raise errors.ManifestCheckError('\n'.join(errors))
 
         with open(output_path, 'w') as fh:
             fh.write(rendered)
 
     @lru_cache()
     def render_manifest(self, manifest_path: str, raw: bool) -> str:
-        '''Render the specified manifest YAML and return the path to the rendered file.'''
+        """Render the specified manifest YAML and return the path to the rendered file."""
         rendered_path = self.get_manifest_filename(manifest_path)
         self.render_single_yaml(manifest_path, rendered_path, ManifestChecker(), raw)
 
@@ -439,7 +477,7 @@ class KubeMixIn(object):
 
     @lru_cache()
     def render_answers(self, answers_path: str, app_name: str, raw: bool) -> str:
-        '''Render the specified manifest YAML and return the path to the rendered file.'''
+        """Render the specified manifest YAML and return the path to the rendered file."""
         rendered_path = self.get_answers_filename(app_name)
         self.render_single_yaml(answers_path, rendered_path, AnswersChecker(), raw)
 

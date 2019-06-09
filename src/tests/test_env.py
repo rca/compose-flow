@@ -1,8 +1,9 @@
+import os
 import shlex
 from unittest import TestCase, mock
 
-from compose_flow import utils
-from compose_flow.commands.subcommands.env import Env
+from compose_flow import errors
+from compose_flow.commands.subcommands.env import Env, RUNTIME_PLACEHOLDER
 from compose_flow.commands import Workflow
 
 from tests import BaseTestCase
@@ -26,7 +27,7 @@ class EnvTestCase(BaseTestCase):
         """
         Ensure a local backend is returned
         """
-        backend_name = 'swarm'
+        backend_name = 'rancher'
 
         flow = mock.Mock()
         flow.args.remote = 'dev'
@@ -42,12 +43,12 @@ class EnvTestCase(BaseTestCase):
         }
 
         get_backend_mock = mocks[0]
-        get_backend_mock.return_value = 'SwarmBackend'
+        get_backend_mock.return_value = 'RancherBackend'
 
         env = Env(flow)
         backend = env.backend
 
-        self.assertEqual(backend, 'SwarmBackend')
+        self.assertEqual(backend, 'RancherBackend')
 
         get_backend_mock.assert_called_with(backend_name, workflow=flow)
 
@@ -122,3 +123,49 @@ class EnvTestCase(BaseTestCase):
         self.assertEqual(
             ['BAR', 'DOCKER_IMAGE', 'FOO', 'VERSION'], sorted(env._persistable_keys)
         )
+
+    @mock.patch('compose_flow.commands.subcommands.env.get_backend')
+    def test_load_runtime(self, *mocks):
+        """
+        Ensures that runtime variables are able to be viewed/edited without being set
+        """
+        version = '1.2.3'
+        docker_image = 'foo:bar'
+
+        bar_env_val = 'bar'
+        os.environ['BAR'] = bar_env_val
+
+        get_backend_mock = mocks[0]
+        get_backend_mock.return_value.read.return_value = (
+            f"FOO={RUNTIME_PLACEHOLDER}\nBAR={RUNTIME_PLACEHOLDER}\nVERSION={version}\nDOCKER_IMAGE={docker_image}"
+        )
+
+        command = shlex.split('-e dev env cat')
+        flow = Workflow(argv=command)
+
+        flow.run()
+
+        env = flow.subcommand
+
+        self.assertEqual(RUNTIME_PLACEHOLDER, env.data['FOO'])
+        self.assertEqual(bar_env_val, env.data['BAR'])
+
+    @mock.patch('compose_flow.commands.subcommands.env.get_backend')
+    def test_missing_runtime_error(self, *mocks):
+        """
+        Ensures that runtime variables must be set to run any compose commands
+        """
+        version = '1.2.3'
+        docker_image = 'foo:bar'
+
+        get_backend_mock = mocks[0]
+        get_backend_mock.return_value.read.return_value = (
+            f"FOO={RUNTIME_PLACEHOLDER}\nVERSION={version}\nDOCKER_IMAGE={docker_image}"
+        )
+
+        command = shlex.split('-e dev compose config')
+        flow = Workflow(argv=command)
+
+        assert os.environ.get('FOO') is None
+        with self.assertRaises(errors.RuntimeEnvError):
+            flow.profile.data['services']

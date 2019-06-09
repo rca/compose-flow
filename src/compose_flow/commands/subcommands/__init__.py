@@ -6,7 +6,7 @@ import importlib
 import os
 import sys
 
-from .base import BaseSubcommand
+from .base import BaseSubcommand, BaseBuildSubcommand
 from .passthrough_base import PassthroughBaseSubcommand
 
 
@@ -43,8 +43,9 @@ def get_subcommand_class(filename: str) -> [object, None]:
         try:
             if attr not in (
                 BaseSubcommand,
+                BaseBuildSubcommand,
                 PassthroughBaseSubcommand,
-            ) and issubclass(attr, BaseSubcommand):
+            ) and issubclass(attr, (BaseSubcommand, BaseBuildSubcommand)):
                 return attr
         except TypeError:
             continue

@@ -11,6 +11,7 @@ sh = "*"
 tag-version = "*"
 tabulate = "*"
 docker-compose = "*"
+semver = "*"
 
 [dev-packages]
 twine = "*"
