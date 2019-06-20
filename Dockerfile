@@ -14,8 +14,8 @@ RUN groupadd -g ${gid} ${group} \
  && chmod -R 770 $HOME
 
 # Install Docker client
-ENV DOCKERVERSION="17.09.1-ce"
-ENV DOCKER_SHA="42ccda2f86743abc90d3601a9bf970937a93c448"
+ENV DOCKERVERSION="18.09.5"
+ENV DOCKER_SHA="ac485ffe7ea3f43974c4613d5142eae7ec67a611"
 RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz \
  && echo "$DOCKER_SHA docker-${DOCKERVERSION}.tgz" | sha1sum -c - \
  && tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 \
@@ -34,8 +34,8 @@ RUN curl -L https://storage.googleapis.com/kubernetes-release/release/${KUBE_LAT
  && chmod +x /usr/local/bin/kubectl
 
 # Install Rancher CLI
-ENV RANCHER_VERSION="v2.0.5"
-ENV RANCHER_SHA="2bd11e2d97835e659d1dc286bbcc57fcc0b019bf"
+ENV RANCHER_VERSION="v2.2.0"
+ENV RANCHER_SHA="dcd076643b39891b9f0a8c7da746ee73e0d9735c"
 RUN curl -fsSLO https://github.com/rancher/cli/releases/download/${RANCHER_VERSION}/rancher-linux-amd64-${RANCHER_VERSION}.tar.gz \
  && echo "$RANCHER_SHA rancher-linux-amd64-${RANCHER_VERSION}.tar.gz" | sha1sum -c - \
  && tar xzvf rancher-linux-amd64-${RANCHER_VERSION}.tar.gz --strip 2 \
