@@ -271,26 +271,44 @@ class KubeMixIn(object):
         chart = app['chart']
         raw = app.get('raw', False)
 
-        rendered_path = self.render_answers(app['answers'], app_name, raw)
+        answers_path = app.get('answers')
+        values_path = app.get('values')
+
+        use_answers = True
+        if answers_path and values_path:
+            raise ValueError("A single app cannot use both answers (flat) and values (nested) - pick one!")
+        elif answers_path:
+            if target == 'helm':
+                self.logger.warning("Helm only supports nested values - please "
+                                    "switch from answers to values in compose-flow.yml")
+            rendered_path = self.render_answers(answers_path, app_name, raw)
+        elif values_path:
+            use_answers = False
+            rendered_path = self.render_answers(values_path, app_name, raw)
+        else:
+            self.logger.warning("Neither answers nor values were provided - using default chart configuration")
+            rendered_path = None
 
         app_list = getattr(self, f'list_{target}_apps')()
         upgrade_command_method = getattr(self, f'get_{target}_app_upgrade_command')
         install_command_method = getattr(self, f'get_{target}_app_install_command')
 
         if app_name in app_list:
-            return upgrade_command_method(app_name, rendered_path, chart, version)
+            return upgrade_command_method(app_name, rendered_path, chart, version, use_answers)
         else:
-            return install_command_method(app_name, rendered_path, namespace, chart, version)
+            return install_command_method(app_name, rendered_path, namespace, chart, version, use_answers)
 
     def list_helm_apps(self) -> str:
         return str(self.execute("helm ls -q --all")).split('\n')
 
     def get_helm_app_install_command(
-            self, app_name: str, rendered_path: str,
-            namespace: str, chart: str, version: str):
+            self, app_name: str, rendered_path: str, namespace: str,
+            chart: str, version: str, use_answers: bool = False):
         return f'helm install --name {app_name} -f {rendered_path} --namespace {namespace} --version {version} {chart}'
 
-    def get_helm_app_upgrade_command(self, app_name: str, rendered_path: str, chart: str, version: str):
+    def get_helm_app_upgrade_command(
+            self, app_name: str, rendered_path: str,
+            chart: str, version: str, use_answers: bool = False):
         return f'helm upgrade {app_name} {chart} -f {rendered_path} --version {version}'
 
     def list_pods(self, namespace: str = None):
@@ -304,12 +322,27 @@ class KubeMixIn(object):
         return str(self.execute("rancher apps ls --format '{{.App.Name}}'")).split('\n')
 
     def get_rancher_app_install_command(
-            self, app_name: str, rendered_path: str,
-            namespace: str, chart: str, version: str):
-        return f'rancher apps install --answers {rendered_path} --namespace {namespace} --version {version} {chart} {app_name}'
+            self, app_name: str, rendered_path: str, namespace: str,
+            chart: str, version: str, use_answers: bool):
+        cmd = 'rancher apps install '
+        if rendered_path:
+            if use_answers:
+                cmd += f'--answers {rendered_path}'
+            else:
+                cmd += f'--values {rendered_path}'
+        return cmd + f' --namespace {namespace} --version {version} {chart} {app_name}'
 
-    def get_rancher_app_upgrade_command(self, app_name: str, rendered_path: str, chart: str, version: str):
-        return f'rancher apps upgrade --answers {rendered_path} {app_name} {version}'
+    def get_rancher_app_upgrade_command(
+            self, app_name: str, rendered_path: str,
+            chart: str, version: str, use_answers: bool):
+        cmd = 'rancher apps upgrade '
+        if rendered_path:
+            if use_answers:
+                cmd += f'--answers {rendered_path}'
+            else:
+                cmd += f'--values {rendered_path}'
+
+        return cmd + f' {app_name} {version}'
 
     def list_rancher_namespaces(self) -> List[str]:
         return str(self.execute("rancher namespaces ls --format '{{.Namespace.ID}}'")).split('\n')

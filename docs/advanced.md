@@ -322,7 +322,7 @@ rancher:
         - name: redis-backup
           namespace: redis
           chart: custom-redis-backup-chart
-          answers: redis-backup-answers.yaml
+          values: redis-backup-values.yaml
           version: 0.0.1
       namespaces:
         - my-extra-namespace
@@ -335,6 +335,29 @@ Once configured, ensure your local Rancher CLI is logged in with a valid token, 
 
 ```bash
 compose-flow -e dev deploy rancher
+```
+
+#### Catalog App Values vs. Answers
+
+Rancher supports either flat **`answers`** or nested **`values`** for configuring Helm charts.
+
+To select which format to use for each app, simply specify `values` or `answers` when providing the path to each file in `compose-flow.yml`.
+
+**Note: you must provide _either_ `values` _or_ `answers` for each app - an error will be raised if both are provided for a single app.**
+
+##### Example Flat Answers
+
+```yaml
+ingress.enabled: true
+ingress.host: my-app.example.com
+```
+
+##### Example Nested Values
+
+```yaml
+ingress:
+  enabled: true
+  host: my-app.example.com
 ```
 
 ### Native Kubernetes Tooling
@@ -383,7 +406,7 @@ helm:
   namespace: my-namespace
   chart: my-chart
   version: "0.0.1"
-  answers: ../my-answers.yml
+  values: ../my-values.yml
 ```
 
 # History
