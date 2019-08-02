@@ -111,7 +111,7 @@ class KubeMixIn(object):
 
             if f'secrets "{self.secret_name}" not found' in message:
                 self.secret_exists = False
-                raise errors.NoSuchConfig(f'secret name={self.secret_name} not found')
+                raise errors.NoSuchConfig(f'secret name={self.secret_name} in namespace={self.namespace} not found')
 
             raise
 
