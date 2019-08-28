@@ -13,7 +13,8 @@ import yaml
 
 from compose_flow import errors
 from compose_flow.config import get_config
-from compose_flow.kube.checks import BaseChecker, ManifestChecker, AnswersChecker
+from compose_flow.kube.checks import BaseChecker, ManifestChecker, \
+                                     AnswersChecker, ValuesChecker
 from compose_flow.utils import render, render_jinja
 
 CLUSTER_LS_FORMAT = '{{.Cluster.Name}}: {{.Cluster.ID}}'
@@ -284,7 +285,7 @@ class KubeMixIn(object):
             rendered_path = self.render_answers(answers_path, app_name, raw)
         elif values_path:
             use_answers = False
-            rendered_path = self.render_answers(values_path, app_name, raw)
+            rendered_path = self.render_values(values_path, app_name, raw)
         else:
             self.logger.warning("Neither answers nor values were provided - using default chart configuration")
             rendered_path = None
@@ -451,6 +452,9 @@ class KubeMixIn(object):
     def get_answers_filename(self, app_name: str) -> str:
         return f'compose-flow-{self.cluster_name}-{app_name}-answers.yml'
 
+    def get_values_filename(self, app_name: str) -> str:
+        return f'compose-flow-{self.cluster_name}-{app_name}-values.yml'
+
     def render_single_yaml(self, input_path: str, output_path: str,
                            checker: BaseChecker = None, raw: bool = False
                            ) -> None:
@@ -470,10 +474,10 @@ class KubeMixIn(object):
             rendered = content
 
         if checker:
-            errors = checker.check(rendered)
+            check_errors = checker.check(rendered)
 
-            if errors:
-                raise errors.ManifestCheckError('\n'.join(errors))
+            if check_errors:
+                raise errors.ManifestCheck('\n'.join(check_errors))
 
         with open(output_path, 'w') as fh:
             fh.write(rendered)
@@ -513,5 +517,13 @@ class KubeMixIn(object):
         """Render the specified manifest YAML and return the path to the rendered file."""
         rendered_path = self.get_answers_filename(app_name)
         self.render_single_yaml(answers_path, rendered_path, AnswersChecker(), raw)
+
+        return rendered_path
+
+    @lru_cache()
+    def render_values(self, answers_path: str, app_name: str, raw: bool) -> str:
+        """Render the specified manifest YAML and return the path to the rendered file."""
+        rendered_path = self.get_values_filename(app_name)
+        self.render_single_yaml(answers_path, rendered_path, ValuesChecker(), raw)
 
         return rendered_path
