@@ -191,3 +191,14 @@ class AnswersChecker(BaseChecker):
                 return 'Answers specify resources but not requests! Please specify both CPU and memory requests.'
             if not has_limits or not has_memory_limit or not has_cpu_limit:
                 return 'Answers specify resources but not limits! Please specify both CPU and memory limits.'
+
+
+class ValuesChecker(BaseChecker):
+    check_prefix = '_check_values_'
+
+    def _check_values_flat_resources(self, documents: list) -> str:
+        """
+        Check for resource constraints in nested Helm values.
+        """
+        if len(documents) > 1:
+            return 'We only support flat Helm values! Please provide a single YAML document.'
