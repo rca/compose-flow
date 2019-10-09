@@ -6,12 +6,16 @@ import semver
 from compose_flow.errors import PublishMajorMinorTagsError
 
 
-OFFICIAL_RELEASE_REGEX = re.compile(r'^\d+\.\d+\.\d+$')
+OFFICIAL_RELEASE_REGEX = re.compile(r"^\d+\.\d+\.\d+$")
 
 
 class DockerImage:
-
-    def __init__(self, tagged_image_name: str = None, publish_callable: Callable = None, tag_callable: Callable = None):
+    def __init__(
+        self,
+        tagged_image_name: str = None,
+        publish_callable: Callable = None,
+        tag_callable: Callable = None,
+    ):
         """
         Init method
         :param tagged_image_name: A fully qualified image name of format repository/image_name:tag
@@ -34,16 +38,26 @@ class DockerImage:
     def _get_tagged_image_name(self, tag: str = None):
         """Utility for getting a tagged image name"""
         tag = tag or self.tag
-        return f'{self.repository}/{self.name}:{tag}'
+        return f"{self.repository}/{self.name}:{tag}"
 
     def _parse_tagged_image_name(self):
         """
         Parse the tagged_image_name and set repository, image_name, semver version_info
         :return:
         """
-        self.repository = self._tagged_image_name.split('/')[0] if '/' in self._tagged_image_name else None
-        self.tag = self._tagged_image_name.split(':')[1] if ':' in self._tagged_image_name else None
-        self.name = re.match(rf'{self.repository}/(.*):{self.tag}', self._tagged_image_name).group(1)
+        self.repository = (
+            self._tagged_image_name.split("/")[0]
+            if "/" in self._tagged_image_name
+            else None
+        )
+        self.tag = (
+            self._tagged_image_name.split(":")[1]
+            if ":" in self._tagged_image_name
+            else None
+        )
+        self.name = re.match(
+            rf"{self.repository}/(.*):{self.tag}", self._tagged_image_name
+        ).group(1)
         try:
             self.version_info = semver.VersionInfo.parse(self.tag)
         except ValueError:
@@ -57,8 +71,8 @@ class DockerImage:
             self._publish_minor()
         else:
             raise PublishMajorMinorTagsError(
-                    f'Publishing with auto tags is only allowed for official release MAJOR.MINOR.PATCH tags.'
-                    f'Current tag: {self.version_info}'
+                f"Publishing with auto tags is only allowed for official release MAJOR.MINOR.PATCH tags."
+                f"Current tag: {self.version_info}"
             )
 
     def publish(self):
@@ -77,7 +91,7 @@ class DockerImage:
 
     def _publish_minor(self):
         """Publish image tagged to major.minor version"""
-        tag = f'{self.version_info.major}.{self.version_info.minor}'
+        tag = f"{self.version_info.major}.{self.version_info.minor}"
         self._add_tag_to_image(tag)
         self._publish(tag)
 

@@ -9,7 +9,7 @@ class Docker(PassthroughBaseSubcommand):
     Subcommand for running docker commands
     """
 
-    command_name = 'docker'
+    command_name = "docker"
 
     setup_environment = False
 

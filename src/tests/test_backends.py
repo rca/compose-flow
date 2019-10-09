@@ -4,14 +4,14 @@ import re
 from compose_flow.environment.backends import get_backend
 
 
-@mock.patch('compose_flow.environment.backends.local_backend.open')
-@mock.patch('compose_flow.environment.backends.local_backend.os')
+@mock.patch("compose_flow.environment.backends.local_backend.open")
+@mock.patch("compose_flow.environment.backends.local_backend.os")
 class LocalBackendTestCase(TestCase):
-    buf = 'FOO=1\n'
+    buf = "FOO=1\n"
 
     @property
     def backend(self):
-        backend = get_backend('local')
+        backend = get_backend("local")
 
         return backend
 
@@ -20,35 +20,35 @@ class LocalBackendTestCase(TestCase):
         open_mock.return_value.__enter__.return_value.read.return_value = self.buf
 
         os_mock = mocks[-2]
-        os_mock.listdir.return_value = ['foo']
+        os_mock.listdir.return_value = ["foo"]
 
     def test_list(self, *mocks):
         self._setup_mocks(*mocks)
 
-        self.assertEqual(self.backend.ls(), ['foo'])
+        self.assertEqual(self.backend.ls(), ["foo"])
 
     def test_read(self, *mocks):
         self._setup_mocks(*mocks)
 
-        self.assertEqual(self.backend.read('foo'), self.buf)
+        self.assertEqual(self.backend.read("foo"), self.buf)
 
     def test_write(self, *mocks):
         self._setup_mocks(*mocks)
 
-        self.backend.write('foo', '/path/to/config')
+        self.backend.write("foo", "/path/to/config")
 
         open_mock = mocks[-1]
 
         open_mock.return_value.__enter__.return_value.write.assert_called_with(self.buf)
 
 
-@mock.patch('compose_flow.environment.backends.swarm_backend.docker')
+@mock.patch("compose_flow.environment.backends.swarm_backend.docker")
 class SwarmBackendTestCase(TestCase):
-    buf = 'FOO=1\n'
+    buf = "FOO=1\n"
 
     @property
     def backend(self):
-        backend = get_backend('swarm')
+        backend = get_backend("swarm")
 
         return backend
 
@@ -65,7 +65,7 @@ class SwarmBackendTestCase(TestCase):
     def test_read(self, *mocks):
         self._setup_mocks(*mocks)
 
-        name = 'foo'
+        name = "foo"
 
         self.backend.read(name)
 
@@ -74,8 +74,8 @@ class SwarmBackendTestCase(TestCase):
     def test_write(self, *mocks):
         self._setup_mocks(*mocks)
 
-        name = 'foo'
-        path = '/path/to/config'
+        name = "foo"
+        path = "/path/to/config"
 
         self.backend.write(name, path)
 
@@ -83,22 +83,27 @@ class SwarmBackendTestCase(TestCase):
 
 
 class RancherBackend(TestCase):
-
     @property
     def backend(self):
-        backend = get_backend('rancher')
+        backend = get_backend("rancher")
 
         return backend
 
-    @mock.patch('compose_flow.environment.backends.rancher_backend.RancherBackend.switch_rancher_context')
-    @mock.patch('compose_flow.environment.backends.rancher_backend.RancherBackend._check_rancher_namespace')
+    @mock.patch(
+        "compose_flow.environment.backends.rancher_backend.RancherBackend.switch_rancher_context"
+    )
+    @mock.patch(
+        "compose_flow.environment.backends.rancher_backend.RancherBackend._check_rancher_namespace"
+    )
     def test_secret_contains_no_invalid_characters(self, *mocks):
         """
         Test that when we store a secret all invalid characters are replaced with `-`
         """
         backend = self.backend
-        backend.workflow = mock.MagicMock(config_name='dev-oss_reporting')
+        backend.workflow = mock.MagicMock(config_name="dev-oss_reporting")
 
-        validation_regex = re.compile(r'^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$')
+        validation_regex = re.compile(
+            r"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$"
+        )
 
         self.assertTrue(re.match(validation_regex, backend.secret_name) is not None)

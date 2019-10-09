@@ -10,7 +10,7 @@ class Kubectl(PassthroughBaseSubcommand, KubeMixIn):
     Subcommand for running rancher CLI commands
     """
 
-    command_name = 'kubectl'
+    command_name = "kubectl"
 
     setup_environment = True
 

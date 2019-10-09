@@ -11,8 +11,8 @@ from compose_flow import errors, shell
 from compose_flow.errors import EnvError, ErrorMessage
 from compose_flow import settings
 
-UNIX_PREFIX = 'unix://'
-UNIX_REMOTE_HOST_RE = re.compile(UNIX_PREFIX + r'(?P<socket>.*)')
+UNIX_PREFIX = "unix://"
+UNIX_REMOTE_HOST_RE = re.compile(UNIX_PREFIX + r"(?P<socket>.*)")
 
 
 class Remote(BaseSubcommand):
@@ -21,7 +21,7 @@ class Remote(BaseSubcommand):
     """
 
     def __init__(self, *args, **kwargs):
-        self._host = kwargs.pop('host', None)
+        self._host = kwargs.pop("host", None)
 
         super().__init__(*args, **kwargs)
 
@@ -32,17 +32,17 @@ class Remote(BaseSubcommand):
             pass
         else:
             if do_print:
-                pids_s = ", ".join([f'{x}' for x in pids])
-                print(f'closing pids {pids_s}', file=sys.stderr)
+                pids_s = ", ".join([f"{x}" for x in pids])
+                print(f"closing pids {pids_s}", file=sys.stderr)
 
             for pid in pids:
-                self.execute(f'kill {pid}')
+                self.execute(f"kill {pid}")
 
         self.remove_socket()
 
         if do_print:
             self.print_eval_hint()
-            print(f'unset DOCKER_HOST')
+            print(f"unset DOCKER_HOST")
 
     def connect(self):
         remote_host = self.get_remote_host()
@@ -55,25 +55,25 @@ class Remote(BaseSubcommand):
         if remote_host != self.socket_path:
             self.print_eval_hint()
 
-            print(f'export DOCKER_HOST={self.docker_host}')
+            print(f"export DOCKER_HOST={self.docker_host}")
 
     @property
     def docker_host(self):
         socket_path = self.socket_path
         if socket_path:
-            return f'{UNIX_PREFIX}{socket_path}'
+            return f"{UNIX_PREFIX}{socket_path}"
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
-        subparser.add_argument('action')
-        subparser.add_argument('--host')
+        subparser.add_argument("action")
+        subparser.add_argument("--host")
 
     def get_remote_host(self):
-        return self.docker_host or os.environ.get('DOCKER_HOST')
+        return self.docker_host or os.environ.get("DOCKER_HOST")
 
     def get_remote_ssh_pids(self):
         socket = self.get_socket()
-        pgrep_search = f'ssh -Nf -L {socket}'
+        pgrep_search = f"ssh -Nf -L {socket}"
 
         try:
             # very low-level command that does not need workflow environment
@@ -81,19 +81,19 @@ class Remote(BaseSubcommand):
         except shell.ErrorReturnCode_1:
             pass
         else:
-            for item in proc.stdout.decode('utf8').strip().splitlines():
+            for item in proc.stdout.decode("utf8").strip().splitlines():
                 yield int(item)
 
     def get_socket(self):
         remote_host = self.get_remote_host()
         if not remote_host:
-            raise EnvError('DOCKER_HOST not defined')
+            raise EnvError("DOCKER_HOST not defined")
 
         matches = UNIX_REMOTE_HOST_RE.match(remote_host)
         if not matches:
-            raise ErrorMessage(f'cannot parse remote_host={remote_host}')
+            raise ErrorMessage(f"cannot parse remote_host={remote_host}")
 
-        return matches.group('socket')
+        return matches.group("socket")
 
     @property
     def host(self):
@@ -108,7 +108,7 @@ class Remote(BaseSubcommand):
         remote = args.remote
 
         try:
-            self._host = data['remotes'][remote]['ssh']
+            self._host = data["remotes"][remote]["ssh"]
         except KeyError:
             # it's perfectly fine to not have a remote config
             pass
@@ -131,7 +131,7 @@ class Remote(BaseSubcommand):
         return True
 
     def is_not_connected_okay(self, exc):
-        if self.workflow.args.action in ('connect',):
+        if self.workflow.args.action in ("connect",):
             return True
 
         return super().is_not_connected_okay(exc)
@@ -152,7 +152,7 @@ class Remote(BaseSubcommand):
 
         try:
             if self.status(docker_host=self.docker_host, do_print=False):
-                raise errors.AlreadyConnected(f'already connected to {remote_host}')
+                raise errors.AlreadyConnected(f"already connected to {remote_host}")
         except EnvError:
             pass
 
@@ -161,7 +161,7 @@ class Remote(BaseSubcommand):
 
         host = self.host
         if not host:
-            raise errors.RemoteUndefined('Error: Remote host not given')
+            raise errors.RemoteUndefined("Error: Remote host not given")
 
         socket_path = self.socket_path
 
@@ -171,12 +171,12 @@ class Remote(BaseSubcommand):
 
         # very low-level command that does not need workflow environment
         self.execute(
-            f'ssh -Nf -L {socket_path}:/var/run/docker.sock {host}', _env=os.environ
+            f"ssh -Nf -L {socket_path}:/var/run/docker.sock {host}", _env=os.environ
         )
 
     def print_eval_hint(self):
         print(
-            'copy and paste the commands below or run this command wrapped in an eval statement:\n',
+            "copy and paste the commands below or run this command wrapped in an eval statement:\n",
             file=sys.stderr,
         )
 
@@ -189,7 +189,7 @@ class Remote(BaseSubcommand):
     def socket_path(self):
         host = self.host
         if self.host:
-            return f'/tmp/compose-flow-{host}.sock'
+            return f"/tmp/compose-flow-{host}.sock"
 
     def status(self, docker_host=None, do_print=True):
         pids = []
@@ -207,16 +207,16 @@ class Remote(BaseSubcommand):
         if docker_host and connected:
             status = True
 
-            message = f'connected to docker_host {docker_host}, ssh pid {pids}'
+            message = f"connected to docker_host {docker_host}, ssh pid {pids}"
         elif docker_host:
-            message = f'environment set to {docker_host}, but no ssh connection found'
+            message = f"environment set to {docker_host}, but no ssh connection found"
         elif pids:
-            pids_s = ", ".join([f'{x}' for x in pids])
+            pids_s = ", ".join([f"{x}" for x in pids])
             message = (
-                f'ssh connection found at pids {pids_s}, but environment not setup'
+                f"ssh connection found at pids {pids_s}, but environment not setup"
             )
         else:
-            message = 'Not connected'
+            message = "Not connected"
 
         if message and do_print:
             print(message)
@@ -235,7 +235,7 @@ class Remote(BaseSubcommand):
         username = settings.DEFAULT_CF_REMOTE_USER
 
         host = self.host
-        if host and '@' in host:
-            username = host.split('@', 1)[0]
+        if host and "@" in host:
+            username = host.split("@", 1)[0]
 
         return username

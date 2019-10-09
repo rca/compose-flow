@@ -53,36 +53,36 @@ class Service(BaseSubcommand):
         subparser.formatter_class = argparse.RawDescriptionHelpFormatter
 
         subparser.add_argument(
-            '--user', '-u', help='the user to become int he container'
+            "--user", "-u", help="the user to become int he container"
         )
         subparser.add_argument(
-            '--retries', type=int, default=30, help='number of times to retry'
+            "--retries", type=int, default=30, help="number of times to retry"
         )
         subparser.add_argument(
-            '--ssh', action='store_true', help='ssh to the machine, not the container'
+            "--ssh", action="store_true", help="ssh to the machine, not the container"
         )
         subparser.add_argument(
-            '--sudo',
-            action='store_true',
-            help='use sudo to run the docker command remotely',
+            "--sudo",
+            action="store_true",
+            help="use sudo to run the docker command remotely",
         )
         subparser.add_argument(
-            '--list', action='store_true', help='list available containers'
+            "--list", action="store_true", help="list available containers"
         )
         subparser.add_argument(
-            '--container',
+            "--container",
             type=int,
             default=0,
-            help='which numbered container to select, default=0',
+            help="which numbered container to select, default=0",
         )
         subparser.add_argument(
-            '--random', action='store_true', help='pick a random matching container'
+            "--random", action="store_true", help="pick a random matching container"
         )
         subparser.add_argument(
-            '--service-name', help='full service name to use instead of generated'
+            "--service-name", help="full service name to use instead of generated"
         )
-        subparser.add_argument('action', help='The action to run')
-        subparser.add_argument('service', nargs='?', help='The desired service')
+        subparser.add_argument("action", help="The action to run")
+        subparser.add_argument("service", nargs="?", help="The desired service")
 
     def action_exec(self):
         args = self.workflow.args
@@ -97,7 +97,7 @@ class Service(BaseSubcommand):
                 break
 
         if not result:
-            sys.exit(f'No container found for service={self.service_name}')
+            sys.exit(f"No container found for service={self.service_name}")
 
     def action_list(self):
         """
@@ -108,12 +108,12 @@ class Service(BaseSubcommand):
         """
         service_name = self.service_name
         if service_name:
-            print('ALL CONTAINERS:\n')
+            print("ALL CONTAINERS:\n")
 
             for idx, item in enumerate(self.list_containers()):
-                print('\t{}: {}'.format(idx, item))
+                print("\t{}: {}".format(idx, item))
 
-            print(f'\nSELECTED:\n\t{self.select_container()}')
+            print(f"\nSELECTED:\n\t{self.select_container()}")
         else:
             # print(f'list services for env {self.project_name}\n')
             print(self.list_services())
@@ -122,7 +122,7 @@ class Service(BaseSubcommand):
     def list_containers(self, service_name: str = None):
         service_name = service_name or self.service_name
 
-        command = f'docker service ps --no-trunc --filter desired-state=running {service_name}'
+        command = f"docker service ps --no-trunc --filter desired-state=running {service_name}"
 
         proc = self.execute(command)
 
@@ -132,7 +132,7 @@ class Service(BaseSubcommand):
         items = []
 
         try:
-            output = proc.stdout.decode('utf8').splitlines()[1:]
+            output = proc.stdout.decode("utf8").splitlines()[1:]
 
             # check to see there's at least one container listed
             output[0]
@@ -140,7 +140,7 @@ class Service(BaseSubcommand):
             raise errors.NoContainer()
         else:
             for item in output:
-                if f'{service_name}.' not in item:
+                if f"{service_name}." not in item:
                     continue
 
                 items.append(item)
@@ -151,9 +151,9 @@ class Service(BaseSubcommand):
         """
         Lists all the services for this stack
         """
-        proc = self.execute(f'docker stack services {self.workflow.args.config_name}')
+        proc = self.execute(f"docker stack services {self.workflow.args.config_name}")
 
-        return proc.stdout.decode('utf8')
+        return proc.stdout.decode("utf8")
 
     def run_service(self):
         args = self.workflow.args
@@ -168,30 +168,30 @@ class Service(BaseSubcommand):
 
         # print(container_info)
 
-        if container_host.startswith('ip-'):
-            container_host = container_host.replace('ip-', '').replace('-', '.')
+        if container_host.startswith("ip-"):
+            container_host = container_host.replace("ip-", "").replace("-", ".")
 
-        host_info = f'{self.workflow.remote.username}@{container_host}'
+        host_info = f"{self.workflow.remote.username}@{container_host}"
 
-        docker_user = ''
+        docker_user = ""
         if args.user:
-            docker_user = f'--user {args.user} '
+            docker_user = f"--user {args.user} "
 
-        command = f'ssh -t {host_info}'
+        command = f"ssh -t {host_info}"
         docker_command = (
-            f'docker exec -t -i {docker_user}{container_prefix}.{container_hash}'
+            f"docker exec -t -i {docker_user}{container_prefix}.{container_hash}"
             f' {" ".join(self.workflow.args_remainder)}'
         )
 
         if args.sudo:
-            docker_command = f'sudo {docker_command}'
+            docker_command = f"sudo {docker_command}"
 
         if not args.ssh:
-            command = f'{command} {docker_command}'
+            command = f"{command} {docker_command}"
         else:
-            sys.stderr.write(f'docker_command: {docker_command}\n')
+            sys.stderr.write(f"docker_command: {docker_command}\n")
 
-        logging.debug(f'command={command}')
+        logging.debug(f"command={command}")
 
         return shell.execute(command, os.environ, _fg=True)
 
@@ -217,4 +217,4 @@ class Service(BaseSubcommand):
         if not service_name:
             return
 
-        return f'{args.config_name}_{args.service}'
+        return f"{args.config_name}_{args.service}"

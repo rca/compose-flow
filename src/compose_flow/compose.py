@@ -5,7 +5,7 @@ from .utils import remerge, yaml_dump, yaml_load
 
 
 def get_overlay_filenames(overlay):
-    logger = logging.getLogger('get_overlay_filenames')
+    logger = logging.getLogger("get_overlay_filenames")
 
     overlay_filenames = []
 
@@ -18,8 +18,8 @@ def get_overlay_filenames(overlay):
 
         path = None
         if isinstance(item, dict):
-            name = item['name']
-            path = item['path']
+            name = item["name"]
+            path = item["path"]
         else:
             name = item
 
@@ -34,24 +34,24 @@ def get_overlay_filenames(overlay):
         else:
             # prefix partial with a dot in order to complete the name
             if name:
-                name = '.{}'.format(name)
+                name = ".{}".format(name)
             else:
-                name = ''
+                name = ""
 
-            _filename = 'docker-compose{}.yml'.format(name)
+            _filename = "docker-compose{}.yml".format(name)
             if path:
                 _filename = os.path.join(path, _filename)
 
-            logging.debug('_filename={}'.format(_filename))
+            logging.debug("_filename={}".format(_filename))
 
             if os.path.exists(_filename):
                 overlay_filenames.append(_filename)
             else:
-                logger.warning(f'filename={_filename} does not exist, skipping')
+                logger.warning(f"filename={_filename} does not exist, skipping")
 
     # check to see if any filenames were found, else default to docker-compose.yml
     if not overlay_filenames:
-        overlay_filenames.append('docker-compose.yml')
+        overlay_filenames.append("docker-compose.yml")
 
     return overlay_filenames
 
@@ -71,16 +71,16 @@ def merge_profile(profile: dict) -> str:
         yaml_contents = []
 
         for item in filenames:
-            with open(item, 'r') as fh:
+            with open(item, "r") as fh:
                 yaml_contents.append(yaml_load(fh))
 
         merged = remerge(yaml_contents)
         content = yaml_dump(merged)
     else:
         try:
-            with open(filenames[0], 'r') as fh:
+            with open(filenames[0], "r") as fh:
                 content = fh.read()
         except FileNotFoundError:
-            content = ''
+            content = ""
 
     return content

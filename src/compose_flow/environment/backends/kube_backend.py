@@ -10,14 +10,15 @@ class KubeBackend(BaseBackend, KubeMixIn):
     """
     Manages native `kubectl secret` storage
     """
-    kubectl_command = 'kubectl'
-    env_key = '_env'
+
+    kubectl_command = "kubectl"
+    env_key = "_env"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.secret_exists = None
-        self.workflow = kwargs.get('workflow')
+        self.workflow = kwargs.get("workflow")
 
         self.switch_kube_context()
         self._check_kube_context()
@@ -25,7 +26,7 @@ class KubeBackend(BaseBackend, KubeMixIn):
 
     @property
     def namespace(self):
-        return f'compose-flow-{self.workflow.args.profile}'
+        return f"compose-flow-{self.workflow.args.profile}"
 
     def execute(self, command: str, **kwargs):
         env = os.environ

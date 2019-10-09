@@ -10,18 +10,19 @@ class RancherBackend(BaseBackend, KubeMixIn):
     """
     Manages Kubernetes Secret storage via Rancher CLI
     """
-    kubectl_command = 'rancher kubectl'
-    env_key = '_env'
+
+    kubectl_command = "rancher kubectl"
+    env_key = "_env"
 
     @property
     def namespace(self):
-        return f'compose-flow-{self.project_name.lower()}'
+        return f"compose-flow-{self.project_name.lower()}"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.secret_exists = None
-        self.workflow = kwargs.get('workflow')
+        self.workflow = kwargs.get("workflow")
 
         self.switch_rancher_context()
         self._check_rancher_namespace()

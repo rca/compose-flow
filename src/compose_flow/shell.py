@@ -7,15 +7,15 @@ from sh import ErrorReturnCode_1  # noqa: F401 pylint: disable=E1101
 # these runtime environment variables should be injected into
 # the compose flow environment prior to executing a command
 OS_ENV_INCLUDES = (
-    'DOCKER_HOST',
-    'HOME',
-    'PATH',
-    'USER',
-    'DISPLAY',
-    'DBUS_SESSION_BUS_ADDRESS',
-    'KUBECONFIG',
-    'SSH_AUTH_SOCK',
-    'SSH_AGENT_PID',
+    "DOCKER_HOST",
+    "HOME",
+    "PATH",
+    "USER",
+    "DISPLAY",
+    "DBUS_SESSION_BUS_ADDRESS",
+    "KUBECONFIG",
+    "SSH_AUTH_SOCK",
+    "SSH_AGENT_PID",
 )
 
 

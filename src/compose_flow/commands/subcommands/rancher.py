@@ -10,7 +10,7 @@ class Rancher(PassthroughBaseSubcommand, KubeMixIn):
     Subcommand for running rancher CLI commands
     """
 
-    command_name = 'rancher'
+    command_name = "rancher"
 
     setup_environment = True
 
