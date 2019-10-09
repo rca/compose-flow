@@ -2,7 +2,8 @@
 from nose.tools import raises
 from unittest import TestCase
 
-from compose_flow.kube.checks import BaseChecker, ManifestChecker, AnswersChecker
+from compose_flow.kube.checks import BaseChecker, ManifestChecker, \
+                                     AnswersChecker, ValuesChecker
 
 from tests.utils import get_content
 
@@ -156,7 +157,7 @@ class TestAnswersChecker(TestCase):
 
     def test_multidoc_resources(self):
         """
-        Ensure AnswerChecker returns an error for a multi-document answers file
+        Ensure AnswersChecker returns an error for a multi-document answers file
         """
         content = get_content('answers/multidoc-answers.yaml')
 
@@ -166,7 +167,7 @@ class TestAnswersChecker(TestCase):
 
     def test_no_limits_answers(self):
         """
-        Ensure AnswerChecker returns an error for flat answers with resources but no limits
+        Ensure AnswersChecker returns an error for flat answers with resources but no limits
         """
         content = get_content('answers/no-limits-answers.yaml')
 
@@ -176,7 +177,7 @@ class TestAnswersChecker(TestCase):
 
     def test_no_requests_answers(self):
         """
-        Ensure AnswerChecker returns an error for flat answers with resources but no requests
+        Ensure AnswersChecker returns an error for flat answers with resources but no requests
         """
         content = get_content('answers/no-requests-answers.yaml')
 
@@ -186,9 +187,34 @@ class TestAnswersChecker(TestCase):
 
     def test_good_resources_answers(self):
         """
-        Ensure AnswerChecker returns an error for flat answers with resources but no requests
+        Ensure AnswersChecker returns no error for answers with proper resources
         """
         content = get_content('answers/good-resources-answers.yaml')
+
+        errors = self.checker.check(content)
+
+        assert not errors
+
+
+class TestValuesChecker(TestCase):
+    def setUp(self):
+        self.checker = ValuesChecker()
+
+    def test_multidoc_resources(self):
+        """
+        Ensure ValuesChecker returns an error for a multi-document values file
+        """
+        content = get_content('values/multidoc-values.yaml')
+
+        errors = self.checker.check(content)
+
+        assert len(errors) > 0
+
+    def test_good_resources_answers(self):
+        """
+        Ensure ValuesChecker returns no errors for values with proper resources
+        """
+        content = get_content('values/good-resources-values.yaml')
 
         errors = self.checker.check(content)
 

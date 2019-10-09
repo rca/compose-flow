@@ -13,7 +13,8 @@ import yaml
 
 from compose_flow import errors
 from compose_flow.config import get_config
-from compose_flow.kube.checks import BaseChecker, ManifestChecker, AnswersChecker
+from compose_flow.kube.checks import BaseChecker, ManifestChecker, \
+                                     AnswersChecker, ValuesChecker
 from compose_flow.utils import render, render_jinja
 
 CLUSTER_LS_FORMAT = '{{.Cluster.Name}}: {{.Cluster.ID}}'
@@ -111,7 +112,7 @@ class KubeMixIn(object):
 
             if f'secrets "{self.secret_name}" not found' in message:
                 self.secret_exists = False
-                raise errors.NoSuchConfig(f'secret name={self.secret_name} not found')
+                raise errors.NoSuchConfig(f'secret name={self.secret_name} in namespace={self.namespace} not found')
 
             raise
 
@@ -271,26 +272,44 @@ class KubeMixIn(object):
         chart = app['chart']
         raw = app.get('raw', False)
 
-        rendered_path = self.render_answers(app['answers'], app_name, raw)
+        answers_path = app.get('answers')
+        values_path = app.get('values')
+
+        use_answers = True
+        if answers_path and values_path:
+            raise ValueError("A single app cannot use both answers (flat) and values (nested) - pick one!")
+        elif answers_path:
+            if target == 'helm':
+                self.logger.warning("Helm only supports nested values - please "
+                                    "switch from answers to values in compose-flow.yml")
+            rendered_path = self.render_answers(answers_path, app_name, raw)
+        elif values_path:
+            use_answers = False
+            rendered_path = self.render_values(values_path, app_name, raw)
+        else:
+            self.logger.warning("Neither answers nor values were provided - using default chart configuration")
+            rendered_path = None
 
         app_list = getattr(self, f'list_{target}_apps')()
         upgrade_command_method = getattr(self, f'get_{target}_app_upgrade_command')
         install_command_method = getattr(self, f'get_{target}_app_install_command')
 
         if app_name in app_list:
-            return upgrade_command_method(app_name, rendered_path, chart, version)
+            return upgrade_command_method(app_name, rendered_path, chart, version, use_answers)
         else:
-            return install_command_method(app_name, rendered_path, namespace, chart, version)
+            return install_command_method(app_name, rendered_path, namespace, chart, version, use_answers)
 
     def list_helm_apps(self) -> str:
         return str(self.execute("helm ls -q --all")).split('\n')
 
     def get_helm_app_install_command(
-            self, app_name: str, rendered_path: str,
-            namespace: str, chart: str, version: str):
+            self, app_name: str, rendered_path: str, namespace: str,
+            chart: str, version: str, use_answers: bool = False):
         return f'helm install --name {app_name} -f {rendered_path} --namespace {namespace} --version {version} {chart}'
 
-    def get_helm_app_upgrade_command(self, app_name: str, rendered_path: str, chart: str, version: str):
+    def get_helm_app_upgrade_command(
+            self, app_name: str, rendered_path: str,
+            chart: str, version: str, use_answers: bool = False):
         return f'helm upgrade {app_name} {chart} -f {rendered_path} --version {version}'
 
     def list_pods(self, namespace: str = None):
@@ -304,12 +323,27 @@ class KubeMixIn(object):
         return str(self.execute("rancher apps ls --format '{{.App.Name}}'")).split('\n')
 
     def get_rancher_app_install_command(
-            self, app_name: str, rendered_path: str,
-            namespace: str, chart: str, version: str):
-        return f'rancher apps install --answers {rendered_path} --namespace {namespace} --version {version} {chart} {app_name}'
+            self, app_name: str, rendered_path: str, namespace: str,
+            chart: str, version: str, use_answers: bool):
+        cmd = 'rancher apps install '
+        if rendered_path:
+            if use_answers:
+                cmd += f'--answers {rendered_path}'
+            else:
+                cmd += f'--values {rendered_path}'
+        return cmd + f' --namespace {namespace} --version {version} {chart} {app_name}'
 
-    def get_rancher_app_upgrade_command(self, app_name: str, rendered_path: str, chart: str, version: str):
-        return f'rancher apps upgrade --answers {rendered_path} {app_name} {version}'
+    def get_rancher_app_upgrade_command(
+            self, app_name: str, rendered_path: str,
+            chart: str, version: str, use_answers: bool):
+        cmd = 'rancher apps upgrade '
+        if rendered_path:
+            if use_answers:
+                cmd += f'--answers {rendered_path}'
+            else:
+                cmd += f'--values {rendered_path}'
+
+        return cmd + f' {app_name} {version}'
 
     def list_rancher_namespaces(self) -> List[str]:
         return str(self.execute("rancher namespaces ls --format '{{.Namespace.ID}}'")).split('\n')
@@ -418,6 +452,9 @@ class KubeMixIn(object):
     def get_answers_filename(self, app_name: str) -> str:
         return f'compose-flow-{self.cluster_name}-{app_name}-answers.yml'
 
+    def get_values_filename(self, app_name: str) -> str:
+        return f'compose-flow-{self.cluster_name}-{app_name}-values.yml'
+
     def render_single_yaml(self, input_path: str, output_path: str,
                            checker: BaseChecker = None, raw: bool = False
                            ) -> None:
@@ -437,10 +474,10 @@ class KubeMixIn(object):
             rendered = content
 
         if checker:
-            errors = checker.check(rendered)
+            check_errors = checker.check(rendered)
 
-            if errors:
-                raise errors.ManifestCheckError('\n'.join(errors))
+            if check_errors:
+                raise errors.ManifestCheck('\n'.join(check_errors))
 
         with open(output_path, 'w') as fh:
             fh.write(rendered)
@@ -480,5 +517,13 @@ class KubeMixIn(object):
         """Render the specified manifest YAML and return the path to the rendered file."""
         rendered_path = self.get_answers_filename(app_name)
         self.render_single_yaml(answers_path, rendered_path, AnswersChecker(), raw)
+
+        return rendered_path
+
+    @lru_cache()
+    def render_values(self, answers_path: str, app_name: str, raw: bool) -> str:
+        """Render the specified manifest YAML and return the path to the rendered file."""
+        rendered_path = self.get_values_filename(app_name)
+        self.render_single_yaml(answers_path, rendered_path, ValuesChecker(), raw)
 
         return rendered_path

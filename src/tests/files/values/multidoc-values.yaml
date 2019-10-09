@@ -1,0 +1,7 @@
+---
+resources:
+  request:
+    cpu: 100m
+---
+ingress:
+  enabled: true
