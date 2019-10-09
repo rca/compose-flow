@@ -38,26 +38,26 @@ def get_config(name: str) -> str:
     Returns the content of the config in the swarm
     """
     try:
-        data = list(get_docker_json(f'docker config inspect {name}', os.environ))[0]
+        data = list(get_docker_json(f"docker config inspect {name}", os.environ))[0]
     except DockerError as exc:
         exc_s = str(exc).lower()
 
         # if the config does not exist in docker, raise NoSuchConfig
-        if 'no such config' in exc_s:
-            raise NoSuchConfig(f'config name={name} not found')
+        if "no such config" in exc_s:
+            raise NoSuchConfig(f"config name={name} not found")
 
         raise
 
-    config_data = data[0]['Spec']['Data']
+    config_data = data[0]["Spec"]["Data"]
 
-    return base64.b64decode(config_data).decode('utf8')
+    return base64.b64decode(config_data).decode("utf8")
 
 
 def get_nodes() -> Iterable:
     """
     Returns a list of swarm nodes
     """
-    with json_formatter('docker node ls') as json_command:
+    with json_formatter("docker node ls") as json_command:
         return get_docker_json(json_command, os.environ, jsonl=True)
 
 
@@ -71,7 +71,7 @@ def get_service_config(name: str) -> dict:
     Returns:
         dict
     """
-    with json_formatter(f'docker service inspect {name}') as command:
+    with json_formatter(f"docker service inspect {name}") as command:
         data = list(get_docker_json(command, os.environ))
 
         return data
@@ -81,7 +81,7 @@ def get_services() -> Iterable:
     """
     Returns an iterable of service objects
     """
-    with json_formatter('docker service ls') as json_command:
+    with json_formatter("docker service ls") as json_command:
         return get_docker_json(json_command, os.environ, jsonl=True)
 
 
@@ -93,14 +93,14 @@ def load_config(name: str, path: str) -> None:
     if name in configs:
         remove_config(name)
 
-    shell.execute(f'docker config create {name} {path}', os.environ)
+    shell.execute(f"docker config create {name} {path}", os.environ)
 
 
 def remove_config(name: str) -> None:
     """
     Removes a config from the swarm
     """
-    shell.execute(f'docker config rm {name}', os.environ)
+    shell.execute(f"docker config rm {name}", os.environ)
 
 
 def get_docker_json(command: str, env: dict, jsonl: bool = False) -> [dict, Iterable]:
@@ -138,10 +138,10 @@ def get_docker_output(command: str, env: dict) -> str:
     try:
         proc = shell.execute(command, env)
     except shell.ErrorReturnCode_1 as exc:
-        exc_s = f'{exc}'.lower()
-        if 'cannot connect to the docker daemon' in exc_s:
+        exc_s = f"{exc}".lower()
+        if "cannot connect to the docker daemon" in exc_s:
             raise NotConnected()
 
         raise DockerError(exc)
 
-    return proc.stdout.decode('utf8')
+    return proc.stdout.decode("utf8")

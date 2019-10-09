@@ -9,6 +9,7 @@ class LocalBackend(BaseBackend):
     """
     Manages local file storage
     """
+
     def __init__(self, *args, root: str = None, **kwargs):
         """
         Constructor
@@ -35,9 +36,9 @@ class LocalBackend(BaseBackend):
         """
         path = self.get_path(name)
         if not os.path.exists(path):
-            return ''
+            return ""
 
-        with open(path, 'r') as fh:
+        with open(path, "r") as fh:
             return fh.read()
 
     def rm(self, name: str) -> None:
@@ -53,8 +54,8 @@ class LocalBackend(BaseBackend):
         if not os.path.exists(self.root):
             os.makedirs(self.root)
 
-        with open(path, 'r') as fh:
+        with open(path, "r") as fh:
             buf = fh.read()
 
-        with open(self.get_path(name), 'w') as fh:
+        with open(self.get_path(name), "w") as fh:
             fh.write(buf)

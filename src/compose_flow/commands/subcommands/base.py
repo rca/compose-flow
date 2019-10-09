@@ -24,7 +24,7 @@ class BaseSubcommand(ABC):
     dirty_working_copy_okay = False
 
     # profile checks only check environment by default
-    profile_checks = ['check_env']
+    profile_checks = ["check_env"]
 
     # whether this subcommand should connect to the remote host
     remote_action = True
@@ -47,7 +47,7 @@ class BaseSubcommand(ABC):
 
     @property
     def logger(self):
-        return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
+        return logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     def do_validate_profile(self):
         return True
@@ -58,7 +58,7 @@ class BaseSubcommand(ABC):
         """
         # get the environment from kwargs or else use the workflow environment
         # use the `or` syntax so that the environment data is not evaluated unless env is not passed in
-        env = kwargs.pop('_env', None) or self.workflow.environment.data
+        env = kwargs.pop("_env", None) or self.workflow.environment.data
 
         return shell.execute(command, env, **kwargs)
 
@@ -84,14 +84,14 @@ class BaseSubcommand(ABC):
     def handle_action(self):
         action = self.workflow.args.action
 
-        action_fn = getattr(self, f'action_{action}', None)
+        action_fn = getattr(self, f"action_{action}", None)
         if not action_fn:
             action_fn = getattr(self, action, None)
 
         if action_fn:
             return action_fn()
         else:
-            self.print_subcommand_help(self.__doc__, error=f'unknown action={action}')
+            self.print_subcommand_help(self.__doc__, error=f"unknown action={action}")
 
     def is_dirty_working_copy_okay(self, exc: Exception) -> bool:
         """
@@ -111,8 +111,8 @@ class BaseSubcommand(ABC):
         env = self.workflow.args.environment
 
         dirty_working_copy_okay = self.workflow.args.dirty or config.get(
-            'options', {}
-        ).get(env, {}).get('dirty_working_copy_okay', self.dirty_working_copy_okay)
+            "options", {}
+        ).get(env, {}).get("dirty_working_copy_okay", self.dirty_working_copy_okay)
 
         return dirty_working_copy_okay
 
@@ -143,12 +143,12 @@ class BaseSubcommand(ABC):
         self.workflow.parser.print_help()
 
         if error:
-            return f'\nError: {error}'
+            return f"\nError: {error}"
 
     @classmethod
     def setup_subparser(cls, parser, subparsers):
         name = cls.__name__.lower()
-        aliases = getattr(cls, 'aliases', [])
+        aliases = getattr(cls, "aliases", [])
 
         subparser = subparsers.add_parser(name, aliases=aliases)
         subparser.set_defaults(subcommand_cls=cls)
@@ -186,9 +186,9 @@ class BaseBuildSubcommand(BaseSubcommand):
         return Compose(self.workflow)
 
     def build(self, pull=True):
-        compose_args = ['build']
+        compose_args = ["build"]
 
         if pull:
-            compose_args.append('--pull')
+            compose_args.append("--pull")
 
         self.compose.handle(extra_args=compose_args)

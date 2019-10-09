@@ -14,7 +14,7 @@ from compose_flow import shell
 from .errors import TagVersionError, EnvError, ProfileError
 
 # regular expression for finding variables in docker compose files
-VAR_RE = re.compile(r'\${(?P<varname>.*?)(?P<junk>[:?].*)?}')
+VAR_RE = re.compile(r"\${(?P<varname>.*?)(?P<junk>[:?].*)?}")
 
 
 def get_repo_name() -> str:
@@ -32,23 +32,23 @@ def get_tag_version(default: str = None) -> str:
         print_warning: when `tag-version` results in error, print a warning
     """
     # inject the version from tag-version command into the loaded environment
-    tag_version = default or 'unknown'
+    tag_version = default or "unknown"
     try:
-        proc = shell.execute('tag-version', os.environ)
+        proc = shell.execute("tag-version", os.environ)
     except Exception as exc:
         try:
-            error_message = exc.stderr.decode('utf8')  # pylint: disable=E1101
+            error_message = exc.stderr.decode("utf8")  # pylint: disable=E1101
         except:
             error_message = exc.stderr  # pylint: disable=E1101
 
-        if 'not clean' in error_message:
-            tag_version = f'{tag_version}-dirty'
+        if "not clean" in error_message:
+            tag_version = f"{tag_version}-dirty"
 
         raise TagVersionError(
-            f'Warning: tag-version failed', shell_exception=exc, tag_version=tag_version
+            f"Warning: tag-version failed", shell_exception=exc, tag_version=tag_version
         )
     else:
-        tag_version = proc.stdout.decode('utf8').strip()
+        tag_version = proc.stdout.decode("utf8").strip()
 
     return tag_version
 
@@ -111,7 +111,7 @@ def render(content: str, env: dict = None) -> str:
     Renders the variables in the file
     """
     previous_idx = 0
-    rendered = ''
+    rendered = ""
 
     env = env or os.environ
 
@@ -119,20 +119,20 @@ def render(content: str, env: dict = None) -> str:
 
     for x in VAR_RE.finditer(content):
         rendered += content[
-            previous_idx : x.start('varname') - 2
+            previous_idx : x.start("varname") - 2
         ]  # -2 to get rid of variable's `${`
 
-        varname = x.group('varname')
+        varname = x.group("varname")
         try:
             rendered += env[varname]
         except KeyError:
-            rendered += '*** MISSING_ENVIRONMENT_VAR ***'
+            rendered += "*** MISSING_ENVIRONMENT_VAR ***"
 
-            errors.append(f'{varname} not found in environment')
+            errors.append(f"{varname} not found in environment")
 
-        end = x.end('junk')
+        end = x.end("junk")
         if end == -1:
-            end = x.end('varname')
+            end = x.end("varname")
 
         previous_idx = end + 1  # +1 to get rid of variable's `}`
 
@@ -142,9 +142,9 @@ def render(content: str, env: dict = None) -> str:
 
     if errors:
         logger.error(rendered)
-        logger.error('\n'.join(errors))
+        logger.error("\n".join(errors))
 
-        raise EnvError('Rendering error')
+        raise EnvError("Rendering error")
 
     return rendered
 
@@ -154,7 +154,9 @@ def render_jinja(content: str, env: dict = None) -> str:
         env = {}
 
     jinja_env = Environment()
-    jinja_env.filters['b64encode'] = lambda s: base64.b64encode(s.encode()).decode('utf-8')
+    jinja_env.filters["b64encode"] = lambda s: base64.b64encode(s.encode()).decode(
+        "utf-8"
+    )
 
     return jinja_env.from_string(content).render(env)
 
@@ -204,6 +206,6 @@ def yaml_dump(data, stream=None, Dumper=yaml.Dumper, **kwds):
     OrderedDumper.add_representer(OrderedDict, _dict_representer)
 
     # set the default_flow_style to False if not set
-    kwds.setdefault('default_flow_style', False)
+    kwds.setdefault("default_flow_style", False)
 
     return yaml.dump(data, stream, OrderedDumper, **kwds)
