@@ -15,10 +15,10 @@ def find_subcommands() -> object:
     Generates a collection of subcommand classes found in this package
     """
     for item in os.listdir(os.path.dirname(__file__)):
-        if item.startswith('_'):
+        if item.startswith("_"):
             continue
 
-        if not item.endswith('.py'):
+        if not item.endswith(".py"):
             continue
 
         subcommand_class = get_subcommand_class(item)
@@ -32,10 +32,10 @@ def get_subcommand_class(filename: str) -> [object, None]:
     """
     Imports the given filename and returns the subcommand class found
     """
-    module_name = filename.split('.', 1)[0]
+    module_name = filename.split(".", 1)[0]
     package = __name__
 
-    module = importlib.import_module(f'.{module_name}', package=package)
+    module = importlib.import_module(f".{module_name}", package=package)
 
     for attr_name in dir(module):
         attr = getattr(module, attr_name)
@@ -63,7 +63,7 @@ def set_default_subparser(self, name, args=None):
     subparser_found = False
     existing_default = False  # check if default parser previously defined
     for arg in sys.argv[1:]:
-        if arg in ['-h', '--help']:  # global help if no subparser
+        if arg in ["-h", "--help"]:  # global help if no subparser
             break
     else:
         for x in self._subparsers._actions:

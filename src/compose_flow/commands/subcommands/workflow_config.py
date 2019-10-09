@@ -14,9 +14,9 @@ class WorkflowConfig(BaseSubcommand):
 
         config_path = self.workflow.app_config_path
         if os.path.exists(config_path):
-            with open(config_path, 'r') as fh:
+            with open(config_path, "r") as fh:
                 print(fh.read())
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
-        subparser.add_argument('action')
+        subparser.add_argument("action")

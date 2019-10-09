@@ -10,7 +10,7 @@ class Helm(PassthroughBaseSubcommand, KubeMixIn):
     Subcommand for running rancher CLI commands
     """
 
-    command_name = 'helm'
+    command_name = "helm"
 
     setup_environment = True
 

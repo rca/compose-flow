@@ -11,8 +11,9 @@ from compose_flow.config import get_config
 from compose_flow.errors import CommandError
 
 
-ALLOWED_COMMANDS = ['compose-flow', 'rancher']
-PROFILE_SUBCOMMANDS = ['compose-flow', 'compose']
+ALLOWED_COMMANDS = ["compose-flow", "rancher"]
+PROFILE_SUBCOMMANDS = ["compose-flow", "compose"]
+
 
 class Task(BaseSubcommand):
     # tasks should update version vars in order to be able to run tasks
@@ -22,7 +23,7 @@ class Task(BaseSubcommand):
 
     @classmethod
     def fill_subparser(self, parser, subparser):
-        subparser.add_argument('name', help='the task name to process')
+        subparser.add_argument("name", help="the task name to process")
 
     @property
     def task_name(self):
@@ -33,15 +34,15 @@ class Task(BaseSubcommand):
     def task_config(self):
         config = get_config()
         try:
-            task = config['tasks'][self.task_name]
+            task = config["tasks"][self.task_name]
         except KeyError:
-            raise CommandError(f'task name={self.task_name} not found')
+            raise CommandError(f"task name={self.task_name} not found")
 
         return task
 
     @property
     def command_split(self):
-        command = self.task_config['command']
+        command = self.task_config["command"]
         return shlex.split(command)
 
     @property
@@ -54,7 +55,7 @@ class Task(BaseSubcommand):
     def handle(self):
         if not self.command_split[0] in ALLOWED_COMMANDS:
             raise NotImplementedError(
-                'tasks that are not compose-flow are not yet supported'
+                "tasks that are not compose-flow are not yet supported"
             )
 
         subcommand_name = self.command_split[1]
@@ -71,14 +72,14 @@ class Task(BaseSubcommand):
     def is_dirty_working_copy_okay(self, exc: Exception) -> bool:
         dirty_working_copy_okay = super().is_dirty_working_copy_okay(exc)
 
-        if not dirty_working_copy_okay and self.workflow.args.environment in ('local',):
+        if not dirty_working_copy_okay and self.workflow.args.environment in ("local",):
             self.logger.warning(
                 (
-                    '\n\n'
-                    'WARNING: the local environment does not allow a dirty working copy by default.'
-                    '\n'
-                    'in your compose-flow.yml set `options -> local -> dirty_working_copy_okay` to true'
-                    '\n\n'
+                    "\n\n"
+                    "WARNING: the local environment does not allow a dirty working copy by default."
+                    "\n"
+                    "in your compose-flow.yml set `options -> local -> dirty_working_copy_okay` to true"
+                    "\n\n"
                 )
             )
 
@@ -86,4 +87,4 @@ class Task(BaseSubcommand):
 
     @property
     def logger(self):
-        return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
+        return logging.getLogger(f"{__name__}.{self.__class__.__name__}")

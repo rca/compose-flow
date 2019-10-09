@@ -7,11 +7,11 @@ from compose_flow.commands import Workflow
 
 from tests import BaseTestCase
 
-TEST_PROJECT_NAME = 'test_project_name'
+TEST_PROJECT_NAME = "test_project_name"
 
 
-@mock.patch('compose_flow.commands.subcommands.env.utils')
-@mock.patch('compose_flow.commands.subcommands.env.get_backend')
+@mock.patch("compose_flow.commands.subcommands.env.utils")
+@mock.patch("compose_flow.commands.subcommands.env.get_backend")
 class WorkflowTestCase(BaseTestCase):
     def _setup_docker_config_mock(self, *mocks):
         get_backend_mock = mocks[-2]
@@ -19,23 +19,23 @@ class WorkflowTestCase(BaseTestCase):
 
     def _setup_utils_mock(self, *mocks):
         utils_mock = mocks[-1]
-        utils_mock.get_tag_version.return_value = '0.0.0'
+        utils_mock.get_tag_version.return_value = "0.0.0"
         utils_mock.render.side_effect = lambda x, **kwargs: x
 
     def test_default_env_when_no_env_specified(self, *mocks):
         self._setup_docker_config_mock(*mocks)
         self._setup_utils_mock(*mocks)
 
-        command = shlex.split('env cat')
+        command = shlex.split("env cat")
         workflow = Workflow(argv=command)
 
         env = workflow.environment
 
         self.assertEqual(
-            ['CF_ENV', 'CF_ENV_NAME', 'CF_PROJECT'], sorted(env.data.keys())
+            ["CF_ENV", "CF_ENV_NAME", "CF_PROJECT"], sorted(env.data.keys())
         )
 
-    @mock.patch('compose_flow.commands.workflow.os')
+    @mock.patch("compose_flow.commands.workflow.os")
     def test_docker_image_prefix_default(self, *mocks):
         """
         Ensure the default image name will not accidentally push the image to a remote registry
@@ -46,31 +46,30 @@ class WorkflowTestCase(BaseTestCase):
 
         workflow = Workflow(argv=[])
 
-        self.assertEqual(workflow.docker_image_prefix, 'localhost.localdomain')
+        self.assertEqual(workflow.docker_image_prefix, "localhost.localdomain")
 
-    @mock.patch('compose_flow.commands.workflow.settings')
-    @mock.patch('compose_flow.commands.workflow.os')
+    @mock.patch("compose_flow.commands.workflow.settings")
+    @mock.patch("compose_flow.commands.workflow.os")
     def test_docker_image_prefix_from_os_settings(self, *mocks):
         os_mock = mocks[0]
         os_mock.path.exists.return_value = False
 
         settings_mock = mocks[1]
-        settings_mock.DOCKER_IMAGE_PREFIX = 'foo'
+        settings_mock.DOCKER_IMAGE_PREFIX = "foo"
 
         workflow = Workflow(argv=[])
 
-        self.assertEqual(workflow.docker_image_prefix, 'foo')
+        self.assertEqual(workflow.docker_image_prefix, "foo")
 
-    @mock.patch('compose_flow.commands.workflow.Workflow.app_config', new_callable=mock.PropertyMock)
+    @mock.patch(
+        "compose_flow.commands.workflow.Workflow.app_config",
+        new_callable=mock.PropertyMock,
+    )
     def test_docker_image_prefix_from_app_config(self, *mocks):
-        image_prefix = 'registry.prefix.com/foo'
+        image_prefix = "registry.prefix.com/foo"
 
         app_config_mock = mocks[0]
-        app_config_mock.return_value = {
-            'build': {
-                'image_prefix': image_prefix,
-            },
-        }
+        app_config_mock.return_value = {"build": {"image_prefix": image_prefix}}
 
         workflow = Workflow(argv=[])
 
@@ -80,20 +79,20 @@ class WorkflowTestCase(BaseTestCase):
         self._setup_docker_config_mock(*mocks)
         self._setup_utils_mock(*mocks)
 
-        command = shlex.split('-e dev env cat')
+        command = shlex.split("-e dev env cat")
         workflow = Workflow(argv=command)
 
         env = workflow.environment
 
         self.assertEqual(
-            ['BAR', 'CF_ENV', 'CF_ENV_NAME', 'CF_PROJECT', 'FOO'],
+            ["BAR", "CF_ENV", "CF_ENV_NAME", "CF_PROJECT", "FOO"],
             sorted(env.data.keys()),
         )
-        self.assertEqual('1', env.data['FOO'])
-        self.assertEqual('2', env.data['BAR'])
+        self.assertEqual("1", env.data["FOO"])
+        self.assertEqual("2", env.data["BAR"])
 
     @mock.patch(
-        'compose_flow.commands.workflow.Workflow.subcommand',
+        "compose_flow.commands.workflow.Workflow.subcommand",
         new_callable=mock.PropertyMock,
     )
     def test_setup_environment_flag(self, *mocks):
@@ -104,25 +103,25 @@ class WorkflowTestCase(BaseTestCase):
         subcommand_mock = mocks[0]
         subcommand_mock.return_value.setup_environment = False
 
-        command = shlex.split('-e dev env cat')
+        command = shlex.split("-e dev env cat")
         workflow = Workflow(argv=command)
 
         workflow._setup_environment()
 
         self.assertEqual({}, workflow.environment._data)
 
-    @mock.patch('compose_flow.commands.workflow.print')
-    @mock.patch('compose_flow.commands.workflow.pkg_resources')
+    @mock.patch("compose_flow.commands.workflow.print")
+    @mock.patch("compose_flow.commands.workflow.pkg_resources")
     def test_version(self, *mocks):
         """
         Ensure the --version arg just returns the version
         """
-        version = '0.0.0-test'
+        version = "0.0.0-test"
 
         pkg_resources_mock = mocks[0]
         pkg_resources_mock.require.return_value = [mock.Mock(version=version)]
 
-        command = shlex.split('--version')
+        command = shlex.split("--version")
         workflow = Workflow(argv=command)
 
         workflow.run()
@@ -131,7 +130,7 @@ class WorkflowTestCase(BaseTestCase):
         print_mock.assert_called_with(version)
 
 
-@mock.patch('compose_flow.commands.workflow.PROJECT_NAME', new=TEST_PROJECT_NAME)
+@mock.patch("compose_flow.commands.workflow.PROJECT_NAME", new=TEST_PROJECT_NAME)
 class WorkflowArgsTestCase(TestCase):
     """
     Tests for parsing command line arguments
@@ -141,7 +140,7 @@ class WorkflowArgsTestCase(TestCase):
         """
         Test sensible defaults when no environment is defined
         """
-        command = shlex.split('publish')
+        command = shlex.split("publish")
         workflow = Workflow(argv=command)
 
         self.assertEqual(None, workflow.args.environment)
@@ -153,24 +152,24 @@ class WorkflowArgsTestCase(TestCase):
         """
         Test sensible defaults when an environment is defined
         """
-        env = 'dev'
-        command = shlex.split(f'-e {env} publish')
+        env = "dev"
+        command = shlex.split(f"-e {env} publish")
         workflow = Workflow(argv=command)
 
         self.assertEqual(env, workflow.args.environment)
         self.assertEqual(env, workflow.args.remote)
-        self.assertEqual(f'{env}-{TEST_PROJECT_NAME}', workflow.args.config_name)
+        self.assertEqual(f"{env}-{TEST_PROJECT_NAME}", workflow.args.config_name)
         self.assertEqual(TEST_PROJECT_NAME, workflow.project_name)
 
     def test_sensible_defaults_with_env_and_project(self, *mocks):
         """
         Test sensible defaults when an environment and project name is defined
         """
-        env = 'dev'
-        command = shlex.split(f'-e {env} --project-name foo publish')
+        env = "dev"
+        command = shlex.split(f"-e {env} --project-name foo publish")
         workflow = Workflow(argv=command)
 
         self.assertEqual(env, workflow.args.environment)
         self.assertEqual(env, workflow.args.remote)
-        self.assertEqual(f'{env}-foo', workflow.args.config_name)
-        self.assertEqual('foo', workflow.project_name)
+        self.assertEqual(f"{env}-foo", workflow.args.config_name)
+        self.assertEqual("foo", workflow.project_name)

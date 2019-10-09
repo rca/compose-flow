@@ -13,7 +13,7 @@ def get_content(relative_path: str) -> str:
     Returns:
         the file contents
     """
-    full_path = os.path.join(MODULE_DIR, 'files', relative_path)
+    full_path = os.path.join(MODULE_DIR, "files", relative_path)
 
     with open(full_path) as fh:
         return fh.read()

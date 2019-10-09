@@ -3,10 +3,10 @@ from unittest import TestCase, mock
 
 from compose_flow.commands.subcommands.remote import Remote
 
-TEST_USERNAME = 'testuser'
+TEST_USERNAME = "testuser"
 
 
-@mock.patch('compose_flow.settings.DEFAULT_CF_REMOTE_USER', new=TEST_USERNAME)
+@mock.patch("compose_flow.settings.DEFAULT_CF_REMOTE_USER", new=TEST_USERNAME)
 class RemoteTestCase(TestCase):
     @property
     @lru_cache()
@@ -27,14 +27,8 @@ class RemoteTestCase(TestCase):
         """
         Ensure username falls back to the settings user when there is no '@' in the remote hostname
         """
-        self.workflow.args.environment = 'dev'
-        self.workflow.app_config = {
-            'remotes': {
-                'dev': {
-                    'ssh': f'testremotehost'
-                },
-            },
-        }
+        self.workflow.args.environment = "dev"
+        self.workflow.app_config = {"remotes": {"dev": {"ssh": f"testremotehost"}}}
 
         remote = Remote(self.workflow)
 
@@ -44,15 +38,11 @@ class RemoteTestCase(TestCase):
         """
         Ensure username is extracted from remote host
         """
-        username = 'testuser'
+        username = "testuser"
 
-        self.workflow.args.environment = 'dev'
+        self.workflow.args.environment = "dev"
         self.workflow.app_config = {
-            'remotes': {
-                'dev': {
-                    'ssh': f'{username}@testremotehost'
-                },
-            },
+            "remotes": {"dev": {"ssh": f"{username}@testremotehost"}}
         }
 
         remote = Remote(self.workflow)
