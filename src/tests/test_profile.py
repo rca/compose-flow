@@ -1,7 +1,7 @@
 from unittest import TestCase, mock
 
 from compose_flow.commands.subcommands.profile import Profile
-from compose_flow.utils import yaml_load
+from compose_flow.utils import yaml_dump, yaml_load
 
 from tests.utils import get_content
 
@@ -87,6 +87,43 @@ class ProfileTestCase(TestCase):
         errors = profile._check_services(profile.check_constraints, profile.data)
 
         self.assertEqual(0, len(errors))
+
+    @mock.patch("compose_flow.commands.subcommands.profile.merge_profile")
+    def test_environment_overrides_default_value(self, *mocks):
+        """
+        Ensure values set in env take precedence over values set in the Compose file
+        """
+        # in the docker compose environment, set `FOO` to a default value of 1
+        data = {
+            "services": {
+                "foo": {
+                    "build": "..",
+                    "image": "${DOCKER_IMAGE}",
+                    "environment": ["FOO=1"],
+                }
+            }
+        }
+
+        merge_profile_mock = mocks[0]
+        merge_profile_mock.return_value = yaml_dump(data)
+
+        self.workflow.args.config_name = "test"
+
+        # set a value for `FOO` in the env
+        self.workflow.environment.data = {"FOO": "test"}
+
+        profile = Profile(self.workflow)
+        compiled = profile._compile(data)
+
+        new_data = yaml_load(compiled)
+
+        # extract FOO from the compiled environment
+        foo_environment = [
+            x for x in new_data["services"]["foo"]["environment"] if x.startswith("FOO")
+        ]
+
+        # when the compose file is compiled, the value of 1 is dropped because a value for it exists in the env
+        self.assertEqual(foo_environment, ["FOO"])
 
     def test_expand_services(self, *mocks):
         data = {

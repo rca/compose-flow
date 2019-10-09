@@ -3,6 +3,7 @@ Profile subcommand
 """
 import copy
 import logging
+import sys
 import tempfile
 
 from functools import lru_cache
@@ -317,6 +318,8 @@ class Profile(BaseSubcommand):
             for service_name, service_data in data.get("services", {}).items():
                 service_environment = service_data.setdefault("environment", [])
 
+                env_data = self.workflow.environment.data
+
                 # convert the service_environment into a dict
                 service_environment_d = {}
                 for item in service_environment:
@@ -324,7 +327,16 @@ class Profile(BaseSubcommand):
                     k = item_split[0]
 
                     if len(item_split) > 1:
-                        v = item_split[1]
+                        # in order for the env to take precedence over the value in the compose file
+                        # drop the rhs of the equal sign when there is a defined value in the env
+                        if k in env_data:
+                            self.logger.debug(
+                                f"{k} is in env, dropping value from compose file"
+                            )
+
+                            v = None
+                        else:
+                            v = item_split[1]
                     else:
                         v = None
 
