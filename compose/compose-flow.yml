@@ -26,6 +26,12 @@ remotes:
     backend: rancher
 
 tasks:
+  blacken:
+    command: compose-flow compose run --rm app black --target-version py36 --target-version py37 --target-version py38 .
+
+  blacken-check:
+    command: compose-flow compose run --rm app black --target-version py36 --target-version py37 --target-version py38 --check .
+
   publish:
     command: compose-flow compose run -u root:docker --rm app /bin/bash ./scripts/publish.sh
 
