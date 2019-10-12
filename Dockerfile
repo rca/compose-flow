@@ -65,8 +65,7 @@ RUN pip3 install pipenv
 
 COPY Pipfile Pipfile.lock ${SRC_DIR}/
 
-RUN pipenv install --system --dev && \
-    rm -rf /root/.cache/pip
+RUN pipenv install --system --dev --clear
 
 COPY ./ ${SRC_DIR}/
 
