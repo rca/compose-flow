@@ -27,7 +27,7 @@ from compose_flow import errors, shell
 
 class Pod(BaseSubcommand, KubeMixIn):
 
-    command_name = 'pod'
+    command_name = "pod"
 
     setup_environment = True
 
@@ -43,28 +43,30 @@ class Pod(BaseSubcommand, KubeMixIn):
         subparser.formatter_class = argparse.RawDescriptionHelpFormatter
 
         subparser.add_argument(
-            '--container',
+            "--container",
             type=str,
             default=None,
-            help='which container to exec into within a pod',
+            help="which container to exec into within a pod",
         )
         subparser.add_argument(
-            '-i',
-            '--container-index',
+            "-i",
+            "--container-index",
             type=int,
             default=0,
             help="exec into the i'th container",
         )
         subparser.add_argument(
-            '--retries', type=int, default=30, help='number of times to retry'
+            "--retries", type=int, default=30, help="number of times to retry"
         )
         subparser.add_argument(
-            '--namespace', type=str, help='override the namespace. defaults to project name.'
+            "--namespace",
+            type=str,
+            help="override the namespace. defaults to project name.",
         )
 
         # ToDo: make this a subparser itself
-        subparser.add_argument('action', help='action to run. options: [exec,]')
-        subparser.add_argument('pod_name', help='name of desired pod, e.g. `web`')
+        subparser.add_argument("action", help="action to run. options: [exec,]")
+        subparser.add_argument("pod_name", help="name of desired pod, e.g. `web`")
 
     def action_exec(self):
         args = self.workflow.args
@@ -80,8 +82,8 @@ class Pod(BaseSubcommand, KubeMixIn):
                 break
 
     def format_pods_output(self, list_raw, include_header=False):
-        list_raw = list_raw.split('\n')
-        list_raw = [row_str.split(' ') for row_str in list_raw]
+        list_raw = list_raw.split("\n")
+        list_raw = [row_str.split(" ") for row_str in list_raw]
 
         if not include_header:
             list_raw = list_raw[1:]
@@ -99,16 +101,16 @@ class Pod(BaseSubcommand, KubeMixIn):
         pod = self.select_pod()
 
         if args.container:
-            target_container = f'--container {args.container}'
+            target_container = f"--container {args.container}"
         else:
-            target_container = ''
+            target_container = ""
 
         command = (
-                f'{self.kubectl_command} -n {self.namespace} exec -it {pod} {target_container} -- '
-                f'{" ".join(self.workflow.args_remainder)}'
-            )
+            f"{self.kubectl_command} -n {self.namespace} exec -it {pod} {target_container} -- "
+            f'{" ".join(self.workflow.args_remainder)}'
+        )
 
-        logging.debug(f'command={command}')
+        logging.debug(f"command={command}")
 
         return shell.execute(command, os.environ, _fg=True)
 
@@ -117,7 +119,7 @@ class Pod(BaseSubcommand, KubeMixIn):
         pods_list_raw = self.list_pods(namespace=self.namespace)
         pods_list = self.format_pods_output(pods_list_raw)
 
-        pod_name_re = rf'^{args.pod_name}\-.*\-.*$'
+        pod_name_re = rf"^{args.pod_name}\-.*\-.*$"
 
         matched_pods = [p for p in pods_list if re.match(pod_name_re, p[0])]
 
@@ -126,5 +128,5 @@ class Pod(BaseSubcommand, KubeMixIn):
             return target_pod
         except IndexError:
             raise errors.PodNotFound(
-                f'Could not find pod with index {args.container_index} matching regex {pod_name_re}'
+                f"Could not find pod with index {args.container_index} matching regex {pod_name_re}"
             )

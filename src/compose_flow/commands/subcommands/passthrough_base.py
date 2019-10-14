@@ -17,14 +17,14 @@ class PassthroughBaseSubcommand(BaseSubcommand):
 
     @classmethod
     def fill_subparser(cls, parser, subparser) -> None:
-        subparser.add_argument('extra_args', nargs=argparse.REMAINDER)
+        subparser.add_argument("extra_args", nargs=argparse.REMAINDER)
 
     def get_command(self):
         # check to make sure the command is installed
         command_path = find_executable(self.command_name)
         if command_path is None:
             raise errors.ErrorMessage(
-                f'{self.command_name} not found in PATH; is it installed?'
+                f"{self.command_name} not found in PATH; is it installed?"
             )
 
         return [command_path]
@@ -39,15 +39,15 @@ class PassthroughBaseSubcommand(BaseSubcommand):
 
         # if there is a space in one of the command arguments, use repr() to
         # quote it properly when it contains a space
-        command_s = ' '.join([x if ' ' not in x else repr(x) for x in command])
+        command_s = " ".join([x if " " not in x else repr(x) for x in command])
 
         self.logger.info(command_s)
 
         if not args.dry_run:
             res = self.execute(command_s, _fg=True)
             if log_output:
-                self.logger.info(res.stdout.decode('utf-8').strip())
+                self.logger.info(res.stdout.decode("utf-8").strip())
 
     @property
     def logger(self) -> logging.Logger:
-        return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
+        return logging.getLogger(f"{__name__}.{self.__class__.__name__}")

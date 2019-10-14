@@ -14,9 +14,9 @@ from compose_flow.commands.subcommands import BaseSubcommand
 from compose_flow.config import get_config
 from compose_flow.environment.backends import get_backend
 
-DOCKER_IMAGE_VAR = 'DOCKER_IMAGE'
-VERSION_VAR = 'VERSION'
-RUNTIME_PLACEHOLDER = 'runtime://'
+DOCKER_IMAGE_VAR = "DOCKER_IMAGE"
+VERSION_VAR = "VERSION"
+RUNTIME_PLACEHOLDER = "runtime://"
 
 
 class Env(BaseSubcommand):
@@ -49,27 +49,31 @@ class Env(BaseSubcommand):
 
         app_config = self.workflow.app_config
 
-        remote_section = app_config.get('remotes', {}).get(remote, {})
+        remote_section = app_config.get("remotes", {}).get(remote, {})
 
-        if 'environment' in remote_section.keys():
-            warning_msg = ("The environment subsection of .compose/config.yml has been deprecated! "
-                           "Please flatten your remotes to just the backend field.")
+        if "environment" in remote_section.keys():
+            warning_msg = (
+                "The environment subsection of .compose/config.yml has been deprecated! "
+                "Please flatten your remotes to just the backend field."
+            )
             warnings.warn(warning_msg)
-            remote_section = remote_section.get('environment', {})
+            remote_section = remote_section.get("environment", {})
 
-        return remote_section.get('backend')
+        return remote_section.get("backend")
 
     @property
     def backend(self):
         """
         Returns the environment backend to use
         """
-        backend_name = 'local'
+        backend_name = "local"
         remote = self.workflow.args.remote
         project_config = get_config()
 
         if remote is not None:
-            project_backend_name = project_config.get('remotes', {}).get(remote, {}).get('backend')
+            project_backend_name = (
+                project_config.get("remotes", {}).get(remote, {}).get("backend")
+            )
             default_backend_name = self._get_default_backend(remote)
 
             if project_backend_name:
@@ -82,7 +86,7 @@ class Env(BaseSubcommand):
 
         backend = get_backend(backend_name, workflow=self.workflow)
 
-        self.logger.debug(f'backend_name={backend_name}, backend={backend}')
+        self.logger.debug(f"backend_name={backend_name}, backend={backend}")
 
         return backend
 
@@ -90,16 +94,16 @@ class Env(BaseSubcommand):
         """
         Open the current backend data in an editor and write changes back
         """
-        with tempfile.NamedTemporaryFile('w') as fh:
+        with tempfile.NamedTemporaryFile("w") as fh:
             path = fh.name
 
             self.render_buf(fh, runtime_config=False)
 
             fh.flush()
 
-            editor = os.environ.get('EDITOR', os.environ.get('VISUAL', 'vi'))
+            editor = os.environ.get("EDITOR", os.environ.get("VISUAL", "vi"))
 
-            self.execute(f'{editor} {path}', _fg=True)
+            self.execute(f"{editor} {path}", _fg=True)
 
             self.backend.write(self.workflow.args.config_name, path)
 
@@ -107,7 +111,7 @@ class Env(BaseSubcommand):
         """
         Writes the environment into the backend
         """
-        with tempfile.NamedTemporaryFile('w+') as fh:
+        with tempfile.NamedTemporaryFile("w+") as fh:
             self.render_buf(fh, runtime_config=False)
             fh.flush()
 
@@ -115,15 +119,15 @@ class Env(BaseSubcommand):
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
-        subparser.add_argument('action')
-        subparser.add_argument('path', nargs='*')
+        subparser.add_argument("action")
+        subparser.add_argument("path", nargs="*")
         subparser.add_argument(
-            '-f', '--force', action='store_true', help='edit even if no config found'
+            "-f", "--force", action="store_true", help="edit even if no config found"
         )
         subparser.add_argument(
-            '--variables',
-            action='store_true',
-            help='show runtime variables instead of values',
+            "--variables",
+            action="store_true",
+            help="show runtime variables instead of values",
         )
 
     def cat(self) -> str:
@@ -132,7 +136,7 @@ class Env(BaseSubcommand):
         """
         config_name = self.workflow.config_name
         if config_name not in self.backend.ls():
-            return f'docker config named {config_name} not in backend={self.backend.__class__.__name__}'
+            return f"docker config named {config_name} not in backend={self.backend.__class__.__name__}"
 
         print(self.render())
 
@@ -144,10 +148,10 @@ class Env(BaseSubcommand):
         args = self.workflow.args
 
         return {
-            'CF_ENV': args.environment or '',
-            'CF_PROJECT': self.workflow.project_name,
+            "CF_ENV": args.environment or "",
+            "CF_PROJECT": self.workflow.project_name,
             # deprecate this env var
-            'CF_ENV_NAME': self.workflow.project_name,
+            "CF_ENV_NAME": self.workflow.project_name,
         }
 
     @property
@@ -165,7 +169,7 @@ class Env(BaseSubcommand):
             if not v.startswith(RUNTIME_PLACEHOLDER):
                 continue
 
-            location, location_ref = v.split('://', 1)
+            location, location_ref = v.split("://", 1)
             location_ref = location_ref or k
 
             if k not in self._rendered_config:
@@ -173,11 +177,14 @@ class Env(BaseSubcommand):
 
             new_val = os.environ.get(location_ref)
             if new_val is None:
-                if hasattr(self.workflow.args, 'action') and self.is_env_modification_action():
+                if (
+                    hasattr(self.workflow.args, "action")
+                    and self.is_env_modification_action()
+                ):
                     new_val = RUNTIME_PLACEHOLDER
                 else:
                     raise errors.RuntimeEnvError(
-                        f'runtime substitution for {k}={v} not found'
+                        f"runtime substitution for {k}={v} not found"
                     )
 
             data[k] = new_val
@@ -231,7 +238,7 @@ class Env(BaseSubcommand):
         project_name = self.workflow.project_name
         env = self.workflow.args.environment
 
-        docker_image = f'{registry_domain}/{project_name}:{env}'
+        docker_image = f"{registry_domain}/{project_name}:{env}"
 
         self._docker_image = self.set_docker_tag(docker_image)
 
@@ -241,9 +248,9 @@ class Env(BaseSubcommand):
         """
         Sets the docker image tag based on the current version
         """
-        if ':' not in docker_image:
+        if ":" not in docker_image:
             raise EnvironmentError(
-                'compose-flow enforces image versioning; DOCKER_IMAGE must contain a colon'
+                "compose-flow enforces image versioning; DOCKER_IMAGE must contain a colon"
             )
 
         return f'{docker_image.split(":", 1)[0]}:{self.version}'
@@ -274,7 +281,7 @@ class Env(BaseSubcommand):
         return is_dirty_working_copy_okay or self.is_env_modification_action()
 
     def is_env_error_okay(self, exc):
-        return self.workflow.args.action in ('push',)
+        return self.workflow.args.action in ("push",)
 
     def is_env_runtime_error_okay(self):
         return self.is_env_modification_action()
@@ -283,17 +290,17 @@ class Env(BaseSubcommand):
         args = self.workflow.args
         subcommand = self.workflow.subcommand
         # the `force` attribute may not exist
-        force = 'force' in args and args.force
+        force = "force" in args and args.force
 
         try:
             action = self.workflow.args.action
         except AttributeError:
             action = None
 
-        return action in ('edit',) and force
+        return action in ("edit",) and force
 
     def is_env_modification_action(self):
-        return self.workflow.args.action in ('cat', 'edit', 'push')
+        return self.workflow.args.action in ("cat", "edit", "push")
 
     def is_write_profile_error_okay(self, exc):
         return self.is_env_modification_action()
@@ -315,22 +322,22 @@ class Env(BaseSubcommand):
             if not self.is_missing_config_okay(exc):
                 raise
 
-            content = ''
+            content = ""
 
         for idx, line in enumerate(content.splitlines()):
             # skip empty lines
-            if line.strip() == '':
+            if line.strip() == "":
                 continue
 
             # skip commented lines
-            if line.strip().startswith('#'):
+            if line.strip().startswith("#"):
                 continue
 
             try:
-                key, value = line.split('=', 1)
+                key, value = line.split("=", 1)
             except ValueError as exc:
                 self.logger.error(
-                    f'ERROR: unable to parse line number {idx}, edit your env: {line}'
+                    f"ERROR: unable to parse line number {idx}, edit your env: {line}"
                 )
 
                 raise
@@ -342,13 +349,13 @@ class Env(BaseSubcommand):
 
         # now that the data from the cf environment is parsed default the
         # docker image to anything that was defined in there.
-        self._docker_image = data.get('DOCKER_IMAGE')
+        self._docker_image = data.get("DOCKER_IMAGE")
 
         return data
 
     @property
     def logger(self):
-        return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
+        return logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     def render(self, data: dict = None) -> str:
         """
@@ -374,9 +381,9 @@ class Env(BaseSubcommand):
 
         lines = []
         for k, v in data.items():
-            lines.append(f'{k}={v}')
+            lines.append(f"{k}={v}")
 
-        buf.write('\n'.join(sorted(lines)))
+        buf.write("\n".join(sorted(lines)))
 
     def rm(self) -> None:
         """
@@ -412,9 +419,9 @@ class Env(BaseSubcommand):
             # check if the subcommand is okay with a dirty working copy
             if not subcommand.is_dirty_working_copy_okay(exc):
                 raise errors.TagVersionError(
-                    f'Warning: unable to run tag-version ({exc})\n',
+                    f"Warning: unable to run tag-version ({exc})\n",
                     shell_exception=exc,
-                    tag_version=tag_version
+                    tag_version=tag_version,
                 )
 
         return tag_version

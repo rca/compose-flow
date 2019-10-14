@@ -5,14 +5,15 @@ from compose_flow.kube.mixins import KubeMixIn
 from .base import BaseSubcommand
 from .profile import Profile
 
-ACTIONS = ['rancher', 'docker', 'rke', 'helm', 'kubectl']
-PROFILE_ACTIONS = ['docker']
+ACTIONS = ["rancher", "docker", "rke", "helm", "kubectl"]
+PROFILE_ACTIONS = ["docker"]
 
 
 class Deploy(BaseSubcommand, KubeMixIn):
     """
     Subcommand for deploying an image to the docker swarm
     """
+
     rw_env = True
     update_version_env_vars = True
 
@@ -21,11 +22,11 @@ class Deploy(BaseSubcommand, KubeMixIn):
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
-        subparser.add_argument('action', nargs='?', default='docker', choices=ACTIONS)
+        subparser.add_argument("action", nargs="?", default="docker", choices=ACTIONS)
 
     @property
     def logger(self):
-        return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
+        return logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     @property
     def setup_profile(self):
@@ -48,7 +49,7 @@ class Deploy(BaseSubcommand, KubeMixIn):
 
         for manifest in self.get_kubectl_manifests():
             if isinstance(manifest, str):
-                manifest = {'path': manifest}
+                manifest = {"path": manifest}
             command.append(self.get_kubectl_command(manifest))
 
         return command
@@ -66,8 +67,10 @@ class Deploy(BaseSubcommand, KubeMixIn):
 
         for manifest in self.get_rancher_manifests():
             if isinstance(manifest, str):
-                manifest = {'path': manifest}
-            command.append(self.get_kubectl_command(manifest, kubectl_prefix='rancher kubectl'))
+                manifest = {"path": manifest}
+            command.append(
+                self.get_kubectl_command(manifest, kubectl_prefix="rancher kubectl")
+            )
 
         return command
 
@@ -80,7 +83,7 @@ class Deploy(BaseSubcommand, KubeMixIn):
         command = []
 
         for app in self.get_helm_apps():
-            command.append(self.get_app_deploy_command(app, target='helm'))
+            command.append(self.get_app_deploy_command(app, target="helm"))
         return command
 
     def handle(self):
@@ -89,14 +92,14 @@ class Deploy(BaseSubcommand, KubeMixIn):
         action = args.action
 
         try:
-            action_method = getattr(self, 'build_' + action + '_command')
+            action_method = getattr(self, "build_" + action + "_command")
         except AttributeError:
             self.logger.error("Unknown deployment platform: %s", action)
 
         command = action_method()
         command_is_list = isinstance(command, list)
 
-        logged_command = '\n'.join(command) if command_is_list else command
+        logged_command = "\n".join(command) if command_is_list else command
         self.logger.info(logged_command)
 
         if not args.dry_run:

@@ -7,7 +7,7 @@ class BaseBackend(object):
 
     @property
     def logger(self):
-        return logging.getLogger(f'{__name__}.{self.__class__.__name__}')
+        return logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     def ls(self):
         """List the available environments"""

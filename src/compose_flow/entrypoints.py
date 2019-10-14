@@ -13,7 +13,7 @@ MIN_VERSION = (3, 6)
 RUNTIME_VERSION = (sys.version_info.major, sys.version_info.minor)
 
 if RUNTIME_VERSION < MIN_VERSION:
-    sys.exit('Error: compose-flow runs on Python3.6+')
+    sys.exit("Error: compose-flow runs on Python3.6+")
 
 from . import settings
 from .commands import Workflow
@@ -28,6 +28,6 @@ def compose_flow():
     try:
         response = Workflow().run()
     except errors.NoSuchConfig as exc:
-        response = f'Error: {exc}'
+        response = f"Error: {exc}"
 
     sys.exit(response)

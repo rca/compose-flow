@@ -10,7 +10,7 @@ from compose_flow.errors import NoSuchConfig
 from compose_flow.utils import render, yaml_load
 
 DEFAULT_CF_REMOTES_CONFIG_NAME = os.environ.get(
-    'CF_REMOTES_CONFIG_NAME', 'compose-flow-remotes'
+    "CF_REMOTES_CONFIG_NAME", "compose-flow-remotes"
 )
 
 
@@ -20,13 +20,13 @@ class RemoteConfig(BaseSubcommand):
     """
 
     def __init__(self, *args, **kwargs):
-        self.config_name = kwargs.pop('config_name', DEFAULT_CF_REMOTES_CONFIG_NAME)
+        self.config_name = kwargs.pop("config_name", DEFAULT_CF_REMOTES_CONFIG_NAME)
 
         super().__init__(*args, **kwargs)
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
-        subparser.add_argument('action')
+        subparser.add_argument("action")
 
     def cat(self):
         """
