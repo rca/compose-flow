@@ -151,7 +151,7 @@ class Service(BaseSubcommand):
         """
         Lists all the services for this stack
         """
-        proc = self.execute(f"docker stack services {self.workflow.args.config_name}")
+        proc = self.execute(f"docker stack services {self.workflow.config_name}")
 
         return proc.stdout.decode("utf8")
 
@@ -207,7 +207,7 @@ class Service(BaseSubcommand):
     @property
     def service_name(self):
         args = self.workflow.args
-        env = self.workflow.environment
+        config_name = self.workflow.config_name
 
         service_name = args.service_name
         if service_name:
@@ -217,4 +217,4 @@ class Service(BaseSubcommand):
         if not service_name:
             return
 
-        return f"{args.config_name}_{args.service}"
+        return f"{config_name}_{service_name}"
