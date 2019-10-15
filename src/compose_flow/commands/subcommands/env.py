@@ -236,7 +236,7 @@ class Env(BaseSubcommand):
 
         registry_domain = self.workflow.docker_image_prefix
         project_name = self.workflow.project_name
-        env = self.workflow.args.environment
+        env = self.workflow.environment_name
 
         docker_image = f"{registry_domain}/{project_name}:{env}"
 
@@ -312,7 +312,7 @@ class Env(BaseSubcommand):
         data = {}
 
         # when no environment is specified on the command line, do not load any docker config
-        environment = self.workflow.args.environment
+        environment = self.workflow.environment_name
         if not environment:
             return data
 
@@ -410,9 +410,9 @@ class Env(BaseSubcommand):
             return tag_version
 
         # default the tag version to the name of the environment
-        tag_version = self.workflow.args.environment
+        tag_version = self.workflow.environment_name
         try:
-            tag_version = utils.get_tag_version(default=self.workflow.args.environment)
+            tag_version = utils.get_tag_version(default=tag_version)
         except Exception as exc:
             subcommand = self.workflow.subcommand
 
