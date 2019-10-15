@@ -103,6 +103,11 @@ class Workflow(object):
 
         return environment
 
+    @property
+    @lru_cache()
+    def environment_name(self):
+        return self.args.environment
+
     def get_argument_parser(self, doc: str = None):
         argparse.ArgumentParser.set_default_subparser = set_default_subparser
 
