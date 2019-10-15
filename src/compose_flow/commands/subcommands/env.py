@@ -105,7 +105,7 @@ class Env(BaseSubcommand):
 
             self.execute(f"{editor} {path}", _fg=True)
 
-            self.backend.write(self.workflow.args.config_name, path)
+            self.backend.write(self.workflow.config_name, path)
 
     def write(self) -> None:
         """
@@ -115,7 +115,7 @@ class Env(BaseSubcommand):
             self.render_buf(fh, runtime_config=False)
             fh.flush()
 
-            self.backend.write(self.workflow.args.config_name, fh.name)
+            self.backend.write(self.workflow.config_name, fh.name)
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
