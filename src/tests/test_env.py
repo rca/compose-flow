@@ -10,6 +10,7 @@ from tests import BaseTestCase
 
 
 @mock.patch("compose_flow.commands.workflow.PROJECT_NAME", new="testdirname")
+@mock.patch("compose_flow.config.read_project_config", return_value=dict())
 class EnvTestCase(BaseTestCase):
     def test_backend_default(self, *mocks):
         """
@@ -52,11 +53,12 @@ class EnvTestCase(BaseTestCase):
 
         TODO: this should move to test_workflow
         """
-        command = shlex.split("-e dev --config-name=test env cat")
+        config_name = "dev-test"
+        command = shlex.split(f"-e dev --config-name={config_name} env cat")
         flow = Workflow(argv=command)
         env = Env(flow)
 
-        self.assertEqual(flow.config_name, "test")
+        self.assertEqual(flow.config_name, config_name)
 
     def test_data_not_loaded_when_cache_is_empty_dict(self, *mocks):
         workflow = mock.MagicMock()
