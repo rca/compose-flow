@@ -334,7 +334,11 @@ class Env(BaseSubcommand):
                 continue
 
             try:
-                key, value = line.split("=", 1)
+                line_split = line.split("=", 1)
+                if len(line_split) == 1:
+                    line_split.append("")
+
+                key, value = line_split
             except ValueError as exc:
                 self.logger.error(
                     f"ERROR: unable to parse line number {idx}, edit your env: {line}"
