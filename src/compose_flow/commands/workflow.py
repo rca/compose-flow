@@ -10,6 +10,7 @@ to manage running services.
 import argparse
 import logging.config
 import os
+import pathlib
 import pkg_resources  # part of setuptools
 import sys
 
@@ -21,7 +22,7 @@ from .subcommands.profile import Profile
 from .subcommands.remote import Remote
 
 from .. import errors, settings
-from ..config import DC_CONFIG_ROOT
+from ..config import DC_CONFIG_ROOT, DEFAULT_DC_CONFIG_FILE
 from ..errors import CommandError, ErrorMessage
 from ..utils import get_repo_name, yaml_load
 
@@ -40,6 +41,9 @@ class Workflow(object):
 
         self.parser = self.get_argument_parser()
         self.args, self.args_remainder = self.parser.parse_known_args(self.argv)
+
+        self.config_basename = None
+        self.config_name = None
 
         self._set_arg_defaults()
 
@@ -78,10 +82,6 @@ class Workflow(object):
         return version_arg
 
     @property
-    def config_name(self):
-        return self.args.config_name or self.project_name  # pylint: disable=E1101
-
-    @property
     def docker_image_prefix(self):
         docker_image_prefix = self.app_config.get("build", {}).get("image_prefix")
         docker_image_prefix = docker_image_prefix or settings.DOCKER_IMAGE_PREFIX
@@ -112,7 +112,18 @@ class Workflow(object):
 
         # defaults for these args are set in _set_arg_defaults() below
         parser.add_argument("-c", "--config-name")
+        parser.add_argument(
+            "-C",
+            "--config-basename",
+            help="the configuration name without environment prefix",
+        )
         parser.add_argument("-e", "--environment")
+        parser.add_argument(
+            "-f",
+            "--compose-flow-filename",
+            type=pathlib.Path,
+            help=f"the compose-flow project file to use, defaults to using {DEFAULT_DC_CONFIG_FILE}",
+        )
         parser.add_argument("-p", "--profile")
         parser.add_argument(
             "-n",
@@ -213,12 +224,34 @@ class Workflow(object):
             self.args.remote = self.args.environment
 
         # the config name is generated from the environment and project name
-        if self.args.config_name is None:
-            prefix = ""
-            if self.args.environment:
-                prefix = f"{self.args.environment}-"
+        prefix = ""
+        if self.args.environment:
+            prefix = f"{self.args.environment}-"
 
-            self.args.config_name = f"{prefix}{self.project_name}"
+        config_basename = self.args.config_basename
+        config_name = self.args.config_name
+
+        if config_basename and config_name:
+            raise CommandError(
+                "only provide a config_name or config_basename, not both"
+            )
+
+        if config_basename:
+            self.config_name = f"{prefix}{config_basename}"
+            self.config_basename = config_basename
+        elif config_name:
+            if prefix:
+                if config_name and not config_name.startswith(prefix):
+                    raise CommandError(
+                        f"config_name must be prefixed with the environment, e.g. {prefix}{config_name}"
+                    )
+
+                self.config_name = config_name
+                self.config_basename = config_name.split(prefix, 1)[-1]
+        else:
+            # both config_name and config_basename are not set
+            self.config_basename = self.project_name
+            self.config_name = f"{prefix}{self.config_basename}"
 
     def _setup_environment(self):
         """
