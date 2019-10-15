@@ -2,7 +2,6 @@ import shlex
 
 from unittest import TestCase, mock
 
-from compose_flow import utils
 from compose_flow.commands import Workflow
 
 from tests import BaseTestCase
@@ -13,11 +12,13 @@ TEST_PROJECT_NAME = "test_project_name"
 @mock.patch("compose_flow.commands.subcommands.env.utils")
 @mock.patch("compose_flow.commands.subcommands.env.get_backend")
 class WorkflowTestCase(BaseTestCase):
-    def _setup_docker_config_mock(self, *mocks):
+    @staticmethod
+    def _setup_docker_config_mock(*mocks):
         get_backend_mock = mocks[-2]
         get_backend_mock.return_value.read.return_value = f"FOO=1\nBAR=2"
 
-    def _setup_utils_mock(self, *mocks):
+    @staticmethod
+    def _setup_utils_mock(*mocks):
         utils_mock = mocks[-1]
         utils_mock.get_tag_version.return_value = "0.0.0"
         utils_mock.render.side_effect = lambda x, **kwargs: x
@@ -130,6 +131,7 @@ class WorkflowTestCase(BaseTestCase):
         print_mock.assert_called_with(version)
 
 
+# noinspection PyUnusedLocal
 @mock.patch("compose_flow.commands.workflow.PROJECT_NAME", new=TEST_PROJECT_NAME)
 class WorkflowArgsTestCase(TestCase):
     """
@@ -145,7 +147,7 @@ class WorkflowArgsTestCase(TestCase):
 
         self.assertEqual(None, workflow.args.environment)
         self.assertEqual(None, workflow.args.remote)
-        self.assertEqual(TEST_PROJECT_NAME, workflow.args.config_name)
+        self.assertEqual(TEST_PROJECT_NAME, workflow.config_name)
         self.assertEqual(TEST_PROJECT_NAME, workflow.project_name)
 
     def test_sensible_defaults_with_env(self, *mocks):
@@ -158,7 +160,7 @@ class WorkflowArgsTestCase(TestCase):
 
         self.assertEqual(env, workflow.args.environment)
         self.assertEqual(env, workflow.args.remote)
-        self.assertEqual(f"{env}-{TEST_PROJECT_NAME}", workflow.args.config_name)
+        self.assertEqual(f"{env}-{TEST_PROJECT_NAME}", workflow.config_name)
         self.assertEqual(TEST_PROJECT_NAME, workflow.project_name)
 
     def test_sensible_defaults_with_env_and_project(self, *mocks):
@@ -171,5 +173,5 @@ class WorkflowArgsTestCase(TestCase):
 
         self.assertEqual(env, workflow.args.environment)
         self.assertEqual(env, workflow.args.remote)
-        self.assertEqual(f"{env}-foo", workflow.args.config_name)
+        self.assertEqual(f"{env}-foo", workflow.config_name)
         self.assertEqual("foo", workflow.project_name)
