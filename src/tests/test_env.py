@@ -91,6 +91,18 @@ class EnvTestCase(BaseTestCase):
         self.assertEqual(flow.config_name, "dev-testdirname")
 
     @mock.patch("compose_flow.commands.subcommands.env.get_backend")
+    def test_empty_env_value(self, *mocks):
+        """Ensure that a value can be empty if the line ends with an equals
+        """
+        get_backend_mock = mocks[0]
+        get_backend_mock.return_value.read.return_value = f"FOO="
+
+        command = shlex.split("-e dev env cat")
+        flow = Workflow(argv=command)
+
+        self.assertEquals("", flow.environment.data["FOO"])
+
+    @mock.patch("compose_flow.commands.subcommands.env.get_backend")
     def test_load_ro(self, *mocks):
         """
         Ensures that env.load does not reset the VERSION var
