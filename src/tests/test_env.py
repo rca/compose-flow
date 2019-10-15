@@ -1,6 +1,6 @@
 import os
 import shlex
-from unittest import TestCase, mock
+from unittest import mock
 
 from compose_flow import errors
 from compose_flow.commands.subcommands.env import Env, RUNTIME_PLACEHOLDER
@@ -9,6 +9,7 @@ from compose_flow.commands import Workflow
 from tests import BaseTestCase
 
 
+# noinspection PyUnusedLocal
 @mock.patch("compose_flow.commands.workflow.PROJECT_NAME", new="testdirname")
 @mock.patch("compose_flow.config.read_project_config", return_value=dict())
 class EnvTestCase(BaseTestCase):
@@ -60,6 +61,7 @@ class EnvTestCase(BaseTestCase):
 
         self.assertEqual(flow.config_name, config_name)
 
+    # noinspection PyMethodMayBeStatic
     def test_data_not_loaded_when_cache_is_empty_dict(self, *mocks):
         workflow = mock.MagicMock()
         workflow.args.environment = None
@@ -74,8 +76,10 @@ class EnvTestCase(BaseTestCase):
         # prime the cache with an empty dict to ensure load is not called
         env._data = {}
 
+        # noinspection PyStatementEffect
         env.data
 
+        # noinspection PyUnresolvedReferences
         env.load.assert_not_called()
 
     def test_default_config_name(self, *mocks):
@@ -144,7 +148,10 @@ class EnvTestCase(BaseTestCase):
         os.environ["BAR"] = bar_env_val
 
         get_backend_mock = mocks[0]
-        get_backend_mock.return_value.read.return_value = f"FOO={RUNTIME_PLACEHOLDER}\nBAR={RUNTIME_PLACEHOLDER}\nVERSION={version}\nDOCKER_IMAGE={docker_image}"
+        get_backend_mock.return_value.read.return_value = (
+            f"FOO={RUNTIME_PLACEHOLDER}\nBAR={RUNTIME_PLACEHOLDER}\n"
+            f"VERSION={version}\nDOCKER_IMAGE={docker_image}"
+        )
 
         command = shlex.split("-e dev env cat")
         flow = Workflow(argv=command)
@@ -174,4 +181,5 @@ class EnvTestCase(BaseTestCase):
 
         assert os.environ.get("FOO") is None
         with self.assertRaises(errors.RuntimeEnvError):
+            # noinspection PyStatementEffect
             flow.profile.data["services"]
