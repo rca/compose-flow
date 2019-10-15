@@ -12,6 +12,7 @@ tag-version = "*"
 tabulate = "*"
 docker-compose = "*"
 semver = "*"
+influxstats = "==0.0.10rc2"
 
 [dev-packages]
 black = "==19.3b0"
