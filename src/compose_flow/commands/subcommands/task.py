@@ -32,7 +32,7 @@ class Task(BaseSubcommand):
     @property
     @lru_cache()
     def task_config(self):
-        config = get_config()
+        config = get_config(self.workflow)
         try:
             task = config["tasks"][self.task_name]
         except KeyError:

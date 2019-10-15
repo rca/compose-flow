@@ -460,7 +460,7 @@ class Profile(BaseSubcommand):
         """
         Returns the profile data found in the dc.yml file
         """
-        config = get_config()
+        config = get_config(self.workflow)
         if not config:
             return {}
 
