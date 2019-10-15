@@ -247,14 +247,10 @@ class Workflow(object):
             self.config_name = f"{prefix}{config_basename}"
             self.config_basename = config_basename
         elif config_name:
+            self.config_name = config_name
             if prefix:
-                if config_name and not config_name.startswith(prefix):
-                    raise CommandError(
-                        f"config_name must be prefixed with the environment, e.g. {prefix}{config_name}"
-                    )
-
-                self.config_name = config_name
-                self.config_basename = config_name.split(prefix, 1)[-1]
+                if config_name.startswith(prefix):
+                    self.config_basename = config_name.split(prefix, 1)[-1]
         else:
             # both config_name and config_basename are not set
             self.config_basename = self.project_name

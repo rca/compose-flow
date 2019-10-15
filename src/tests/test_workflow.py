@@ -23,6 +23,17 @@ class WorkflowTestCase(BaseTestCase):
         utils_mock.get_tag_version.return_value = "0.0.0"
         utils_mock.render.side_effect = lambda x, **kwargs: x
 
+    def test_config_name_with_different_env(self, *mocks):
+        """Ensure the config can have a different env prefix than the current env
+
+        This allows storage of environments other than the current one, for example, storing a default local config
+        in the dev remote so that multiple devs can access it to seed their environment
+        """
+        command = shlex.split("-e dev -c local-test-project env cat")
+        workflow = Workflow(argv=command)
+
+        self.assertEquals("local-test-project", workflow.config_name)
+
     def test_default_env_when_no_env_specified(self, *mocks):
         self._setup_docker_config_mock(*mocks)
         self._setup_utils_mock(*mocks)
