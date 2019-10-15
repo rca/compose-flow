@@ -35,7 +35,7 @@ setup(
     url="https://github.com/openslate/compose-flow",
     author="OpenSlate",
     author_email="code@openslate.com",
-    version="0.0.0",
+    use_scm_version=True,
     description="codified workflows for docker compose",
     long_description=readme(),
     long_description_content_type="text/markdown",
