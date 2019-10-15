@@ -1,10 +1,13 @@
 import os
 import pathlib
+import typing
 
 from functools import lru_cache
 
 from compose_flow.utils import yaml_load
 
+if typing.TYPE_CHECKING:
+    from .commands.workflow import Workflow
 
 DEFAULT_DC_CONFIG_FILE = pathlib.Path("compose") / "compose-flow.yml"
 
@@ -15,7 +18,7 @@ DC_CONFIG_ROOT, DC_CONFIG_FILE = os.path.split(DC_CONFIG_PATH)
 
 
 @lru_cache()
-def get_config() -> dict:
+def get_config(workflow: "Workflow") -> dict:
     data = None
 
     if os.path.exists(DC_CONFIG_FILE):

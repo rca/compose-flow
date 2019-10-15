@@ -68,7 +68,7 @@ class Env(BaseSubcommand):
         """
         backend_name = "local"
         remote = self.workflow.args.remote
-        project_config = get_config()
+        project_config = get_config(self.workflow)
 
         if remote is not None:
             project_backend_name = (
