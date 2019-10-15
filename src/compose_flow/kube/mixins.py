@@ -460,7 +460,7 @@ class KubeMixIn(object):
     ) -> str:
         """Construct command to apply a Kubernetes YAML manifest using kubectl."""
 
-        deploy_label = self.workflow.args.config_name
+        deploy_label = self.workflow.config_name
 
         raw_path = manifest["path"]
         deploy_label = manifest.get("label")

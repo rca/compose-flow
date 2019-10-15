@@ -102,9 +102,7 @@ def read_project_config(workflow: "Workflow") -> dict:
     if compose_flow_filename:
         paths = [compose_flow_filename]
     else:
-        base_config_name = get_base_config_name(workflow)
-
-        config_name_config_file = f"compose-flow.{base_config_name}.yml"
+        config_name_config_file = f"compose-flow.{workflow.config_basename}.yml"
         project_name_config_file = f"compose-flow.{workflow.project_name}.yml"
 
         paths = [config_name_config_file, project_name_config_file, DC_CONFIG_PATH]
