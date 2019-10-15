@@ -40,7 +40,7 @@ class KubeMixIn(object):
     @property
     @lru_cache()
     def config(self):
-        return get_config()
+        return get_config(self.workflow)
 
     @property
     def rancher_config(self):
@@ -499,7 +499,7 @@ class KubeMixIn(object):
         return command
 
     def get_rke_deploy_command(self):
-        raw_config = get_config()["rke"]["config"]
+        raw_config = get_config(self.workflow)["rke"]["config"]
         rendered_config = f"compose-flow-{self.workflow.args.profile}-rke.yml"
         self.render_single_yaml(raw_config, rendered_config)
         return f"rke up --config {rendered_config}"
