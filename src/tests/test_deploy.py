@@ -7,6 +7,8 @@ from compose_flow.commands.subcommands.profile import Profile
 
 from tests import BaseTestCase
 
+MANIFEST_URL = "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.11/deploy/manifests/00-crds.yaml"
+
 
 @mock.patch("compose_flow.commands.subcommands.env.get_backend")
 @mock.patch("compose_flow.commands.subcommands.env.os")
@@ -183,3 +185,40 @@ class DeployTestCase(BaseTestCase):
         # make sure the new namespace is created
         mock_create_ns = mocks[0]
         mock_create_ns.assert_not_called()
+
+    @mock.patch(
+        "compose_flow.commands.subcommands.deploy.Deploy.switch_rancher_context"
+    )
+    @mock.patch(
+        "compose_flow.commands.subcommands.deploy.Deploy.get_apps", return_value=[]
+    )
+    @mock.patch(
+        "compose_flow.commands.subcommands.deploy.Deploy.get_rancher_manifests",
+        return_value=[MANIFEST_URL],
+    )
+    @mock.patch(
+        "compose_flow.commands.subcommands.deploy.Deploy.get_rancher_namespaces",
+        return_value=[],
+    )
+    @mock.patch(
+        "compose_flow.commands.subcommands.deploy.Deploy.list_rancher_namespaces",
+        return_value=["existing-namespace"],
+    )
+    @mock.patch(
+        "compose_flow.commands.subcommands.deploy.Deploy.create_rancher_namespace"
+    )
+    def test_rancher_url_manifest(self, *mocks):
+        """
+        Ensure that manifests can be deployed to Rancher from external URLs
+        """
+        command = shlex.split("-e dev --dry-run deploy rancher")
+        workflow = Workflow(argv=command)
+
+        workflow.environment.write = mock.Mock()
+        workflow.profile.check = mock.Mock()
+
+        workflow.run()
+
+        # make sure the logs contain the manifest URL
+        with self.assertLogs(workflow.subcommand.logger, level="INFO") as logs:
+            self.assertIn([MANIFEST_URL], logs.output)
