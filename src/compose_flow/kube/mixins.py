@@ -8,6 +8,7 @@ import pathlib
 import sh
 import shutil
 from typing import List
+import urllib
 import yaml
 
 
@@ -54,6 +55,10 @@ class KubeMixIn(object):
     def secret_name(self):
         # k8s doesn't support _ in names
         return self.workflow.config_name.replace("_", "-")
+
+    @staticmethod
+    def _is_url(path):
+        return urllib.parse.urlparse(path).scheme != ""
 
     # check methods to validate setup
     def _check_kube_context(self):
@@ -475,16 +480,21 @@ class KubeMixIn(object):
             f"{kubectl_prefix} {namespace_str}{action} {deploy_label_str}--validate -f "
         )
 
-        if os.path.isdir(raw_path):
-            rendered_path = self.render_nested_manifests(raw_path, raw)
-            command += rendered_path + " --recursive"
-        elif os.path.isfile(raw_path):
-            rendered_path = self.render_manifest(raw_path, raw)
-            command += rendered_path
+        # Allow URL manifests to be provided but do not template them
+        if self._is_url(raw_path):
+            self.logger.info("Skip rendering for URL manifest %s", raw_path)
+            command += raw_path
         else:
-            raise errors.MissingManifest(
-                "Missing manifest at path: {}".format(manifest)
-            )
+            if os.path.isdir(raw_path):
+                rendered_path = self.render_nested_manifests(raw_path, raw)
+                command += rendered_path + " --recursive"
+            elif os.path.isfile(raw_path):
+                rendered_path = self.render_manifest(raw_path, raw)
+                command += rendered_path
+            else:
+                raise errors.MissingManifest(
+                    "Missing manifest at path: {}".format(manifest)
+                )
 
         return command
 
