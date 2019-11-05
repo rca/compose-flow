@@ -18,6 +18,18 @@ DOCKER_IMAGE_VAR = "DOCKER_IMAGE"
 VERSION_VAR = "VERSION"
 RUNTIME_PLACEHOLDER = "runtime://"
 
+# the name of the environment variable to lookup an external environment to extend
+# the current one onto
+# for example, if a config for project `bar` has the environment:
+#
+# ```
+# CF_ENV_EXTENDS_BASENAME=foo
+# [...]
+# ```
+#
+# then the environment `foo` would be loaded in and the `bar` environment set on top
+ENV_EXTENDS_BASENAME = "CF_ENV_EXTENDS_BASENAME"
+
 
 class Env(BaseSubcommand):
     """
@@ -305,9 +317,13 @@ class Env(BaseSubcommand):
     def is_write_profile_error_okay(self, exc):
         return self.is_env_modification_action()
 
-    def load(self) -> dict:
+    def load(self, basename: str = None, post_process: bool = True) -> dict:
         """
         Loads an environment from the backend
+
+        Args:
+            basename: the config basename to load
+            post_process: whether to perform post-processing upon reading data
         """
         data = {}
 
@@ -316,8 +332,14 @@ class Env(BaseSubcommand):
         if not environment:
             return data
 
+        # when a basename is given as a param, create the config name from it
+        # this is used to extend configurations based on the ENV_EXTENDS_BASENAME env variable
+        config_name = self.workflow.config_name
+        if basename:
+            config_name = f"{self.workflow.args.environment}-{basename}"
+
         try:
-            content = self.backend.read(self.workflow.config_name)
+            content = self.backend.read(config_name)
         except errors.NoSuchConfig as exc:
             if not self.is_missing_config_okay(exc):
                 raise
@@ -348,12 +370,13 @@ class Env(BaseSubcommand):
 
             data[key] = value
 
-        # all values from the docker config are persistable
-        self.update(data)
+        if post_process:
+            # all values from the docker config are persistable
+            self.update(data)
 
-        # now that the data from the cf environment is parsed default the
-        # docker image to anything that was defined in there.
-        self._docker_image = data.get("DOCKER_IMAGE")
+            # now that the data from the cf environment is parsed default the
+            # docker image to anything that was defined in there.
+            self._docker_image = data.get("DOCKER_IMAGE")
 
         return data
 
@@ -379,8 +402,29 @@ class Env(BaseSubcommand):
     def render_buf(self, buf, data: dict = None, runtime_config: bool = True):
         data = data or self.data  # pylint: disable=E1101
 
-        # reset runtime variables
-        if not runtime_config:
+        if runtime_config:
+            # look to see if ENV_EXTENDS_BASENAME is defined in each environment,
+            # starting with the initial data.  when ENV_EXTENDS_BASENAME is found
+            # load its data and check it for ENV_EXTENDS_BASENAME.  continue
+            # checking until ENV_EXTENDS_BASENAME is not found
+            extended_configs = []
+
+            _data, data = data, {}
+            while True:
+                extended_configs.insert(0, _data)
+
+                extends_env = _data.get(ENV_EXTENDS_BASENAME)
+                if not extends_env:
+                    break
+
+                self.logger.info(f"extending current env with {extends_env}")
+                _data = self.load(basename=extends_env, post_process=False)
+
+            # apply the extended configs top-down such that the original data overwrites
+            # any upstream configuration
+            for extended_config in extended_configs:
+                data.update(extended_config)
+        else:  # reset runtime variables
             data.update(self._rendered_config)
 
         lines = []
