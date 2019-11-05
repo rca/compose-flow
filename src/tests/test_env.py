@@ -183,3 +183,25 @@ class EnvTestCase(BaseTestCase):
         with self.assertRaises(errors.RuntimeEnvError):
             # noinspection PyStatementEffect
             flow.profile.data["services"]
+
+    @mock.patch("compose_flow.commands.subcommands.env.get_backend")
+    def test_rendered_extends(self, *mocks):
+        """Ensure the rendered config includes extended variables
+        """
+
+        def backend_read(config_name):
+            data = f"CF_ENV_EXTENDS_BASENAME=foo"
+            if "foo" in config_name:
+                data = "FOO=true"
+
+            return data
+
+        get_backend_mock = mocks[0]
+        get_backend_mock.return_value.read.side_effect = backend_read
+
+        command = shlex.split("-e dev env cat")
+        flow = Workflow(argv=command)
+
+        buf = flow.environment.render()
+
+        self.assertEqual(True, "FOO=true" in buf)
