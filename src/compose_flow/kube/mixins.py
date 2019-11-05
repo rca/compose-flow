@@ -570,8 +570,10 @@ class KubeMixIn(object):
             content = fh.read()
 
         if not raw:
-            rendered = render(content, env=self.workflow.environment.data)
-            rendered = render_jinja(rendered, env=self.workflow.environment.data)
+            env = dict(get_kv(self.workflow.environment.render(), multiple=True))
+
+            rendered = render(content, env=env)
+            rendered = render_jinja(rendered, env=env)
         else:
             rendered = content
 
