@@ -13,24 +13,9 @@ from .base import BaseSubcommand
 from compose_flow.compose import merge_profile
 from compose_flow.config import get_config
 from compose_flow.errors import EnvError, NoSuchProfile, ProfileError
-from compose_flow.utils import render, yaml_dump, yaml_load
+from compose_flow.utils import get_kv, render, yaml_dump, yaml_load
 
 COPY_ENV_VAR = "CF_COPY_ENV_FROM"
-
-
-def get_kv(item: str) -> tuple:
-    """
-    Returns the item split at equal
-    """
-    item_split = item.split("=", 1)
-    key = item_split[0]
-
-    try:
-        val = item_split[1]
-    except IndexError:
-        val = None
-
-    return key, val
 
 
 def listify_kv(d: dict) -> list:

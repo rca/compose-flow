@@ -19,7 +19,7 @@ from compose_flow.kube.checks import (
     AnswersChecker,
     ValuesChecker,
 )
-from compose_flow.utils import render, render_jinja
+from compose_flow.utils import render, render_jinja, get_kv
 
 CLUSTER_LS_FORMAT = "{{.Cluster.Name}}: {{.Cluster.ID}}"
 PROJECT_LS_FORMAT = "{{.Project.Name}}: {{.Project.ID}}"

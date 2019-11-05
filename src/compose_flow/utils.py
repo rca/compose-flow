@@ -17,6 +17,21 @@ from .errors import TagVersionError, EnvError, ProfileError
 VAR_RE = re.compile(r"\${(?P<varname>.*?)(?P<junk>[:?].*)?}")
 
 
+def get_kv(item: str) -> tuple:
+    """
+    Returns the item split at equal
+    """
+    item_split = item.split("=", 1)
+    key = item_split[0]
+
+    try:
+        val = item_split[1]
+    except IndexError:
+        val = None
+
+    return key, val
+
+
 def get_repo_name() -> str:
     repo_name = os.path.basename(os.getcwd())
 
