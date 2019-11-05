@@ -2,9 +2,11 @@ import base64
 import logging
 import re
 import os
-import yaml
 
+from typing import Iterable
 from collections import OrderedDict
+
+import yaml
 
 from boltons.iterutils import remap, get_path, default_enter, default_visit
 from jinja2 import Environment
@@ -17,7 +19,7 @@ from .errors import TagVersionError, EnvError, ProfileError
 VAR_RE = re.compile(r"\${(?P<varname>.*?)(?P<junk>[:?].*)?}")
 
 
-def get_kv(item: str) -> tuple:
+def _get_kv(item: str) -> tuple:
     """
     Returns the item split at equal
     """
@@ -30,6 +32,16 @@ def get_kv(item: str) -> tuple:
         val = None
 
     return key, val
+
+
+def get_kv(item: str, multiple: bool = False) -> Iterable[tuple]:
+    """Wrapper around _get_kv() to support multiple items in the string"""
+    items = [_get_kv(line) for line in item.splitlines()]
+
+    if multiple:
+        return items
+
+    return items[0]
 
 
 def get_repo_name() -> str:
