@@ -7,6 +7,7 @@ import os
 import pathlib
 import sh
 import shutil
+import typing
 from typing import List
 import urllib
 import yaml
@@ -20,7 +21,7 @@ from compose_flow.kube.checks import (
     AnswersChecker,
     ValuesChecker,
 )
-from compose_flow.utils import render, render_jinja, get_kv
+from compose_flow.utils import render, render_jinja, get_kv, yaml_dump, yaml_load
 
 CLUSTER_LS_FORMAT = "{{.Cluster.Name}}: {{.Cluster.ID}}"
 PROJECT_LS_FORMAT = "{{.Project.Name}}: {{.Project.ID}}"
@@ -28,6 +29,21 @@ PROJECT_LS_FORMAT = "{{.Project.Name}}: {{.Project.ID}}"
 EXCLUDE_PROFILES = ["local"]
 
 NONFATAL_ERROR_MESSAGES = ['strconv.ParseFloat: parsing "']
+
+if typing.TYPE_CHECKING:
+    from compose_flow.commands.workflow import Workflow
+
+
+def render_config(workflow: "Workflow", config: dict) -> dict:
+    # render the config prior to returning it
+    content = yaml_dump(config)
+    rendered_content = render(content, env=workflow.environment.data)
+
+    rendered_config = yaml_load(rendered_content)
+
+    print(f"rendered_config={rendered_config}")
+
+    return rendered_config
 
 
 class KubeMixIn(object):
@@ -43,8 +59,22 @@ class KubeMixIn(object):
         return get_config(self.workflow)
 
     @property
+    @lru_cache()
+    def rendered_config(self):
+        config = self.config
+
+        return render_config(self.workflow, config)
+
+    @property
     def rancher_config(self):
-        return self.config["rancher"]
+        return self.get_rancher_config()
+
+    def get_rancher_config(self, rendered: bool = False):
+        config = self.config
+        if rendered:
+            config = self.rendered_config
+
+        return config["rancher"]
 
     @property
     def remotes(self):
@@ -517,7 +547,11 @@ class KubeMixIn(object):
         return self.config["helm"]
 
     def get_apps(self) -> list:
-        default_apps = self.rancher_config.get("apps", [])
+        rancher_config = self.get_rancher_config(rendered=True)
+        default_apps = rancher_config.get("apps", [])
+
+        print(f"apps={default_apps}")
+
         extra_apps = self.get_extra_section("apps")
 
         return default_apps + extra_apps
