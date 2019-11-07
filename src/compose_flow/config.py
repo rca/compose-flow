@@ -117,11 +117,11 @@ def read_project_config(workflow: "Workflow") -> dict:
                 data = yaml_load(fh)
 
                 break
-
-        outfile = f"compose-flow-{workflow.environment_name}-{workflow.config_name}-config.yml"
-        with open(outfile, "w") as fh:
-            fh.write(yaml_dump(data))
     else:
         logger.warning(f"compose-flow config not found; tried {paths} in {os.getcwd()}")
+
+    outfile = f"compose-flow-{workflow.config_name}-config.yml"
+    with open(outfile, "w") as fh:
+        fh.write(yaml_dump(data))
 
     return data
