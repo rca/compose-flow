@@ -218,11 +218,6 @@ class Env(BaseSubcommand):
 
                     data[k] = rendered
 
-        # set defaults when no value is set
-        for k, v in self.cf_env.items():
-            if k not in data:
-                data[k] = v
-
         if self.workflow.subcommand.update_version_env_vars:
             # regenerate the full docker image name
             self._docker_image = None
@@ -424,6 +419,11 @@ class Env(BaseSubcommand):
             # any upstream configuration
             for extended_config in extended_configs:
                 data.update(extended_config)
+
+            # set defaults when no value is set
+            for k, v in self.cf_env.items():
+                if k not in data:
+                    data[k] = v
         else:  # reset runtime variables
             data.update(self._rendered_config)
 
