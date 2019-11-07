@@ -207,17 +207,20 @@ class DeployTestCase(BaseTestCase):
     @mock.patch(
         "compose_flow.commands.subcommands.deploy.Deploy.create_rancher_namespace"
     )
+    @mock.patch("compose_flow.commands.subcommands.deploy.Deploy.execute")
     def test_rancher_url_manifest(self, *mocks):
         """
         Ensure that manifests can be deployed to Rancher from external URLs
         """
-        command = shlex.split("-e dev --dry-run deploy rancher")
+        command = shlex.split("-e dev deploy rancher")
         workflow = Workflow(argv=command)
 
         workflow.environment.write = mock.Mock()
         workflow.profile.check = mock.Mock()
 
-        command = workflow.run()
+        workflow.run()
 
-        # make sure the logs contain the manifest URL
-        self.assertTrue(any(MANIFEST_URL in c for c in command))
+        command = mocks[0].call_args[0][0]
+
+        # make sure the command contains the manifest URL
+        self.assertTrue(MANIFEST_URL in command)

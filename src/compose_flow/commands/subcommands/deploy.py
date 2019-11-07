@@ -111,5 +111,3 @@ class Deploy(BaseSubcommand, KubeMixIn):
                 self.execute(command)
 
             env.write()
-
-        return command
