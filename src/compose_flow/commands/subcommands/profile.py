@@ -13,24 +13,9 @@ from .base import BaseSubcommand
 from compose_flow.compose import merge_profile
 from compose_flow.config import get_config
 from compose_flow.errors import EnvError, NoSuchProfile, ProfileError
-from compose_flow.utils import render, yaml_dump, yaml_load
+from compose_flow.utils import get_kv, render, yaml_dump, yaml_load
 
 COPY_ENV_VAR = "CF_COPY_ENV_FROM"
-
-
-def get_kv(item: str) -> tuple:
-    """
-    Returns the item split at equal
-    """
-    item_split = item.split("=", 1)
-    key = item_split[0]
-
-    try:
-        val = item_split[1]
-    except IndexError:
-        val = None
-
-    return key, val
 
 
 def listify_kv(d: dict) -> list:
@@ -332,7 +317,7 @@ class Profile(BaseSubcommand):
 
                 for k, v in (
                     ("DOCKER_SERVICE", service_name),
-                    ("DOCKER_STACK", self.workflow.args.config_name),
+                    ("DOCKER_STACK", self.workflow.config_name),
                 ):
                     if k not in service_environment_d:
                         service_environment_d[k] = v
@@ -460,7 +445,7 @@ class Profile(BaseSubcommand):
         """
         Returns the profile data found in the dc.yml file
         """
-        config = get_config()
+        config = get_config(self.workflow)
         if not config:
             return {}
 

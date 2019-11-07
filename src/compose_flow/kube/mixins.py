@@ -7,6 +7,7 @@ import os
 import pathlib
 import sh
 import shutil
+import typing
 from typing import List
 import yaml
 
@@ -19,7 +20,7 @@ from compose_flow.kube.checks import (
     AnswersChecker,
     ValuesChecker,
 )
-from compose_flow.utils import render, render_jinja
+from compose_flow.utils import render, render_jinja, get_kv, yaml_dump, yaml_load
 
 CLUSTER_LS_FORMAT = "{{.Cluster.Name}}: {{.Cluster.ID}}"
 PROJECT_LS_FORMAT = "{{.Project.Name}}: {{.Project.ID}}"
@@ -27,6 +28,21 @@ PROJECT_LS_FORMAT = "{{.Project.Name}}: {{.Project.ID}}"
 EXCLUDE_PROFILES = ["local"]
 
 NONFATAL_ERROR_MESSAGES = ['strconv.ParseFloat: parsing "']
+
+if typing.TYPE_CHECKING:
+    from compose_flow.commands.workflow import Workflow
+
+
+def render_config(workflow: "Workflow", config: dict) -> dict:
+    # render the config prior to returning it
+    content = yaml_dump(config)
+    rendered_content = render(content, env=workflow.environment.data)
+
+    rendered_config = yaml_load(rendered_content)
+
+    print(f"rendered_config={rendered_config}")
+
+    return rendered_config
 
 
 class KubeMixIn(object):
@@ -39,11 +55,25 @@ class KubeMixIn(object):
     @property
     @lru_cache()
     def config(self):
-        return get_config()
+        return get_config(self.workflow)
+
+    @property
+    @lru_cache()
+    def rendered_config(self):
+        config = self.config
+
+        return render_config(self.workflow, config)
 
     @property
     def rancher_config(self):
-        return self.config["rancher"]
+        return self.get_rancher_config()
+
+    def get_rancher_config(self, rendered: bool = False):
+        config = self.config
+        if rendered:
+            config = self.rendered_config
+
+        return config["rancher"]
 
     @property
     def remotes(self):
@@ -117,7 +147,7 @@ class KubeMixIn(object):
 
     def _get_secret(self, name: str):
         return self.execute(
-            f"{self.kubectl_command} get secrets --namespace {self.namespace} -o yaml {self.secret_name}"
+            f"{self.kubectl_command} get secrets --namespace {self.namespace} -o yaml {name}"
         )
 
     def _read_secret_env(self, name: str) -> str:
@@ -460,7 +490,7 @@ class KubeMixIn(object):
     ) -> str:
         """Construct command to apply a Kubernetes YAML manifest using kubectl."""
 
-        deploy_label = self.workflow.args.config_name
+        deploy_label = self.workflow.config_name
 
         raw_path = manifest["path"]
         deploy_label = manifest.get("label")
@@ -489,7 +519,7 @@ class KubeMixIn(object):
         return command
 
     def get_rke_deploy_command(self):
-        raw_config = get_config()["rke"]["config"]
+        raw_config = get_config(self.workflow)["rke"]["config"]
         rendered_config = f"compose-flow-{self.workflow.args.profile}-rke.yml"
         self.render_single_yaml(raw_config, rendered_config)
         return f"rke up --config {rendered_config}"
@@ -507,7 +537,11 @@ class KubeMixIn(object):
         return self.config["helm"]
 
     def get_apps(self) -> list:
-        default_apps = self.rancher_config.get("apps", [])
+        rancher_config = self.get_rancher_config(rendered=True)
+        default_apps = rancher_config.get("apps", [])
+
+        print(f"apps={default_apps}")
+
         extra_apps = self.get_extra_section("apps")
 
         return default_apps + extra_apps
@@ -560,8 +594,10 @@ class KubeMixIn(object):
             content = fh.read()
 
         if not raw:
-            rendered = render(content, env=self.workflow.environment.data)
-            rendered = render_jinja(rendered, env=self.workflow.environment.data)
+            env = dict(get_kv(self.workflow.environment.render(), multiple=True))
+
+            rendered = render(content, env=env)
+            rendered = render_jinja(rendered, env=env)
         else:
             rendered = content
 

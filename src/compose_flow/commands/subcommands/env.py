@@ -18,6 +18,18 @@ DOCKER_IMAGE_VAR = "DOCKER_IMAGE"
 VERSION_VAR = "VERSION"
 RUNTIME_PLACEHOLDER = "runtime://"
 
+# the name of the environment variable to lookup an external environment to extend
+# the current one onto
+# for example, if a config for project `bar` has the environment:
+#
+# ```
+# CF_ENV_EXTENDS_BASENAME=foo
+# [...]
+# ```
+#
+# then the environment `foo` would be loaded in and the `bar` environment set on top
+ENV_EXTENDS_BASENAME = "CF_ENV_EXTENDS_BASENAME"
+
 
 class Env(BaseSubcommand):
     """
@@ -68,7 +80,7 @@ class Env(BaseSubcommand):
         """
         backend_name = "local"
         remote = self.workflow.args.remote
-        project_config = get_config()
+        project_config = get_config(self.workflow)
 
         if remote is not None:
             project_backend_name = (
@@ -105,7 +117,7 @@ class Env(BaseSubcommand):
 
             self.execute(f"{editor} {path}", _fg=True)
 
-            self.backend.write(self.workflow.args.config_name, path)
+            self.backend.write(self.workflow.config_name, path)
 
     def write(self) -> None:
         """
@@ -115,7 +127,7 @@ class Env(BaseSubcommand):
             self.render_buf(fh, runtime_config=False)
             fh.flush()
 
-            self.backend.write(self.workflow.args.config_name, fh.name)
+            self.backend.write(self.workflow.config_name, fh.name)
 
     @classmethod
     def fill_subparser(cls, parser, subparser):
@@ -206,11 +218,6 @@ class Env(BaseSubcommand):
 
                     data[k] = rendered
 
-        # set defaults when no value is set
-        for k, v in self.cf_env.items():
-            if k not in data:
-                data[k] = v
-
         if self.workflow.subcommand.update_version_env_vars:
             # regenerate the full docker image name
             self._docker_image = None
@@ -236,7 +243,7 @@ class Env(BaseSubcommand):
 
         registry_domain = self.workflow.docker_image_prefix
         project_name = self.workflow.project_name
-        env = self.workflow.args.environment
+        env = self.workflow.environment_name
 
         docker_image = f"{registry_domain}/{project_name}:{env}"
 
@@ -305,19 +312,29 @@ class Env(BaseSubcommand):
     def is_write_profile_error_okay(self, exc):
         return self.is_env_modification_action()
 
-    def load(self) -> dict:
+    def load(self, basename: str = None, post_process: bool = True) -> dict:
         """
         Loads an environment from the backend
+
+        Args:
+            basename: the config basename to load
+            post_process: whether to perform post-processing upon reading data
         """
         data = {}
 
         # when no environment is specified on the command line, do not load any docker config
-        environment = self.workflow.args.environment
+        environment = self.workflow.environment_name
         if not environment:
             return data
 
+        # when a basename is given as a param, create the config name from it
+        # this is used to extend configurations based on the ENV_EXTENDS_BASENAME env variable
+        config_name = self.workflow.config_name
+        if basename:
+            config_name = f"{self.workflow.args.environment}-{basename}"
+
         try:
-            content = self.backend.read(self.workflow.config_name)
+            content = self.backend.read(config_name)
         except errors.NoSuchConfig as exc:
             if not self.is_missing_config_okay(exc):
                 raise
@@ -334,7 +351,11 @@ class Env(BaseSubcommand):
                 continue
 
             try:
-                key, value = line.split("=", 1)
+                line_split = line.split("=", 1)
+                if len(line_split) == 1:
+                    line_split.append("")
+
+                key, value = line_split
             except ValueError as exc:
                 self.logger.error(
                     f"ERROR: unable to parse line number {idx}, edit your env: {line}"
@@ -344,12 +365,13 @@ class Env(BaseSubcommand):
 
             data[key] = value
 
-        # all values from the docker config are persistable
-        self.update(data)
+        if post_process:
+            # all values from the docker config are persistable
+            self.update(data)
 
-        # now that the data from the cf environment is parsed default the
-        # docker image to anything that was defined in there.
-        self._docker_image = data.get("DOCKER_IMAGE")
+            # now that the data from the cf environment is parsed default the
+            # docker image to anything that was defined in there.
+            self._docker_image = data.get("DOCKER_IMAGE")
 
         return data
 
@@ -375,8 +397,34 @@ class Env(BaseSubcommand):
     def render_buf(self, buf, data: dict = None, runtime_config: bool = True):
         data = data or self.data  # pylint: disable=E1101
 
-        # reset runtime variables
-        if not runtime_config:
+        if runtime_config:
+            # look to see if ENV_EXTENDS_BASENAME is defined in each environment,
+            # starting with the initial data.  when ENV_EXTENDS_BASENAME is found
+            # load its data and check it for ENV_EXTENDS_BASENAME.  continue
+            # checking until ENV_EXTENDS_BASENAME is not found
+            extended_configs = []
+
+            _data, data = data, {}
+            while True:
+                extended_configs.insert(0, _data)
+
+                extends_env = _data.get(ENV_EXTENDS_BASENAME)
+                if not extends_env:
+                    break
+
+                self.logger.info(f"extending current env with {extends_env}")
+                _data = self.load(basename=extends_env, post_process=False)
+
+            # apply the extended configs top-down such that the original data overwrites
+            # any upstream configuration
+            for extended_config in extended_configs:
+                data.update(extended_config)
+
+            # set defaults when no value is set
+            for k, v in self.cf_env.items():
+                if k not in data:
+                    data[k] = v
+        else:  # reset runtime variables
             data.update(self._rendered_config)
 
         lines = []
@@ -410,9 +458,9 @@ class Env(BaseSubcommand):
             return tag_version
 
         # default the tag version to the name of the environment
-        tag_version = self.workflow.args.environment
+        tag_version = self.workflow.environment_name
         try:
-            tag_version = utils.get_tag_version(default=self.workflow.args.environment)
+            tag_version = utils.get_tag_version(default=tag_version)
         except Exception as exc:
             subcommand = self.workflow.subcommand
 
