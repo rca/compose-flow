@@ -43,9 +43,7 @@ class WorkflowTestCase(BaseTestCase):
 
         env = workflow.environment
 
-        self.assertEqual(
-            ["CF_ENV", "CF_ENV_NAME", "CF_PROJECT"], sorted(env.data.keys())
-        )
+        self.assertEqual([], sorted(env.data.keys()))
 
     @mock.patch("compose_flow.commands.workflow.os")
     def test_docker_image_prefix_default(self, *mocks):
@@ -96,10 +94,7 @@ class WorkflowTestCase(BaseTestCase):
 
         env = workflow.environment
 
-        self.assertEqual(
-            ["BAR", "CF_ENV", "CF_ENV_NAME", "CF_PROJECT", "FOO"],
-            sorted(env.data.keys()),
-        )
+        self.assertEqual(["BAR", "FOO"], sorted(env.data.keys()))
         self.assertEqual("1", env.data["FOO"])
         self.assertEqual("2", env.data["BAR"])
 
