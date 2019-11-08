@@ -122,7 +122,7 @@ class KubeMixIn(object):
 
     def _get_secret(self, name: str):
         return self.execute(
-            f"{self.kubectl_command} get secrets --namespace {self.namespace} -o yaml {self.secret_name}"
+            f"{self.kubectl_command} get secrets --namespace {self.namespace} -o yaml {name}"
         )
 
     def _read_secret_env(self, name: str) -> str:
