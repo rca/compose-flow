@@ -22,6 +22,7 @@ class Remote(BaseSubcommand):
 
     def __init__(self, *args, **kwargs):
         self._host = kwargs.pop("host", None)
+        self.name = kwargs.pop("name", None)
 
         super().__init__(*args, **kwargs)
 
@@ -105,7 +106,7 @@ class Remote(BaseSubcommand):
 
         args = self.workflow.args
         data = self.workflow.app_config
-        remote = args.remote
+        remote = self.name or args.remote
 
         try:
             self._host = data["remotes"][remote]["ssh"]

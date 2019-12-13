@@ -1,9 +1,11 @@
+import os
 import sys
 import sh
 
 from .base_backend import BaseBackend
 
 from compose_flow import docker
+from compose_flow.commands.subcommands.remote import Remote
 
 
 class SwarmBackend(BaseBackend):
@@ -74,7 +76,31 @@ class SwarmBackend(BaseBackend):
         return docker.get_configs()
 
     def read(self, name: str) -> str:
-        return docker.get_config(name)
+        config_remote = self.workflow.args.config_remote
+        remote = None
+        old_docker_host = os.environ.get("DOCKER_HOST")
+
+        try:
+            if config_remote:
+                print(f"read config from config_remote={config_remote}")
+
+                remote = Remote(workflow=self.workflow, name=config_remote)
+                remote.connect()
+
+                docker_host = remote.docker_host
+                if docker_host:
+                    # one of the very few exceptions of updating the os environment directly
+                    # the docker host is low level in that it's not possible to run docker
+                    # commands on remote hosts if this is not set before those commands are
+                    # attempted.
+                    os.environ.update({"DOCKER_HOST": docker_host})
+
+            return docker.get_config(name)
+        finally:
+            if old_docker_host:
+                os.environ.update({"DOCKER_HOST": old_docker_host})
+            else:
+                os.environ.pop("DOCKER_HOST", None)
 
     def rm(self, name: str) -> None:
         """

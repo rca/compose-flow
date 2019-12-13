@@ -78,8 +78,11 @@ class Env(BaseSubcommand):
         """
         Returns the environment backend to use
         """
+        return self.get_backend()
+
+    def get_backend(self, remote=None):
         backend_name = "local"
-        remote = self.workflow.args.remote
+        remote = remote or self.workflow.args.remote
         project_config = get_config(self.workflow)
 
         if remote is not None:
@@ -146,10 +149,6 @@ class Env(BaseSubcommand):
         """
         Prints the loaded config to stdout
         """
-        config_name = self.workflow.config_name
-        if config_name not in self.backend.ls():
-            return f"docker config named {config_name} not in backend={self.backend.__class__.__name__}"
-
         print(self.render())
 
     @property
@@ -334,7 +333,8 @@ class Env(BaseSubcommand):
             config_name = f"{self.workflow.args.environment}-{basename}"
 
         try:
-            content = self.backend.read(config_name)
+            backend = self.get_backend(remote=self.workflow.args.config_remote)
+            content = backend.read(config_name)
         except errors.NoSuchConfig as exc:
             if not self.is_missing_config_okay(exc):
                 raise
