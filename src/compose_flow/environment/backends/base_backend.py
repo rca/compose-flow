@@ -1,9 +1,15 @@
 import logging
 
+from compose_flow.errors import BackendError
+
 
 class BaseBackend(object):
     def __init__(self, *args, **kwargs):
-        pass
+        workflow = kwargs.get("workflow")
+        if workflow:
+            self.workflow = workflow
+        else:
+            raise BackendError("must pass workflow")
 
     @property
     def logger(self):
