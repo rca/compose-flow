@@ -10,4 +10,6 @@ def get_backend(name: str, *args, **kwargs) -> object:
     module = importlib.import_module(module_path)
     backend_cls = getattr(module, f"{name.capitalize()}Backend")
 
-    return backend_cls(*args, **kwargs)
+    backend = backend_cls(*args, **kwargs)
+
+    return backend
