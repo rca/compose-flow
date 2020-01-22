@@ -22,6 +22,7 @@ class Remote(BaseSubcommand):
 
     def __init__(self, *args, **kwargs):
         self._host = kwargs.pop("host", None)
+        self.name = kwargs.pop("name", None)
 
         super().__init__(*args, **kwargs)
 
