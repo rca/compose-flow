@@ -106,7 +106,7 @@ class Remote(BaseSubcommand):
 
         args = self.workflow.args
         data = self.workflow.app_config
-        remote = args.remote
+        remote = self.name or args.remote
 
         try:
             self._host = data["remotes"][remote]["ssh"]

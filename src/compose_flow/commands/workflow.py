@@ -124,6 +124,10 @@ class Workflow(object):
             "--config-basename",
             help="the configuration name without environment prefix",
         )
+        parser.add_argument(
+            "--config-remote",
+            help=f"the remote to use to retrieve the requested configuration",
+        )
         parser.add_argument("-e", "--environment")
         parser.add_argument(
             "-f",

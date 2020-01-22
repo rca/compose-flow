@@ -40,7 +40,7 @@ class Deploy(BaseSubcommand, KubeMixIn):
             --prune
             --with-registry-auth
             --compose-file {self.workflow.profile.filename}
-            {self.workflow.args.config_name}"""
+            {self.workflow.config_name}"""
 
     def build_kubectl_command(self) -> list:
         self.switch_kube_context()
