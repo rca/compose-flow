@@ -37,9 +37,7 @@ CF_REMOTES_CONFIG_PATH = os.path.expanduser(
 
 class Workflow(object):
     def __init__(self, argv=None):
-        self.argv = argv
-        if argv is None:
-            self.argv = sys.argv[1:]
+        self.argv = argv if argv is not None else sys.argv[1:]
 
         self.parser = self.get_argument_parser()
         self.args, self.args_remainder = self.parser.parse_known_args(self.argv)
