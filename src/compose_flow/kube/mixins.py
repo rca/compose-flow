@@ -61,9 +61,7 @@ class KubeMixIn(object):
     @property
     @lru_cache()
     def rendered_config(self):
-        config = self.config
-
-        return render_config(self.workflow, config)
+        return render_config(self.workflow, self.config)
 
     @property
     def rancher_config(self):
