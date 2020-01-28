@@ -32,7 +32,7 @@ class Task(BaseSubcommand):
     @property
     @lru_cache()
     def task_config(self):
-        config = get_config()
+        config = get_config(self.workflow)
         try:
             task = config["tasks"][self.task_name]
         except KeyError:
@@ -72,7 +72,7 @@ class Task(BaseSubcommand):
     def is_dirty_working_copy_okay(self, exc: Exception) -> bool:
         dirty_working_copy_okay = super().is_dirty_working_copy_okay(exc)
 
-        if not dirty_working_copy_okay and self.workflow.args.environment in ("local",):
+        if not dirty_working_copy_okay and self.workflow.environment_name in ("local",):
             self.logger.warning(
                 (
                     "\n\n"

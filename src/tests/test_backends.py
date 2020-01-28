@@ -11,7 +11,8 @@ class LocalBackendTestCase(TestCase):
 
     @property
     def backend(self):
-        backend = get_backend("local")
+        workflow = mock.MagicMock(config_name="dev-oss_reporting")
+        backend = get_backend("local", workflow=workflow)
 
         return backend
 
@@ -48,7 +49,10 @@ class SwarmBackendTestCase(TestCase):
 
     @property
     def backend(self):
-        backend = get_backend("swarm")
+        workflow = mock.MagicMock(config_name="dev-oss_reporting")
+        remote_cls = mock.MagicMock()
+        remote_cls.return_value = mock.MagicMock(docker_host="foobar-docker-remote")
+        backend = get_backend("swarm", workflow=workflow, remote_cls=remote_cls)
 
         return backend
 
@@ -85,7 +89,8 @@ class SwarmBackendTestCase(TestCase):
 class RancherBackend(TestCase):
     @property
     def backend(self):
-        backend = get_backend("rancher")
+        workflow = mock.MagicMock(config_name="dev-oss_reporting")
+        backend = get_backend("rancher", workflow=workflow)
 
         return backend
 
@@ -100,7 +105,6 @@ class RancherBackend(TestCase):
         Test that when we store a secret all invalid characters are replaced with `-`
         """
         backend = self.backend
-        backend.workflow = mock.MagicMock(config_name="dev-oss_reporting")
 
         validation_regex = re.compile(
             r"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$"

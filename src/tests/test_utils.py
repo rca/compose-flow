@@ -16,3 +16,17 @@ class RenderTestCase(TestCase):
         expected = f'      - /tmp/jenkins/{env["JOB_NAME"]}/{env["BUILD_NUMBER"]}:/usr/local/src/results'
 
         self.assertEqual(expected, rendered)
+
+    def test_get_kv(self, *mocks):
+        """Ensure a single item is parsed
+        """
+        data = utils.get_kv("FOO=one")
+
+        self.assertEqual(("FOO", "one"), data)
+
+    def test_get_kv_multiple(self, *mocks):
+        """Ensure multiple items are parsed
+        """
+        data = utils.get_kv("FOO=one\nBAR=two", multiple=True)
+
+        self.assertEqual([("FOO", "one"), ("BAR", "two")], data)

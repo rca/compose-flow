@@ -17,5 +17,4 @@ class BaseTestCase(TestCase):
         self.sh_patcher = mock.patch("compose_flow.shell.sh")
         self.sh_mock = self.sh_patcher.start()
 
-    def tearDown(self):
-        self.sh_patcher.stop()
+        self.addCleanup(self.sh_patcher.stop)

@@ -4,6 +4,12 @@ class CommandError(Exception):
     """
 
 
+class BackendError(Exception):
+    """
+    Backend error
+    """
+
+
 class DockerError(CommandError):
     """
     Raised when a problem running a docker command is encountered

@@ -1,4 +1,6 @@
 import argparse
+import sys
+
 from typing import List
 
 from compose_flow.docker_image import DockerImage
@@ -28,9 +30,15 @@ class Publish(BaseBuildSubcommand):
         docker_images = set()
 
         profile = self.workflow.profile
-        for service_data in profile.data["services"].values():
+        for service_name, service_data in profile.data["services"].items():
             if service_data.get("build"):
                 tagged_image_name = service_data.get("image")
+                if not tagged_image_name:
+                    print(
+                        f"service_name={service_name} does not have an image directive",
+                        file=sys.stderr,
+                    )
+                    continue
                 docker_images.add(tagged_image_name)
 
         return list(docker_images)
@@ -40,6 +48,7 @@ class Publish(BaseBuildSubcommand):
         Returns a list of docker images built in the compose file
         """
         tagged_image_names = self.get_built_tagged_image_names()
+        print(tagged_image_names)
         docker_images = [
             DockerImage(
                 tagged_image_name=tagged_image_name,

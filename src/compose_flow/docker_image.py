@@ -45,6 +45,8 @@ class DockerImage:
         Parse the tagged_image_name and set repository, image_name, semver version_info
         :return:
         """
+        print(f"_tagged_image_name={self._tagged_image_name}")
+
         self.repository = (
             self._tagged_image_name.split("/")[0]
             if "/" in self._tagged_image_name

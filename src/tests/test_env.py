@@ -1,6 +1,6 @@
 import os
 import shlex
-from unittest import TestCase, mock
+from unittest import mock
 
 from compose_flow import errors
 from compose_flow.commands.subcommands.env import Env, RUNTIME_PLACEHOLDER
@@ -9,7 +9,9 @@ from compose_flow.commands import Workflow
 from tests import BaseTestCase
 
 
+# noinspection PyUnusedLocal
 @mock.patch("compose_flow.commands.workflow.PROJECT_NAME", new="testdirname")
+@mock.patch("compose_flow.config.read_project_config", return_value=dict())
 class EnvTestCase(BaseTestCase):
     def test_backend_default(self, *mocks):
         """
@@ -52,12 +54,14 @@ class EnvTestCase(BaseTestCase):
 
         TODO: this should move to test_workflow
         """
-        command = shlex.split("-e dev --config-name=test env cat")
+        config_name = "dev-test"
+        command = shlex.split(f"-e dev --config-name={config_name} env cat")
         flow = Workflow(argv=command)
         env = Env(flow)
 
-        self.assertEqual(flow.config_name, "test")
+        self.assertEqual(flow.config_name, config_name)
 
+    # noinspection PyMethodMayBeStatic
     def test_data_not_loaded_when_cache_is_empty_dict(self, *mocks):
         workflow = mock.MagicMock()
         workflow.args.environment = None
@@ -72,8 +76,10 @@ class EnvTestCase(BaseTestCase):
         # prime the cache with an empty dict to ensure load is not called
         env._data = {}
 
+        # noinspection PyStatementEffect
         env.data
 
+        # noinspection PyUnresolvedReferences
         env.load.assert_not_called()
 
     def test_default_config_name(self, *mocks):
@@ -87,6 +93,18 @@ class EnvTestCase(BaseTestCase):
         env = Env(flow)
 
         self.assertEqual(flow.config_name, "dev-testdirname")
+
+    @mock.patch("compose_flow.commands.subcommands.env.get_backend")
+    def test_empty_env_value(self, *mocks):
+        """Ensure that a value can be empty if the line ends with an equals
+        """
+        get_backend_mock = mocks[0]
+        get_backend_mock.return_value.read.return_value = f"FOO="
+
+        command = shlex.split("-e dev env cat")
+        flow = Workflow(argv=command)
+
+        self.assertEquals("", flow.environment.data["FOO"])
 
     @mock.patch("compose_flow.commands.subcommands.env.get_backend")
     def test_load_ro(self, *mocks):
@@ -130,7 +148,10 @@ class EnvTestCase(BaseTestCase):
         os.environ["BAR"] = bar_env_val
 
         get_backend_mock = mocks[0]
-        get_backend_mock.return_value.read.return_value = f"FOO={RUNTIME_PLACEHOLDER}\nBAR={RUNTIME_PLACEHOLDER}\nVERSION={version}\nDOCKER_IMAGE={docker_image}"
+        get_backend_mock.return_value.read.return_value = (
+            f"FOO={RUNTIME_PLACEHOLDER}\nBAR={RUNTIME_PLACEHOLDER}\n"
+            f"VERSION={version}\nDOCKER_IMAGE={docker_image}"
+        )
 
         command = shlex.split("-e dev env cat")
         flow = Workflow(argv=command)
@@ -160,4 +181,27 @@ class EnvTestCase(BaseTestCase):
 
         assert os.environ.get("FOO") is None
         with self.assertRaises(errors.RuntimeEnvError):
+            # noinspection PyStatementEffect
             flow.profile.data["services"]
+
+    @mock.patch("compose_flow.commands.subcommands.env.get_backend")
+    def test_rendered_extends(self, *mocks):
+        """Ensure the rendered config includes extended variables
+        """
+
+        def backend_read(config_name):
+            data = f"CF_ENV_EXTENDS_BASENAME=foo"
+            if "foo" in config_name:
+                data = "FOO=true"
+
+            return data
+
+        get_backend_mock = mocks[0]
+        get_backend_mock.return_value.read.side_effect = backend_read
+
+        command = shlex.split("-e dev env cat")
+        flow = Workflow(argv=command)
+
+        buf = flow.environment.render()
+
+        self.assertEqual(True, "FOO=true" in buf)
