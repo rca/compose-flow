@@ -206,8 +206,11 @@ class Env(BaseSubcommand):
             # reset the substitution count to break the loop when no subs are made
             sub_count = 0
 
+            full_env = self.cf_env
+            full_env.update(data)
+
             for k, v in data.items():
-                rendered = utils.render(v, env=data)
+                rendered = utils.render(v, env=full_env)
 
                 if rendered != v:
                     sub_count += 1
