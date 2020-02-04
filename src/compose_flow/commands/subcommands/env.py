@@ -386,7 +386,7 @@ class Env(BaseSubcommand):
         buf = io.StringIO()
 
         try:
-            runtime_config = not self.args.variables
+            runtime_config = not self.workflow.args.variables
         except AttributeError:
             runtime_config = True
 
