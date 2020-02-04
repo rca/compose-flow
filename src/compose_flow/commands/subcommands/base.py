@@ -58,7 +58,7 @@ class BaseSubcommand(ABC):
         """
         # get the environment from kwargs or else use the workflow environment
         # use the `or` syntax so that the environment data is not evaluated unless env is not passed in
-        env = kwargs.pop("_env", None) or self.workflow.environment.data
+        env = kwargs.pop("_env", None) or self.workflow.environment.rendered_data
 
         return shell.execute(command, env, **kwargs)
 

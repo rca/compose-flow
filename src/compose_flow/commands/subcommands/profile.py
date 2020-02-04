@@ -81,7 +81,7 @@ class Profile(BaseSubcommand):
         Returns:
             list of errors
         """
-        env_data = self.workflow.environment.data
+        env_data = self.workflow.environment.rendered_data
         errors = []
 
         for name, service_data in data["services"].items():
@@ -414,7 +414,8 @@ class Profile(BaseSubcommand):
 
         # render the file
         try:
-            rendered = render(content, env=self.workflow.environment.data)
+            env = self.workflow.environment.rendered_data
+            rendered = render(content, env=env)
         except EnvError as exc:
             if not self.workflow.subcommand.is_missing_profile_okay(exc):
                 raise

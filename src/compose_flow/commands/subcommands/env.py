@@ -436,6 +436,23 @@ class Env(BaseSubcommand):
 
         buf.write("\n".join(sorted(lines)))
 
+    @property
+    def rendered_data(self) -> dict:
+        """
+        Returns data that has been fully rendered
+        """
+        data = {}
+
+        for line in self.render().splitlines():
+            if "=" not in line:
+                data[line] = ""
+                continue
+
+            k, v = line.split("=", 1)
+            data[k] = v
+
+        return data
+
     def rm(self) -> None:
         """
         Removes an environment from the backend
