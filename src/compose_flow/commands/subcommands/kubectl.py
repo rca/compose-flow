@@ -19,4 +19,4 @@ class Kubectl(PassthroughBaseSubcommand, KubeMixIn):
     def handle(self, extra_args: list = None) -> [None, str]:
         self.switch_kube_context()
 
-        return super().handle(log_output=False)
+        return super().handle(log_output=False, extra_args=extra_args)

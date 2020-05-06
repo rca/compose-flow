@@ -19,4 +19,4 @@ class Helm(PassthroughBaseSubcommand, KubeMixIn):
     def handle(self, extra_args: list = None) -> [None, str]:
         self.switch_kube_context()
 
-        return super().handle(log_output=True)
+        return super().handle(log_output=True, extra_args=extra_args)
