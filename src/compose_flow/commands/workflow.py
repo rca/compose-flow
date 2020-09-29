@@ -124,7 +124,7 @@ class Workflow(object):
         )
         parser.add_argument(
             "--config-remote",
-            help=f"the remote to use to retrieve the requested configuration",
+            help="the remote to use to retrieve the requested configuration",
         )
         parser.add_argument("-e", "--environment")
         parser.add_argument(
@@ -142,7 +142,7 @@ class Workflow(object):
         parser.add_argument(
             "-r",
             "--remote",
-            help=f"the label of the remote system to connect to, default same name as the environment",
+            help="the label of the remote system to connect to, default same name as the environment",
         )
         parser.add_argument(
             "--tag-version",

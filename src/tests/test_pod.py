@@ -90,6 +90,6 @@ class PodTestCase(BaseTestCase):
 
         workflow.run()
 
-        target_command = f"rancher kubectl -n foobar exec -it generic-workers-6c744b8fb8-7sjb8  -- /bin/bash"
+        target_command = "rancher kubectl -n foobar exec -it generic-workers-6c744b8fb8-7sjb8  -- /bin/bash"
 
         self.assertEqual(target_command, mocks[1].call_args[0][0])

@@ -15,7 +15,7 @@ class WorkflowTestCase(BaseTestCase):
     @staticmethod
     def _setup_docker_config_mock(*mocks):
         get_backend_mock = mocks[-2]
-        get_backend_mock.return_value.read.return_value = f"FOO=1\nBAR=2"
+        get_backend_mock.return_value.read.return_value = "FOO=1\nBAR=2"
 
     @staticmethod
     def _setup_utils_mock(*mocks):
