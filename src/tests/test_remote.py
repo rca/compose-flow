@@ -28,7 +28,7 @@ class RemoteTestCase(TestCase):
         Ensure username falls back to the settings user when there is no '@' in the remote hostname
         """
         self.workflow.args.environment = "dev"
-        self.workflow.app_config = {"remotes": {"dev": {"ssh": f"testremotehost"}}}
+        self.workflow.app_config = {"remotes": {"dev": {"ssh": "testremotehost"}}}
 
         remote = Remote(self.workflow)
 

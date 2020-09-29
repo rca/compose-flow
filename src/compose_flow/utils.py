@@ -72,7 +72,7 @@ def get_tag_version(default: str = None) -> str:
             tag_version = f"{tag_version}-dirty"
 
         raise TagVersionError(
-            f"Warning: tag-version failed", shell_exception=exc, tag_version=tag_version
+            "Warning: tag-version failed", shell_exception=exc, tag_version=tag_version
         )
     else:
         tag_version = proc.stdout.decode("utf8").strip()

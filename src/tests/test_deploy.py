@@ -22,7 +22,7 @@ class DeployTestCase(BaseTestCase):
         """
         docker_mock = mocks[-1]
         docker_mock.get_config.return_value = (
-            f"FOO=1\nBAR=2\nVERSION=1.0\nDOCKER_IMAGE=foo:dev"
+            "FOO=1\nBAR=2\nVERSION=1.0\nDOCKER_IMAGE=foo:dev"
         )
 
         utils_mock = mocks[0]

@@ -99,7 +99,7 @@ class EnvTestCase(BaseTestCase):
         """Ensure that a value can be empty if the line ends with an equals
         """
         get_backend_mock = mocks[0]
-        get_backend_mock.return_value.read.return_value = f"FOO="
+        get_backend_mock.return_value.read.return_value = "FOO="
 
         command = shlex.split("-e dev env cat")
         flow = Workflow(argv=command)
@@ -190,7 +190,7 @@ class EnvTestCase(BaseTestCase):
         """
 
         def backend_read(config_name):
-            data = f"CF_ENV_EXTENDS_BASENAME=foo"
+            data = "CF_ENV_EXTENDS_BASENAME=foo"
             if "foo" in config_name:
                 data = "FOO=true"
 

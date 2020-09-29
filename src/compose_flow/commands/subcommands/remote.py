@@ -43,7 +43,7 @@ class Remote(BaseSubcommand):
 
         if do_print:
             self.print_eval_hint()
-            print(f"unset DOCKER_HOST")
+            print("unset DOCKER_HOST")
 
     def connect(self):
         remote_host = self.get_remote_host()
