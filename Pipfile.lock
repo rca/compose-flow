@@ -358,10 +358,10 @@
         },
         "tag-version": {
             "hashes": [
-                "sha256:27f171d2e2f7d6807ee1270102913af15bd12737b059a9cd852bc6532a2b091e"
+                "sha256:fb6a52aa0392e25a1d98b696f4f69e3c86e0491421ba1732c135b21baa8b8866"
             ],
             "index": "pypi",
-            "version": "==0.0.20"
+            "version": "==0.1.0"
         },
         "texttable": {
             "hashes": [
