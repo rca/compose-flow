@@ -61,7 +61,7 @@ def get_tag_version(default: str = None) -> str:
     # inject the version from tag-version command into the loaded environment
     tag_version = default or "unknown"
     try:
-        proc = shell.execute("tag-version", os.environ)
+        proc = shell.execute("tag-version version --format docker", os.environ)
     except Exception as exc:
         try:
             error_message = exc.stderr.decode("utf8")  # pylint: disable=E1101
